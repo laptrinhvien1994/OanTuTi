@@ -23,4 +23,6 @@ io.on('connection', function(socket){
   console.log('Client is connecting');
 });
 
-server.listen(9999);
+server.listen(9999, function(){
+  console.log('Server was started');
+});

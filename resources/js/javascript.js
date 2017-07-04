@@ -1,7 +1,33 @@
-angular.module('app', [])
-.controller('homeController',['$scope' ,function($scope){
+angular.module('app', ['ngRoute'])
+.config(function($routeProvider){
+  $routeProvider
+  .when('/',{
+    templateUrl: 'resources/home.html',
+    controller : 'homeController'
+  })
+  .when('/profile', {
+    templateUrl: 'resources/profile.html',
+    controller: 'profileController'
+  })
+  .when('/chat', {
+    templateUrl: 'resources/chat.html',
+    controller: 'chatController'
+  })
+  .when('/contact', {
+    templateUrl: 'resources/contact.html',
+    controller: 'contactController'
+  })
+  .when('/battle', {
+    templateUrl: 'resources/battle.html',
+    controller: 'battleController'
+  });
+})
+.controller('homeController',['$scope' ,function($scope, $route){
   //Socket connect to Server
-  var socket = io.connect('http://localhost:9999');
+  //var socket = io.connect('http://localhost:9999');
+
+
+
 
   //Get Facebook SDK
   window.fbAsyncInit = function() {
@@ -18,10 +44,6 @@ angular.module('app', [])
 		FB.Event.subscribe("auth.login", function(response){
 		});
 	};
-
-  window.loginCallback = function(){
-    console.log('login');
-  }
 
 	//Get Facebook's SDK for Javascript
 	(function(d, s, id){
