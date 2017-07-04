@@ -10,12 +10,12 @@ app.use('/resources', express.static('resources'));
 
 //Routing
 app.get('/', function(req, res){
-  console.log('Oantuti');
+  console.log(req.url);
   res.render('index');
 });
 
 app.get('*', function(req,res){
-  res.redirect('index');
+  res.redirect('/');
 });
 
 //Socket Connection
