@@ -19,8 +19,32 @@ app.get('*', function(req,res){
 });
 
 //Socket Connection
+
+var sockets = [];
+
 io.on('connection', function(socket){
   console.log('Client is connecting');
+  //console.log('socket', socket.handshake.query.userID);
+  // socket
+  // .on('', function(data){
+  //
+  // })
+  // .on('', function(data){
+  //
+  // })
+  // .on('', function(data){
+  //
+  // })
+  // .on('', function(data){
+  //
+  // })
+  // .emit('',)
+  // .emit('',)
+  // .emit('',)
+  // .emit('',)
+  // .emit('',)
+  // .emit('',);
+
 });
 
 server.listen(9999, function(){
