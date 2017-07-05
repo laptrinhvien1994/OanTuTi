@@ -8,15 +8,29 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <link href="resources/css/style.css" rel="stylesheet">
   </head>
-  <body ng-controller="homeController">
-    <div class="jumbotron text-center">
-        <h1>Chào mừng bạn đến với Oẳn tù tì Online.</h1>
-        <p>Oẳn tù tì là một trò chơi dân gian đơn giản, nay được hiện thực trên nền tảng web, cùng với các công nghệ hỗ trợ hiện đại, Oẳn tù tì Online sẽ mang lại cho bạn một trải nghiệm mới lạ.</p>
-        <br/><br/><br/>
+  <body>
+    <nav class="navbar navbar-default" ng-controller="accountController">
+      <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Oẳn tù tì</a>
+        </div>
 
-        <!-- <div class="fb-login-button" data-max-rows="1" data-size="large" data-button-type="login_with" data-show-faces="true" data-auto-logout-link="true" data-use-continue-as="true"></div> -->
-        <fb:login-button scope="public_profile,email" data-max-rows="1" data-size="large" data-button-type="login_with" data-show-faces="true" data-auto-logout-link="true" data-use-continue-as="true" onlogin="checkLoginState();"></fb:login-button>
-    </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <form class="navbar-form navbar-right">
+          <input ng-if="isLoggedin" type="button" class="btn btn-default" value="Đăng xuất">
+        </form>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="javascript:void(0)"><b>{{ userName }}</b></a></li>
+        </ul>
+      </div><!-- /.container-fluid -->
+    </nav>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="socket.io/socket.io.js"></script>

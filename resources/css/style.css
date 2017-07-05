@@ -1,3 +1,23 @@
 body{
   font-family: Tahoma
 }
+
+.chat-room{
+  min-height: 500px;
+}
+
+.room-list{
+  border: 1px solid black;
+  min-height: 500px;
+}
+
+#chat-content{
+  border: 1px solid black;
+  min-height: 450px;
+}
+
+#chat-textbox{
+  border: 1px solid black;
+  min-height: 50px;
+  line-height: 50px;
+}

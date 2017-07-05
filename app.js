@@ -10,7 +10,6 @@ app.use('/resources', express.static('resources'));
 
 //Routing
 app.get('/', function(req, res){
-  console.log(req.url);
   res.render('index');
 });
 
