@@ -40,7 +40,18 @@ angular.module('app', ['ngRoute'])
     scope: {
       imgUrl: "@imgUrl",
       userName: "@userName",
+    },
+    controller: function($scope){
+      //attach properties here
     }
+  }
+})
+.filter('length', function(){
+  return function(value){
+    if(value.length > 18){
+      value = value.slice(0, 15) + "...";
+    }
+    return value;
   }
 })
 .controller('homeController',['$scope','$rootScope','$location' ,function($scope, $rootScope, $location){
@@ -206,7 +217,7 @@ angular.module('app', ['ngRoute'])
     { userName: 'Người dùng 35', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
     { userName: 'Người dùng 36', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
     { userName: 'Người dùng 37', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { userName: 'Người dùng 38', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'}
+    { userName: 'Người dùng 388 88 8 8 8 8 8 ', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'}
   ]
 }])
 .controller('profileController', ['$scope', function($scope){

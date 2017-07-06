@@ -1,9 +1,23 @@
 <div class="container chat-room">
   <div class="col-md-8 chat">
-    <div class="col-md-4 user-online">
+    <!-- <div class="col-md-4 user-online">
       <ul class="list-unstyled" id="user-online">
         <user-online ng-repeat="user in userList" user-name="{{user.userName}}" img-url="{{user.imgUrl}}"></user-online>
       </ul>
+    </div> -->
+    <div class="col-md-1 features">
+
+    </div>
+    <div class="col-md-3 user-online" >
+      <div class="col-md-12 user-online-header text-center">
+        <img class="online-dot" src="http://www.clker.com/cliparts/M/b/y/w/a/e/green-circle-hi.png" width="8" height="8">
+        <span class="text-center"><b>ĐANG ONLINE</b></span>
+      </div>
+      <div class="scrollbar col-md-12 scroll-content" id="style-1">
+        <ul class="list-unstyled" id="user-online">
+          <user-online ng-repeat="user in userList" user-name="{{user.userName}}" img-url="{{user.imgUrl}}"></user-online>
+        </ul>
+      </div>
     </div>
     <div class="col-md-8 chat-area">
         <div id="chat-content" class="col-md-12">
