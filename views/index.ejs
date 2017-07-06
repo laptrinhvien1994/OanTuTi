@@ -28,6 +28,7 @@
         </form>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="javascript:void(0)"><b>{{ userName }}</b></a></li>
+          <li ng-if="isLoggedin"><a href="javascript:void(0)"><img src="{{imgUrl}}" width="25" height="25" alt="avatar"/></a></li>
         </ul>
       </div><!-- /.container-fluid -->
     </nav>

@@ -33,6 +33,16 @@ angular.module('app', ['ngRoute'])
   $locationProvider
   .hashPrefix('');
 })
+.directive('userOnline', function(){
+  return {
+    restrict: 'E',
+    templateUrl: 'resources/template/useronline.ejs',
+    scope: {
+      imgUrl: "@imgUrl",
+      userName: "@userName",
+    }
+  }
+})
 .controller('homeController',['$scope','$rootScope','$location' ,function($scope, $rootScope, $location){
   //Socket connect to Server
   var socket = io.connect('http://localhost:9999',{ query : "userID=123"});
@@ -107,19 +117,19 @@ angular.module('app', ['ngRoute'])
         window.localStorage.setItem('accessToken',{ userName: $scope.accessToken });
         Promise.all([
           getImage(),
-          getIP()
+          //getIP()
         ])
         .then(function(data){
-          if(!data[0].errorCode && !data[1].errorCode){
+          if(!data[0].errorCode){ //&& !data[1].errorCode){
             $scope.userName = data[0].name;
             $scope.imgUrl = data[0].url;
-            $scope.userIP = data[1].ip;
-            $scope.userLocation = data[1].city + '_' + data[1].country;
+            //$scope.userIP = data[1].ip;
+            //$scope.userLocation = data[1].city + '_' + data[1].country;
             window.localStorage.setItem('userName', $scope.userName);
             window.localStorage.setItem('imgUrl', $scope.imgUrl);
-            window.localStorage.setItem('ip', $scope.userIP);
-            window.localStorage.setItem('userLocation', $scope.userLocation);
-            $rootScope.$broadcast('userName', { userName: $scope.userName });
+            //window.localStorage.setItem('ip', $scope.userIP);
+            //window.localStorage.setItem('userLocation', $scope.userLocation);
+            $rootScope.$broadcast('userName', { userName: $scope.userName, imgUrl: $scope.imgUrl });
             $location.url('/chat');
           }else{
             data.forEach(function(r){ if(r.errorCode) console.log(r.error); });
@@ -149,19 +159,68 @@ angular.module('app', ['ngRoute'])
   $scope.isLoggedin = false;
   $scope.$on('userName', function(event, args){
     $scope.userName = 'Chào, ' + args.userName;
+    $scope.imgUrl = args.imgUrl;
     $scope.isLoggedin = true;
     $scope.$apply();
   });
 }])
 .controller('chatController', ['$scope', function($scope){
+  $scope.$on('userName', function(event, args){
+  });
 
+  $scope.userList = [
+    { userName: 'Người dùng 1', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 2', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 3', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 4', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 5', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 6', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 7', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 8', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 9', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 10', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 11', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 12', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 13', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 14', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 15', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 16', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 17', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 18', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 19', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 20', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 21', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 22', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 23', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 24', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 25', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 26', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 27', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 28', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 29', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 30', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 31', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 32', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 33', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 34', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 35', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 36', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 37', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { userName: 'Người dùng 38', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'}
+  ]
 }])
 .controller('profileController', ['$scope', function($scope){
+  $scope.$on('userName', function(event, args){
 
+  });
 }])
 .controller('contactController', ['$scope', function($scope){
+  $scope.$on('userName', function(event, args){
 
+  });
 }])
 .controller('battleController', ['$scope', function($scope){
+  $scope.$on('userName', function(event, args){
 
+  });
 }]);
