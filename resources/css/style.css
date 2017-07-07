@@ -1,10 +1,16 @@
 @import url(https://fonts.googleapis.com/css?family=Cabin:400,400italic,500,600,700,700italic&subset=vietnamese);
+html{
+  height: 100%;
+}
 body{
   font-family: Tahoma;
   /*background: url('http://pre10.deviantart.net/1719/th/pre/i/2012/324/2/0/green_prince_by_c_91-d5lm68k.png');*/
   background: url('http://www.1366x768.net/large/201112/3382.jpg');
   background-repeat: no-repeat;
-  background-size: 100% auto;
+  background-size: cover;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
 }
 /*font-family: 'Montserrat', sans-serif;*/
 
@@ -105,6 +111,10 @@ ul#user-online li:hover{
   padding-right: 0px;
 }
 
+#wrapper{
+  min-height: 100%
+}
+
 
 /*-----CSS SCROLLBAR-----*/
 .scrollbar
@@ -136,4 +146,15 @@ ul#user-online li:hover{
 	border-radius: 10px;
 	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
 	background-color: rgba(255, 255, 255, 0.95);;
+}
+
+/*-------CIRCLE BUTTON-------*/
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.428571429;
+  border-radius: 15px;
 }
