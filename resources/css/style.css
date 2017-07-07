@@ -54,11 +54,13 @@ body{
 }
 
 #chat-textbox{
-  border-top: 1px solid black;
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
   background-color: rgba(255, 255, 255, 1);
-  min-height: 43px;
-  line-height: 43px;
+  min-height: 46px;
+  line-height: 46px;
   border-bottom-right-radius: 12px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 ul#user-online li{
@@ -79,6 +81,14 @@ ul#user-online li:hover{
   border: 2px solid #ffffff;
   margin-left: 10px;
   margin-top: -2px;
+  border-radius: 50%;
+  -webkit-transition: -webkit-transform .8s ease-in-out;
+          transition:         transform .8s ease-in-out;
+}
+
+.user-avatar:hover{
+  -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
 }
 
 .li-user{
@@ -121,6 +131,7 @@ ul#user-online li:hover{
 
 .li-room{
   line-height: 50px;
+  cursor: pointer;
 }
 
 .li-room:hover{
@@ -138,6 +149,34 @@ ul#user-online li:hover{
   border-top-right-radius: 12px;
 }
 
+::-webkit-input-placeholder {
+   font-style: italic;
+}
+:-moz-placeholder {
+   font-style: italic;
+}
+::-moz-placeholder {
+   font-style: italic;
+}
+:-ms-input-placeholder {
+   font-style: italic;
+}
+
+input.message-textbox{
+  width: 100%;
+  border: transparent;
+  padding-left: 20px;
+}
+
+input.message-textbox:focus, button.send:focus{
+  outline-width: 0 !important;
+}
+
+
+.textbox{
+  padding-left: 0px;
+  padding-right: 0px;
+}
 
 /*-----CSS SCROLLBAR-----*/
 .scrollbar
@@ -212,4 +251,9 @@ ul#user-online li:hover{
   font-size: 12px;
   line-height: 1.428571429;
   border-radius: 15px;
+}
+
+/*-------CSS HOME-------*/
+.jumbotron{
+  background-color: rgba(255, 255, 255, 0.75);
 }

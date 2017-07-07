@@ -51,7 +51,7 @@ angular.module('app', ['ngRoute'])
     restrict: 'E',
     templateUrl: 'resources/template/availableroom.ejs',
     scope: {
-      roomId: "@roomId",
+      roomID: "@roomId",
       roomName: "@roomName",
       roomMode: "@roomMode",
       owner: "@owner",
@@ -62,10 +62,10 @@ angular.module('app', ['ngRoute'])
     }
   }
 })
-.filter('length', function(){
-  return function(value){
-    if(value.length > 18){
-      value = value.slice(0, 15) + "...";
+.filter('resizeName', function(){
+  return function(value, maxLength){
+    if(value.length > maxLength){
+      value = value.slice(0, maxLength - 3) + "...";
     }
     return value;
   }
@@ -295,7 +295,9 @@ $(document).ready(function(){
         count++;
       }
       $('body').css('background-image', "url('"+bgList[count]+"')");
-      console.log(count);
   }, 5000);
-
+  // $('.li-user').hover(function(){
+  //   $('.user-avatar').css({"-webkit-transform":"rotate(360deg)","transform":"rotate(360deg)"});
+  // }, function(){
+  //});
 });

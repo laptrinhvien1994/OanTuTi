@@ -1,8 +1,8 @@
 <li class="li-room">
   &nbsp;&nbsp;&nbsp;
-  <span>{{ roomId }}</span>&nbsp;&nbsp;
-  <span><b>{{ roomName }}</b></span>&nbsp;&nbsp;
+  <span class="label label-default">{{roomID}}</span>&nbsp;&nbsp;
+  <span data-toggle="tooltip" data-placement="right" title="{{roomName}}"><b>{{ roomName | resizeName:15 }}</b></span>&nbsp;&nbsp;
   <span class="label" ng-class="roomMode == 1 ? 'label-success': 'label-primary'">{{ roomMode == 1 ? 'Đơn' : 'Đôi' }}</span>&nbsp;&nbsp;
-  <span>của {{owner}}</span>
+  <span data-toggle="tooltip" data-placement="right" title="{{owner}}" class="label label-warning">#{{owner | resizeName:18}}</span>
   <!-- <span>{{totalUser}}</span> -->
 </li>
