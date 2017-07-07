@@ -46,6 +46,22 @@ angular.module('app', ['ngRoute'])
     }
   }
 })
+.directive('availableRoom', function(){
+  return {
+    restrict: 'E',
+    templateUrl: 'resources/template/availableroom.ejs',
+    scope: {
+      roomId: "@roomId",
+      roomName: "@roomName",
+      roomMode: "@roomMode",
+      owner: "@owner",
+      totalUsers: "@totalUser"
+    },
+    controller: function($scope){
+      //attach properties here.
+    }
+  }
+})
 .filter('length', function(){
   return function(value){
     if(value.length > 18){
@@ -218,6 +234,31 @@ angular.module('app', ['ngRoute'])
     { userName: 'Người dùng 36', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
     { userName: 'Người dùng 37', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
     { userName: 'Người dùng 388 88 8 8 8 8 8 ', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'}
+  ];
+
+  $scope.roomList = [
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 6},
+    { roomName: 'Nhào vào đây!', roomMode : 3, owner : 'Người dùng 1', totalUser : 5},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 5},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 4},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
   ]
 }])
 .controller('profileController', ['$scope', function($scope){
@@ -235,3 +276,26 @@ angular.module('app', ['ngRoute'])
 
   });
 }]);
+
+
+$(document).ready(function(){
+  var bgList = [
+    'http://www.1366x768.net/large/201112/3382.jpg',
+    'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-3.jpg',
+    'http://file.vforum.vn/hinh/2015/05/hinh-nen-powerpoint-don-gian-26.jpg',
+    'http://file.vforum.vn/hinh/2015/11/vforum.vn-hinh-nen-xanh-dep-cho-may-tinh-4.jpg',
+    'http://wallpapercave.com/wp/xL6SXfZ.jpg',
+    'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-15.jpg'
+  ];
+  var count= 0;
+  window.setInterval(function(){
+      if(count == bgList.length - 1){
+        count = 0;
+      }else{
+        count++;
+      }
+      $('body').css('background-image', "url('"+bgList[count]+"')");
+      console.log(count);
+  }, 5000);
+
+});

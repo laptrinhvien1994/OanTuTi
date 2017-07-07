@@ -34,11 +34,14 @@
     </div>
   </div>
   <div class="col-md-4 room-list">
-    <ul>
-      <li>Phòng 1</li>
-      <li>Phòng 2</li>
-      <li>Phòng 3</li>
-      <li>Phòng 4</li>
-    </ul>
+    <div class="col-md-12 room-available-header text-center">
+      <img class="online-dot" src="http://www.clker.com/cliparts/M/b/y/w/a/e/green-circle-hi.png" width="8" height="8">
+      <span class="text-center"><b>DANH SÁCH PHÒNG</b></span>
+    </div>
+    <div class="scrollbar1 col-md-12 scroll-content" id="style-2">
+      <ul class="list-unstyled" id="available-room">
+        <available-room ng-repeat="room in roomList track by $index" room-id="{{$index + 1}}" room-name="{{room.roomName}}" room-mode="{{room.roomMode}}" owner="{{room.owner}}" total-user="{{room.totalUser}}"></available-room>
+      </ul>
+    </div>
   </div>
 </div>

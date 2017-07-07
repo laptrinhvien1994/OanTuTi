@@ -5,12 +5,13 @@ html{
 body{
   font-family: Tahoma;
   /*background: url('http://pre10.deviantart.net/1719/th/pre/i/2012/324/2/0/green_prince_by_c_91-d5lm68k.png');*/
-  background: url('http://www.1366x768.net/large/201112/3382.jpg');
+  background-image: url('http://www.1366x768.net/large/201112/3382.jpg');
   background-repeat: no-repeat;
   background-size: cover;
   height: 100%;
   margin: 0px;
   padding: 0px;
+  transition:all 2s;
 }
 /*font-family: 'Montserrat', sans-serif;*/
 
@@ -19,10 +20,13 @@ body{
 }
 
 .room-list{
-  border: 1px solid black;
-  min-height: 550px;
+  height: 550px;
   font-family: 'Montserrat', sans-serif;
   background-color: rgba(255, 255, 255, 1);
+  padding-left: 0px;
+  padding-right: 0px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .chat{
@@ -115,6 +119,25 @@ ul#user-online li:hover{
   min-height: 100%
 }
 
+.li-room{
+  line-height: 50px;
+}
+
+.li-room:hover{
+  background-color: rgba(102, 160, 255, 1);
+}
+
+.room-available-header{
+  background-color: rgba(0, 0, 0, 0.8);
+  height: 40px;
+  border-bottom: 1px solid white;
+  line-height: 40px;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
 
 /*-----CSS SCROLLBAR-----*/
 .scrollbar
@@ -147,6 +170,38 @@ ul#user-online li:hover{
 	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
 	background-color: rgba(255, 255, 255, 0.95);;
 }
+
+.scrollbar1
+{
+	margin-left: 0px;
+	float: left;
+	height: 510px;
+	width: 100%;
+	background-color: rgba(255, 255, 255, 0.75);
+	overflow-y: scroll;
+	margin-bottom: 25px;
+}
+
+#style-2::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: rgba(0, 0, 0, 0.75);;
+}
+
+#style-2::-webkit-scrollbar
+{
+	width: 5px;
+	background-color: #141414;
+}
+
+#style-2::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: rgba(255, 255, 255, 0.95);;
+}
+
 
 /*-------CIRCLE BUTTON-------*/
 .btn-circle {
