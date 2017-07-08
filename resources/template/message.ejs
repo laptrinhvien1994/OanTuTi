@@ -1,2 +1,10 @@
-<div ng-if="positionLeft" class="position-left"><img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30"><span class="each-message">{{ messageContent }}</span></div><div class="clearfix"></div>
-<div ng-if="positionRight" class="position-right"><span class="each-message">{{ messageContent }}</span> <img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30"> </div><div class="clearfix"></div>
+<div ng-if="isLeftSide" class="position-left">
+  <img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
+  <div class="each-message"><span ng-bind-html="content"></span></div>
+</div>
+<div ng-if="isLeftSide" class="clearfix"></div>
+<div ng-if="!isLeftSide" class="position-right">
+  <img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
+  <div class="each-message"><span ng-bind-html="content"></span></div>
+</div>
+<div ng-if="!isLeftSide" class="clearfix"></div>

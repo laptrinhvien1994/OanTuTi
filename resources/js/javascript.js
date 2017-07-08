@@ -1,4 +1,19 @@
-angular.module('app', ['ngRoute'])
+angular.module('app', ['ngRoute', 'ngSanitize'])
+.value('$$emoticonSet', {
+  YahooEmoticons: {
+    ":))": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/21.gif',
+    ":)": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/1.gif',
+    ":D": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/4.gif',
+    ";)": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/3.gif',
+    "=))": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/24.gif',
+    ":P": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/10.gif',
+    ":-bd": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/113.gif'
+  },
+  FacebookEmoticons:{
+    ":v": 'url',
+    ";)": 'url'
+  }
+})
 .config(function($routeProvider, $locationProvider){
   $routeProvider
   .when('/', {
@@ -62,19 +77,43 @@ angular.module('app', ['ngRoute'])
     }
   }
 })
-.directive('message', function(){
+.directive('message', function($compile, $timeout){
   return {
     restrict: 'CE',
     templateUrl: 'resources/template/message.ejs',
     scope: {
       senderName: "@sender",
       imgUrl: "@imgUrl",
-      messageContent: "@content"
+      content: "@content",
+      isLeftSide : "=isLeftSide"
     },
     controller: function($scope){
       //attach properties here.
-    }
+    },
+    // compile: function(element, attrs){
+    //   return function($scope, element, attrs){
+    //     //console.log($scope);
+    //   }
+    //   // return {
+    //   //   pre: function(scope, element, attrs){
+    //   //     //console.log(element);
+    //   //   },
+    //   //   post: function(scope, element, atts){
+    //   //     element.remove('class');
+    //   //   }
+    //   // }
+    // }
   }
+})
+.factory('$replaceTextToEmotions', function($$emoticonSet, $sce){
+  var replaceTextToEmotions = function(plainText, emoticonVendor){
+    for(iconShortcut in $$emoticonSet[emoticonVendor]){
+        imgElement = '<img src="' + $$emoticonSet[emoticonVendor][iconShortcut] + '"/>';
+        plainText = plainText.replace(iconShortcut, imgElement);
+    }
+    return plainText;
+  };
+  return replaceTextToEmotions;
 })
 .filter('resizeName', function(){
   return function(value, maxLength){
@@ -84,9 +123,14 @@ angular.module('app', ['ngRoute'])
     return value;
   }
 })
+.filter('emoticons', function($replaceTextToEmotions){
+  return function(plainText, emoticonVendor){
+    return $replaceTextToEmotions(plainText, emoticonVendor);
+  }
+})
 .controller('homeController',['$scope','$rootScope','$location' ,function($scope, $rootScope, $location){
   //Socket connect to Server
-  var socket = io.connect('http://localhost:9999',{ query : "userID=123"});
+  var socket = io.connect('http://localhost:9999',{ query : "userID=123" });
   socket.on('send', function(data){
     console.log(socket);
     console.log(data);
@@ -205,7 +249,7 @@ angular.module('app', ['ngRoute'])
     $scope.$apply();
   });
 }])
-.controller('chatController', ['$scope', function($scope){
+.controller('chatController', ['$scope', '$sce', function($scope, $sce){
   $scope.$on('userName', function(event, args){
   });
 
@@ -251,29 +295,55 @@ angular.module('app', ['ngRoute'])
   ];
 
   $scope.roomList = [
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 6},
-    { roomName: 'Nhào vào đây!', roomMode : 3, owner : 'Người dùng 1', totalUser : 5},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 5},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 4},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
-    { roomName: 'Nhào vào đây!', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
-    { roomName: 'Nhào vào đây!', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
-  ]
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 6},
+    { roomName: 'One two three', roomMode : 3, owner : 'Người dùng 1', totalUser : 5},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 5},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 4},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 2},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 3},
+    { roomName: 'One two three', roomMode : 2, owner : 'Người dùng 1', totalUser : 1},
+    { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
+  ];
+
+  $scope.messageList = [
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Đây là tin nhắn có nội dung dài để kiểm tra xem có bị lỗi CSS hay không', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon ;)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon =))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Thử emoticon :)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào :))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    //{ isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào <img src="http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/21.gif">', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  ];
 }])
 .controller('profileController', ['$scope', function($scope){
   $scope.$on('userName', function(event, args){
@@ -295,11 +365,11 @@ angular.module('app', ['ngRoute'])
 $(document).ready(function(){
   var bgList = [
     'http://www.1366x768.net/large/201112/3382.jpg',
-    'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-3.jpg',
-    'http://file.vforum.vn/hinh/2015/05/hinh-nen-powerpoint-don-gian-26.jpg',
-    'http://file.vforum.vn/hinh/2015/11/vforum.vn-hinh-nen-xanh-dep-cho-may-tinh-4.jpg',
-    'http://wallpapercave.com/wp/xL6SXfZ.jpg',
-    'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-15.jpg'
+    //'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-3.jpg'
+    //'http://file.vforum.vn/hinh/2015/05/hinh-nen-powerpoint-don-gian-26.jpg',
+    //'http://file.vforum.vn/hinh/2015/11/vforum.vn-hinh-nen-xanh-dep-cho-may-tinh-4.jpg',
+    //'http://wallpapercave.com/wp/xL6SXfZ.jpg',
+    //'http://file.vforum.vn/hinh/2016/04/texure-hieu-ung-bokeh-dep-cho-photoshop-15.jpg'
   ];
   var count= 0;
   window.setInterval(function(){
@@ -315,3 +385,19 @@ $(document).ready(function(){
   // }, function(){
   //});
 });
+
+window.YahooEmoticons = {
+   ":)": 1111 ,
+   ":))": 22222
+};
+
+window.replaceTextToEmotions = function(plainText, emoticonVendor){
+  for(iconShortcut in window[emoticonVendor]){
+    plainText.replace(iconShortcut, window[emoticonVendor][iconShortcut]);
+  }
+  return plainText;
+};
+
+// window.replaceTextToEmotions = function(iconShortcut, emoticonVendor){
+//   return window[emoticonVendor][iconShortcut];
+// }
