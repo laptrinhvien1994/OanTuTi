@@ -105,7 +105,23 @@ angular.module('app', ['ngRoute', 'ngSanitize'])
     // }
   }
 })
-.factory('$replaceTextToEmotions', function($$emoticonSet, $sce){
+.directive('ngEnter', function(){
+  return {
+    restrict: 'A',
+    scope: {
+      enterHandler: '&enterHandler'
+    },
+    link: function($scope, element, attrs){
+      //console.log(element);
+      element.bind('keypress', function(event){
+        if(event.keyCode == 13){
+          $scope.enterHandler();
+        }
+      });
+  }
+  }
+})
+.factory('$replaceTextToEmotions', function($$emoticonSet){
   var replaceTextToEmotions = function(plainText, emoticonVendor){
     for(iconShortcut in $$emoticonSet[emoticonVendor]){
         imgElement = '<img src="' + $$emoticonSet[emoticonVendor][iconShortcut] + '"/>';
@@ -129,12 +145,6 @@ angular.module('app', ['ngRoute', 'ngSanitize'])
   }
 })
 .controller('homeController',['$scope','$rootScope','$location' ,function($scope, $rootScope, $location){
-  //Socket connect to Server
-  var socket = io.connect('http://localhost:9999',{ query : "userID=123" });
-  socket.on('send', function(data){
-    console.log(socket);
-    console.log(data);
-  });
 
   window.fbAsyncInit = function() {
 		FB.init({
@@ -155,6 +165,7 @@ angular.module('app', ['ngRoute', 'ngSanitize'])
 		js.src = "https://connect.facebook.net/vi_VN/sdk.js";
 		fjs.parentNode.insertBefore(js, fjs);
 	}(document, 'script', 'facebook-jssdk'));
+
 
   $scope.userID = null;
   $scope.accessToken = null;
@@ -249,7 +260,7 @@ angular.module('app', ['ngRoute', 'ngSanitize'])
     $scope.$apply();
   });
 }])
-.controller('chatController', ['$scope', '$sce', function($scope, $sce){
+.controller('chatController', ['$scope', function($scope){
   $scope.$on('userName', function(event, args){
   });
 
@@ -319,31 +330,63 @@ angular.module('app', ['ngRoute', 'ngSanitize'])
     { roomName: 'One two three', roomMode : 1, owner : 'Người dùng 1', totalUser : 4},
   ];
 
-  $scope.messageList = [
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Đây là tin nhắn có nội dung dài để kiểm tra xem có bị lỗi CSS hay không', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon ;)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon =))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Thử emoticon :)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào :))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    //{ isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào <img src="http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/21.gif">', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-    { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
-  ];
+  $scope.messageList = [];
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Đây là tin nhắn có nội dung dài để kiểm tra xem có bị lỗi CSS hay không', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon ;)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Thử emoticon =))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Thử emoticon :)', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào :))', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   //{ isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào <img src="http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/21.gif">', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: false, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  //   { isLeftSide: true, sender: 'Người dùng 1', content: 'Xin chào', imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'},
+  // ];
+
+  $scope.messageContent = null;
+  //Socket connect to Server
+  var userID = Math.floor(Math.random()*10000);
+  var socket = io.connect('http://localhost:9999',{ query : "userID="+ userID });
+
+  socket.emit('client-is-typing', {
+    sender: userID
+  })
+  .on('server-message-content', function(data){
+    console.log(data);
+    var message = {
+      isLeftSide: data.senderId != userID,
+      sender: data.senderId != userID ? 'Người dùng 2' : 'Người dùng 1',
+      content: data.content,
+      imgUrl: 'http://jnvtsoaa-dev.hol.es/images/user-icon-male.png'
+    };
+    console.log(message);
+    $scope.messageList.push(message);
+    $scope.$apply();
+  })
+  .on('server-is-typing', function(data){
+
+  })
+
+  $scope.sendMessage = function(){
+    socket.emit('client-message-content', {
+      senderId : userID,
+      content: $scope.messageContent
+    });
+    $scope.messageContent = null;
+  }
 }])
 .controller('profileController', ['$scope', function($scope){
   $scope.$on('userName', function(event, args){

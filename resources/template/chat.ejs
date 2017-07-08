@@ -27,11 +27,11 @@
         </div>
         <div id="chat-textbox" class="col-md-12">
           <div class="col-md-10 textbox">
-            <input class="message-textbox" type="text" placeholder="Nhập nội dung tin nhắn">
+            <input class="message-textbox" ng-enter enter-handler="sendMessage()"  ng-model="messageContent" type="text" placeholder="Nhập nội dung tin nhắn">
           </div>
           <div class="col-md-2 text-center">
             <!-- <input type="button" class="btn btn-info" value="GỬI"> -->
-            <button type="button" class="btn btn-info btn-circle send"><i class="glyphicon glyphicon-send"></i></button>
+            <button type="button" ng-click="sendMessage()" class="btn btn-info btn-circle send"><i class="glyphicon glyphicon-send"></i></button>
           </div>
         </div>
     </div>

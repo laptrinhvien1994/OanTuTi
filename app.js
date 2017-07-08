@@ -23,24 +23,16 @@ var sockets = [];
 
 io.on('connection', function(socket){
   console.log('Client is connecting');
-  //console.log('socket', socket.handshake.query.userID);
-  // socket
-  // .on('', function(data){
-  //
-  // })
-  // .on('', function(data){
-  //
-  // })
-  // .on('', function(data){
-  //
-  // })
-  // .on('', function(data){
-  //
-  // })
-  // .emit('',)
-  // .emit('',)
-  // .emit('',)
-  // .emit('',)
+  // socket.userID = socket.handshake.query.userID;
+  // console.log(socket.userID);
+  // sockets.push(socket.userID);
+  socket.on('client-message-content', function(data){
+    console.log(data);
+    io.sockets.emit('server-message-content', data);
+  })
+  .on('client-is-typing', function(data){
+    io.sockets.emit('server-is-typing', data);
+  });
   // .emit('',)
   // .emit('',);
 
