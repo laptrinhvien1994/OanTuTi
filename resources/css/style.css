@@ -178,6 +178,23 @@ input.message-textbox:focus, button.send:focus{
   padding-right: 0px;
 }
 
+.each-message{
+  background-color: white;
+  border-radius: 10px;
+  width: 85%;
+  padding: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.position-left{
+  float: left;
+}
+
+.position-right{
+  float:right;
+}
+
 /*-----CSS SCROLLBAR-----*/
 .scrollbar
 {

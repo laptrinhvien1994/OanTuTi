@@ -62,6 +62,20 @@ angular.module('app', ['ngRoute'])
     }
   }
 })
+.directive('message', function(){
+  return {
+    restrict: 'CE',
+    templateUrl: 'resources/template/message.ejs',
+    scope: {
+      senderName: "@sender",
+      imgUrl: "@imgUrl",
+      messageContent: "@content"
+    },
+    controller: function($scope){
+      //attach properties here.
+    }
+  }
+})
 .filter('resizeName', function(){
   return function(value, maxLength){
     if(value.length > maxLength){
