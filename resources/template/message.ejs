@@ -1,10 +1,10 @@
 <div ng-if="isLeftSide" class="position-left">
-  <img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
+  <img class="sender img-circle" ng-class="isMerged ? 'transparent-img' : ''" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
   <div class="each-message"><span ng-bind-html="content"></span></div>
 </div>
 <div ng-if="isLeftSide" class="clearfix"></div>
 <div ng-if="!isLeftSide" class="position-right">
-  <img class="sender img-circle" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
+  <img class="sender img-circle" ng-class="isMerged ? 'transparent-img' : ''" src="{{ imgUrl }}" title="{{ senderName }}" width="30" height="30">
   <div class="each-message"><span ng-bind-html="content"></span></div>
 </div>
 <div ng-if="!isLeftSide" class="clearfix"></div>

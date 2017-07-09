@@ -50,7 +50,7 @@ body{
 }
 
 #chat-content{
-  min-height: 500px;
+  min-height: 440px;
   padding-left: 0px;
   padding-right: 0px;
 }
@@ -219,6 +219,43 @@ input.message-textbox:focus, button.send:focus{
   margin-right: 7px;
 }
 
+.transparent-img{
+    opacity: 0;
+}
+
+#chat-header{
+  height: 40px;
+  line-height: 40px;
+  border-bottom : 1px solid rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 1);
+  border-top-right-radius: 12px;
+}
+
+#is-typing-status{
+  height: 20px;
+}
+
+#is-typing-status p{
+  color: black;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*-----CSS SCROLLBAR-----*/
 .scrollbar
 {
@@ -286,12 +323,12 @@ input.message-textbox:focus, button.send:focus{
 {
 	margin-left: 0px;
 	float: left;
-	height: 480px;
+	height: 425px;
 	width: 100%;
 	background-color: rgba(255, 255, 255, 0.0);
 	overflow-y: scroll;
-	margin-bottom: 10px;
-  margin-top: 12px;
+	margin-bottom: 5px;
+  margin-top: 5px;
 }
 
 #style-3::-webkit-scrollbar-track

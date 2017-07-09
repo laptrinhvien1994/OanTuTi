@@ -22,17 +22,20 @@ app.get('*', function(req,res){
 var sockets = [];
 
 io.on('connection', function(socket){
-  console.log('Client is connecting');
+  //console.log('Client is connecting');
   // socket.userID = socket.handshake.query.userID;
   // console.log(socket.userID);
   // sockets.push(socket.userID);
   socket.on('client-message-content', function(data){
-    console.log(data);
     io.sockets.emit('server-message-content', data);
+    socket.broadcast.emit('server-typing-stopped', { senderID: data.senderID });
   })
   .on('client-is-typing', function(data){
-    io.sockets.emit('server-is-typing', data);
-  });
+    socket.broadcast.emit('server-is-typing', data);
+  })
+  .on('client-typing-stopped', function(data){
+    socket.broadcast.emit('server-typing-stopped', data);
+  })
   // .emit('',)
   // .emit('',);
 

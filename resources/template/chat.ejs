@@ -8,7 +8,7 @@
     <div class="col-md-1 features">
 
     </div>
-    <div class="col-md-3 user-online" >
+    <div class="col-md-3 user-online">
       <div class="col-md-12 user-online-header text-center">
         <img class="online-dot" src="http://www.clker.com/cliparts/M/b/y/w/a/e/green-circle-hi.png" width="8" height="8">
         <span class="text-center"><b>ĐANG ONLINE (38)</b></span>
@@ -20,14 +20,20 @@
       </div>
     </div>
     <div class="col-md-8 chat-area">
+        <div id="chat-header" class="col-md-12">
+          <p class="text-center chat-header-title"><b>PHÒNG CHAT CHUNG</b></p>
+        </div>
         <div id="chat-content" class="col-md-12">
           <div class="scrollbar2 col-md-12 scroll-content" id="style-3">
-            <message ng-repeat="message in messageList track by $index" is-left-side="message.isLeftSide" sender="{{ message.sender }}" content="{{ message.content | emoticons:'YahooEmoticons' }}" img-url="{{ message.imgUrl }}"></message>
+            <message ng-repeat="message in messageList track by $index" is-left-side="message.isLeftSide" sender="{{ message.sender }}" content="{{ message.content | emoticons:emoticonVendor }}" img-url="{{ message.imgUrl }}" is-merged="message.isMerged"></message>
           </div>
+        </div>
+        <div id="is-typing-status" class="col-md-12">
+          <p ng-if="isTyping" ><i>Có người đang gõ tin nhắn ...</i><p>
         </div>
         <div id="chat-textbox" class="col-md-12">
           <div class="col-md-10 textbox">
-            <input class="message-textbox" ng-enter enter-handler="sendMessage()"  ng-model="messageContent" type="text" placeholder="Nhập nội dung tin nhắn">
+            <input class="message-textbox" ng-key-down enter-handler="sendMessage()" typing-handler="sendIsTypingSignal()"   ng-model="messageContent" type="text" placeholder="Nhập nội dung tin nhắn">
           </div>
           <div class="col-md-2 text-center">
             <!-- <input type="button" class="btn btn-info" value="GỬI"> -->
@@ -38,7 +44,7 @@
   </div>
   <div class="col-md-4 room-list">
     <div class="col-md-12 room-available-header text-center">
-      <img class="online-dot" src="http://www.clker.com/cliparts/M/b/y/w/a/e/green-circle-hi.png" width="8" height="8">
+      <!-- <img class="online-dot" src="http://www.clker.com/cliparts/M/b/y/w/a/e/green-circle-hi.png" width="8" height="8"> -->
       <span class="text-center"><b>DANH SÁCH PHÒNG</b></span>
     </div>
     <div class="scrollbar1 col-md-12 scroll-content" id="style-2">
