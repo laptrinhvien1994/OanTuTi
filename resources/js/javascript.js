@@ -1,4 +1,4 @@
-angular.module('app', ['ngRoute', 'ngSanitize'])
+angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
 .value('$$emoticonSet', {
   Yahoo: {
     ":))": 'http://l.yimg.com/us.yimg.com/i/mesg/emoticons7/21.gif',
