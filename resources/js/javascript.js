@@ -262,7 +262,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
     $scope.$apply();
   });
 }])
-.controller('chatController', ['$scope', function($scope){
+.controller('chatController', ['$scope', '$uibModal', '$timeout', function($scope, $uibModal, $timeout){
   $scope.$on('userName', function(event, args){
   });
 
@@ -352,6 +352,20 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
     return true;
   }
 
+  $scope.openModalCreateRoom = function(){
+    var modal = $uibModal.open({
+      controller: modalCreateRoomController,
+      templateUrl: 'resources/template/createRoomModal.ejs',
+    });
+
+    $timeout(function(){
+      modal.close();
+    }, 50000);
+  }
+
+  var modalCreateRoomController = function($scope){
+
+  }
 }])
 .controller('profileController', ['$scope', function($scope){
   $scope.$on('userName', function(event, args){
