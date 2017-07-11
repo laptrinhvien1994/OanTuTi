@@ -82,7 +82,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
     }
   }
 })
-.directive('message', function($compile, $timeout){
+.directive('message', function(){
   return {
     restrict: 'CE',
     templateUrl: 'resources/template/message.ejs',
@@ -121,7 +121,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
 .factory('$replaceTextToEmotions', function($$emoticonSet){
   var replaceTextToEmotions = function(plainText, emoticonVendor){
     for(iconShortcut in $$emoticonSet[emoticonVendor]){
-        imgElement = '<img src="' + $$emoticonSet[emoticonVendor][iconShortcut] + '"/>';
+        var imgElement = '<img src="' + $$emoticonSet[emoticonVendor][iconShortcut] + '"/>';
         plainText = plainText.replaceAll(iconShortcut, imgElement);
     }
     return plainText;
