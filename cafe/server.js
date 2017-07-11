@@ -73,7 +73,7 @@ winston.level = 'debug';
          })
      ]
  })
- 
+
  var devLog = function (logData) {
      devLogger.log('debug', logData);
  }
@@ -94,10 +94,10 @@ var db;
 var io;
 
 
-// Connection URL 
+// Connection URL
 // var url = 'mongodb://172.16.1.3:27017/cafe?maxPoolSize=100';
 var url = 'mongodb://192.168.1.11:27017,192.168.1.6:27017,192.168.1.8:27017/cafe?replicaSet=rs0&maxPoolSize=100';
-// Use connect method to connect to the Server 
+// Use connect method to connect to the Server
 MongoClient.connect(url, function (err, database) {
     db = database;
     //initialize socket
@@ -121,7 +121,7 @@ MongoClient.connect(url, function (err, database) {
                     // logDebug(id);
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
-                       //io.sockets.emit('exception', data);  
+                       //io.sockets.emit('exception', data);
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                        logDebug('exception...' + data);
                     }
@@ -150,7 +150,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + data);
-                       //io.sockets.emit('exception', data);  
+                       //io.sockets.emit('exception', data);
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -178,7 +178,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + data);
-                       //io.sockets.emit('exception', data);  
+                       //io.sockets.emit('exception', data);
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -208,7 +208,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                         logDebug('exception...' + JSON.stringify(data));
-                        //io.sockets.emit('exception', data);  
+                        //io.sockets.emit('exception', data);
                         socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -237,7 +237,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + JSON.stringify(data));
-                       //io.sockets.emit('exception', data);  
+                       //io.sockets.emit('exception', data);
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -265,7 +265,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + JSON.stringify(data));
-                       //io.sockets.emit('exception', data);  
+                       //io.sockets.emit('exception', data);
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -377,7 +377,7 @@ MongoClient.connect(url, function (err, database) {
         };
 
 
-        
+
         var update = function (id, data) {
             debugger;
             var shiftIdReq = data.shiftId;
@@ -421,7 +421,7 @@ MongoClient.connect(url, function (err, database) {
                         //Gán shiftId hiện tại là shiftId trong collection tableOrder.
 						shiftIdCur = docs[0].shiftId;
                         //Nếu data Client gửi lên có dữ liệu và shiftId của Client trùng với ShiftId hiện tại. Trường hợp sau khi đã Init.
-                        if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur) 
+                        if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
                         {
                             logDebug('compare');
                              if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
@@ -440,14 +440,14 @@ MongoClient.connect(url, function (err, database) {
                                 //responseData.tables.push(table);
 
                                 //Lặp qua từng hóa đơn trong bàn đó.
-                                for (var j = 0; j < data.tables[i].tableOrder.length; j++) 
+                                for (var j = 0; j < data.tables[i].tableOrder.length; j++)
                                 {
                                     var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
                                     var tHis = _.findWhere(docHis[0].tables, {tableUuid : data.tables[i].tableUuid});
                                     logDebug('t:');
                                     dirDebug(t);
                                     //Nếu bàn mà Client gửi lên có trong ds bàn và đơn hàng trên Server. Trường hợp khác Init.
-                                    if (t) 
+                                    if (t)
                                     {
                                         var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
                                         logDebug('order:');
@@ -485,7 +485,7 @@ MongoClient.connect(url, function (err, database) {
                                             }
                                             else
                                             {
-                                                //var order = clone(data.tables[i].tableOrder[j]);                         
+                                                //var order = clone(data.tables[i].tableOrder[j]);
                                                 logDebug('order is completed or moved or deleted');
                                             }
                                         }
@@ -515,10 +515,10 @@ MongoClient.connect(url, function (err, database) {
                     }
                     //Giai đoạn 2: Trả data phù hợp về cho Client
                     logDebug('shiftIdReq :' + shiftIdReq + ' shiftIdCur : ' + shiftIdCur + ' result = ' + (shiftIdReq == shiftIdCur));
-                    //Chưa có shift nào 
+                    //Chưa có shift nào
                     if (shiftIdReq == '' || shiftIdReq == undefined || shiftIdReq == null)
                     {
-                        data.shiftId = shiftIdCur; 
+                        data.shiftId = shiftIdCur;
                         // logDebug('broadcastOrders' + JSON.stringify(data));
                         io.to(id).emit('broadcastOrders', data);
                         logDebug('sent broadcastOrders (server data)');
@@ -529,7 +529,7 @@ MongoClient.connect(url, function (err, database) {
                         if (shiftIdReq != shiftIdCur)
                         {
                           logDebug('exception, request shiftId ' + shiftIdReq + ' does not match with current ' + shiftIdCur + ' tableOrder: ' + data);
-                          //io.to(id).emit('exception', data); 
+                          //io.to(id).emit('exception', data);
                           //socket.emit('exception', data);
                           socket.emit('exception', {errorCode: 'invalidShift', data: data});
                           logDebug('sent exception');
@@ -539,7 +539,7 @@ MongoClient.connect(url, function (err, database) {
                         {
                             debugger;
                            // logDebug('broadcastOrders' + JSON.stringify(data));
-                           io.to(id).emit('broadcastOrders', data); 
+                           io.to(id).emit('broadcastOrders', data);
                            logDebug('sent broadcastOrders');
                         }
                     }
@@ -554,23 +554,23 @@ MongoClient.connect(url, function (err, database) {
             var history = db.collection('tableOrderHistory');
             var errorLog = db.collection('errorLog');
             var completed = [];
-            // Find some documents 
+            // Find some documents
             tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
-             if (err) 
+             if (err)
 			 {
 				 logError(err);
 				 return;
 			 }
              if (docs && docs.length > 0)
              {
-                 shiftIdCur = docs[0].shiftId; 
-                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur) 
+                 shiftIdCur = docs[0].shiftId;
+                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
                  {
                     // Tim order xoa order o ban cu
                     if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
                     var t = _.findWhere(docs[0].tables, {tableUuid : data.fromTableUuid});
-                    
-                    if (t) 
+
+                    if (t)
                     {
                         var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.fromSaleOrderUuid});
                         dirDebug(order);
@@ -580,7 +580,7 @@ MongoClient.connect(url, function (err, database) {
                             t.tableOrder.splice(t.tableOrder.indexOf(order),1);
                             //Lấy thông tin cho history
                             var tbs = _.find(completed, function(tb){return tb && tb.tableUuid == data.tables[0].tableUuid});
-                            if (!tbs) 
+                            if (!tbs)
                             {
                                 tbs =  {tableUuid: data.tables[0].tableUuid,
                                         tableId: data.tables[0].tableId,
@@ -608,19 +608,19 @@ MongoClient.connect(url, function (err, database) {
                         dirDebug(data.tables[i].tableOrder);
                         if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
                         logDebug('tableOrder[' + i + '].length:',data.tables[i].tableOrder.length);
-                        for (var j = 0; j < data.tables[i].tableOrder.length; j++) 
+                        for (var j = 0; j < data.tables[i].tableOrder.length; j++)
                         {
                             var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
                             logDebug('t:');
                             dirDebug(t);
-                            if (t) 
+                            if (t)
                             {
                                 var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
                                 logDebug('order:');
                                 dirDebug(order);
                                 if (order)
                                 {
-                                    t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j]; 
+                                    t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
                                     logDebug('order is updated');
                                 }
                                 else
@@ -666,11 +666,11 @@ MongoClient.connect(url, function (err, database) {
             dirDebug(completed);
             if (completed.length > 0)
             {
-                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){ 
-                                    if (err) logError(err); 
+                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){
+                                    if (err) logError(err);
                                     if (!docs || docs.length == 0 || !docs[0]) {
-                                        docs = []; 
-                                        docs[0] = data; 
+                                        docs = [];
+                                        docs[0] = data;
                                         docs[0].tables = [];
                                         history.insert(docs[0], function(err,doc){
                                             if (err) logDebug('Error:' + err);});
@@ -694,7 +694,7 @@ MongoClient.connect(url, function (err, database) {
                                     }
                                     logDebug('hisDocs updated');
                                     dirDebug(docs[0]);
-                                    history.update({companyId: data.companyId, storeId : data.storeId, 
+                                    history.update({companyId: data.companyId, storeId : data.storeId,
                                                     shiftId: shiftIdCur}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
                                          if (err) logDebug('Error:' + err);
                                      });
@@ -710,27 +710,27 @@ MongoClient.connect(url, function (err, database) {
             var history = db.collection('tableOrderHistory');
             var errorLog = db.collection('errorLog');
             var completed = [];
-            // Find some documents 
+            // Find some documents
             tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
-             if (err) 
+             if (err)
 			 {
 				 logError(err);
 				 return;
 			 }
              if (docs && docs.length > 0)
              {
-                 shiftIdCur = docs[0].shiftId; 
-                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur) 
+                 shiftIdCur = docs[0].shiftId;
+                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
                  {
                      if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
                      for(var i = 0; i < data.tables.length; i++)
                      {
                         dirDebug(data.tables[i].tableOrder);//history
                         if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
-                        for (var j = 0; j < data.tables[i].tableOrder.length; j++) 
+                        for (var j = 0; j < data.tables[i].tableOrder.length; j++)
                         {
                             var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
-                            if (t) 
+                            if (t)
                             {
                                 var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
                                 dirDebug(order);
@@ -740,7 +740,7 @@ MongoClient.connect(url, function (err, database) {
                                     t.tableOrder.splice(t.tableOrder.indexOf(order),1);
                                     //Lấy thông tin cho history
                                     var tbs = _.find(completed, function(tb){return tb && tb.tableUuid == data.tables[i].tableUuid});
-                                    if (!tbs) 
+                                    if (!tbs)
                                     {
                                         tbs =  {tableUuid: data.tables[i].tableUuid,
                                                 tableId: data.tables[i].tableId,
@@ -779,18 +779,18 @@ MongoClient.connect(url, function (err, database) {
             else
             {
                logDebug('broadcastOrders' + JSON.stringify(data));
-               io.to(id).emit('broadcastOrders', data); 
+               io.to(id).emit('broadcastOrders', data);
             }
             //Cập nhật thông tin history
             logDebug('completed length:' + completed.length);
             dirDebug(completed);
             if (completed.length > 0)
             {
-                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){ 
-                                    if (err) logError(err); 
+                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){
+                                    if (err) logError(err);
                                     if (!docs || docs.length == 0 || !docs[0]) {
-                                        docs = []; 
-                                        docs[0] = data; 
+                                        docs = [];
+                                        docs[0] = data;
                                         docs[0].tables = [];
                                         history.insert(docs[0], function(err,doc){
                                             if (err) logDebug('Error:' + err);});
@@ -817,7 +817,7 @@ MongoClient.connect(url, function (err, database) {
                                     }
                                     logDebug('hisDocs updated');
                                     dirDebug(docs[0]);
-                                    history.update({companyId: data.companyId, storeId : data.storeId, 
+                                    history.update({companyId: data.companyId, storeId : data.storeId,
                                                     shiftId: shiftIdCur}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
                                          if (err) logDebug('Error:' + err);
                                      });
@@ -831,11 +831,11 @@ MongoClient.connect(url, function (err, database) {
             var shiftIdCur;
             var tableOrder = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
-            // Find some documents 
+            // Find some documents
             tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
              if (docs && docs.length > 0)
              {
-                shiftIdCur = docs[0].shiftId; 
+                shiftIdCur = docs[0].shiftId;
                 if (shiftIdReq == shiftIdCur)
                 {
                     tableOrder.remove({companyId: data.companyId, storeId : data.storeId}, function(err, result) {
@@ -848,7 +848,7 @@ MongoClient.connect(url, function (err, database) {
                 }
                 else
                 {
-                    logDebug('exception');    
+                    logDebug('exception');
                 }
              }
              else
@@ -860,14 +860,14 @@ MongoClient.connect(url, function (err, database) {
             if (!shiftIdReq || !shiftIdCur || shiftIdReq != shiftIdCur)
             {
               logDebug('exception, request shiftId ' + shiftIdReq + ' does not match with current ' + shiftIdCur + ' tableOrder: ' + data);
-              //io.to(id).emit('exception', data); 
+              //io.to(id).emit('exception', data);
               socket.emit('exception', {errorCode: 'invalidShift', data: data});
             }
             //Cập nhật thông tin shift
             else
             {
                logDebug('broadcastOrders' + JSON.stringify(data));
-               io.to(id).emit('broadcastOrders', data); 
+               io.to(id).emit('broadcastOrders', data);
             }
             });
         };
@@ -875,9 +875,9 @@ MongoClient.connect(url, function (err, database) {
         var printHelper = function (id, data){
             socket.broadcast.to(id).emit('printHelper', data);
         };
-        
+
         var doAuth = function(data, callback){
-            if (!data || !data.clientId) 
+            if (!data || !data.clientId)
             {
                 socket.emit('exception', {errorCode: 'unauthorizedClientId', data: data});
                 return;
@@ -885,7 +885,7 @@ MongoClient.connect(url, function (err, database) {
             var userSession = cache.get(data.clientId);
             if (!userSession)
             {
-                performRequest(AUTH_URL,'/api/provider/GetUserSession', 'GET', {clientId: data.clientId, format:'json'}, 
+                performRequest(AUTH_URL,'/api/provider/GetUserSession', 'GET', {clientId: data.clientId, format:'json'},
                   function (res) {
                     if (!res) return;
                     if (data.companyId && res.userSession && res.userSession.companyId == data.companyId)
@@ -909,7 +909,7 @@ MongoClient.connect(url, function (err, database) {
                 if (data.companyId && userSession.companyId == data.companyId) callback(data);
             }
         };
-            
+
         var performRequest = function (host, endpoint, method, data, success, error) {
           var dataString = JSON.stringify(data);
           var headers = {};
@@ -961,13 +961,13 @@ MongoClient.connect(url, function (err, database) {
     var clone = function (obj) {
         return JSON.parse(JSON.stringify(obj));
     }
-    
+
     var logError = function(data, err){
         var error = {
-                         companyId: data.companyId, 
-                         storeId: data.storeId, 
-                         clientId: data.clientId, 
-                         ipAddress: data.ipAddress, 
+                         companyId: data.companyId,
+                         storeId: data.storeId,
+                         clientId: data.clientId,
+                         ipAddress: data.ipAddress,
                          errorTime: new Date(),
                          errorMessage: err.message,
                          sourceData: JSON.stringify(data)
@@ -977,30 +977,30 @@ MongoClient.connect(url, function (err, database) {
 				logger.error(err);
 			});
         };
-        
+
     var logDebug = function(data)
     {
-        if (DEBUG) logger.log('debug',data); 
+        if (DEBUG) logger.log('debug',data);
     };
 
     var dirDebug = function(data)
     {
         if (DEBUG) logger.log('debug',data);
     };
-    
-    db.createCollection('tableOrder', function(err, collection) { 
+
+    db.createCollection('tableOrder', function(err, collection) {
         if (err) logError(err);
     });
-    db.createCollection('tableOrderHistory', function(err, history) { 
+    db.createCollection('tableOrderHistory', function(err, history) {
         if (err) logError(err);
     });
-    db.createCollection('errorLog', function(err, errorLog) { 
+    db.createCollection('errorLog', function(err, errorLog) {
         if (err) logError(err);
     });
-    
+
     //Clear cache
     cache.clear();
-    
+
     logger.log('debug',"Connected correctly to server");
     logger.log('debug',"Listening on port " + port);
 	logger.log('debug','Suno Cafe started.')
