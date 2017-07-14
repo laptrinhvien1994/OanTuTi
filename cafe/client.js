@@ -235,6 +235,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             tableStatus: 0,
             tableOrder: [{
                 saleOrder: {
+                    //lastSyncID: 0,
                     orderDetails: []
                 }
             }],
@@ -242,7 +243,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
         angular.copy(saleOrder, tableTAW.tableOrder[0].saleOrder);
         $scope.tables.push(tableTAW);
-
         if ($scope.tableMap && $scope.tableMap.length > 0) {
             for (var i = 0; i < $scope.tableMap.length; i++) {
                 if ($scope.tableMap[i].hasOwnProperty('unit2')) {
@@ -262,22 +262,30 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         tableStatus: 0,
                         tableOrder: [{
                             saleOrder: {
+                                //lastSyncID: 0,
                                 orderDetails: []
                             }
                         }],
-                        startTime: null
+                        startTime: null                  
                     }
                     angular.copy(saleOrder, t.tableOrder[0].saleOrder);
                     $scope.tables.push(t);
                 }
             }
         }
-
         $scope.tablesSetting.push({
             storeId: $scope.currentStore.storeID,
             tables: $scope.tables,
             zone: $scope.tableMap
         });
+
+        for (var x = 0; x < $scope.tablesSetting.length; x++) {
+            for (var y = 0; y < $scope.tablesSetting[x].tables.length; y++) {
+                for (var z = 0; z < $scope.tablesSetting[x].tables[y].tableOrder.length; z++) {
+                    $scope.tablesSetting[x].tables[y].tableOrder[z].saleOrder.lastSyncID = 0;
+                }
+            }
+        }
 
         var data = {
             "key": "tableSetting",
@@ -285,9 +293,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
 
         var url = Api.postKeyValue;
-
+        console.log(data.value);
+        debugger;
         asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
             if (data) {
+                //debugger;
                 ($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
                 $scope.tableIsSelected = $scope.tables[0];
                 $scope.orderIndexIsSelected = 0;
@@ -339,6 +349,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 tableStatus: 0,
                 tableOrder: [{
                     saleOrder: {
+                        //lastSyncID: 0,
                         orderDetails: []
                     }
                 }],
@@ -358,19 +369,19 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (!isSyncSetting) isSyncSetting = { value: "" };
                 if (isSyncSetting) {
                     if (isSyncSetting.value != "") {
-                        var rs = JSON.parse(isSyncSetting.value);
+                        var ss = JSON.parse(isSyncSetting.value);
                     }
-                    $scope.isSync = rs;
+                    $scope.isSync = ss;
                     //console.log('isSync:', rs);
                 }
 
                 var tableSetting = data.values.find(function (s) { return s.name == 'tableSetting' });
                 if (tableSetting) {
                     if (tableSetting.value != "") {
-                        var rs = JSON.parse(tableSetting.value);
+                        var ts = JSON.parse(tableSetting.value);
                         //console.log(rs);
                     }
-                    $scope.tablesSetting = rs;
+                    $scope.tablesSetting = ts;
                 }
 
                 var removeItemSetting = data.values.find(function (s) { return s.name == 'removeItemSetting' });
@@ -391,12 +402,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (!hourServiceSetting) hourServiceSetting = { value: "" };
                 if (hourServiceSetting) {
                     if (hourServiceSetting.value) {
-                        var rs = JSON.parse(hourServiceSetting.value);
+                        var hss = JSON.parse(hourServiceSetting.value);
                     } else {
-                        var rs = null;
+                        var hss = null;
                     }
-                    if (rs != null) {
-                        $scope.hourService = rs;
+                    if (hss != null) {
+                        $scope.hourService = hss;
                     } else {
                         $scope.hourService = {
                             isUse: false,
@@ -437,8 +448,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 var printSetting = data.values.find(function (s) { return s.name == 'printSetting' });
                 if (printSetting) {
                     if (printSetting.value != "") {
-                        var rs = JSON.parse(printSetting.value);
-                        $scope.printSetting = rs;
+                        var ps = JSON.parse(printSetting.value);
+                        $scope.printSetting = ps;
                     } //else {
                     //    $scope.printSetting = {
                     //        'printSubmitOrder': false,
@@ -699,15 +710,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 sort: [{ tableId: 'asc' }]
                 //fields: ['_id', 'table']
             }),
-            DBSettings.$getDocByID({ _id: 'zones' }),
+            DBSettings.$getDocByID({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
             loadedData[5],
         ]);
     })
     .then(function (data) {
-        //Kiểm tra trong DB Local đã có có sơ đồ phòng bàn chưa
-        //- Nếu có thì đọc lên vì trong sơ đồ phòng bàn ở DB Local có thông tin bàn đang dùng và trống
-        //- Nếu chưa có nghĩa là POS Cafe mới chạy lần đầu cần thực hiện lưu thông tin sơ đồ phòng bàn vào DB Local hoặc mở Popup khởi tạo phòng bàn
-        debugger;
+        //Kiểm tra trong DB Local đã có có sơ đồ phòng bàn chưa.
+        //- Nếu có thì đọc lên vì trong sơ đồ phòng bàn ở DB Local có thông tin bàn đang dùng và trống.
+        //- Nếu chưa có => POS Cafe mới chạy lần đầu cần thực hiện lưu thông tin sơ đồ phòng bàn vào DB Local hoặc mở Modal khởi tạo phòng bàn.
         if (data[0].docs.length > 0 && data[1].docs[0] && data[1].docs[0].zones.length > 0) {
             var pDBTable = data[0].docs;
             var pDBZone = data[1].docs[0].zones;
@@ -727,7 +737,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 var array = prepareTables();
                 Promise.all([
                     DBTables.$manipulateBatchDoc(array),
-                    DBSettings.$addDoc({ _id: 'zones', zones: angular.copy($scope.tableMap) })
+                    DBSettings.$addDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) })
                 ])
                 .then(function (data) {
                     //console.log('Lưu DB', data);
@@ -748,13 +758,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
             socket.on('broadcastOrders', function (msg) {
-                console.log('broadcastOrders', msg);
-                // console.log(msg.storeId);
+                console.log('initShift', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
                     // console.log('-- Đã nhận tín hiệu từ socket --');
                     // console.log(msg.tables);
 
-                    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                     .then(function (data) {
                         $scope.shiftId = null;
                         if (data.docs.length > 0) {
@@ -762,66 +771,117 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                         if ($scope.shiftId != msg.shiftId) {
                             $scope.shiftId = msg.shiftId;
-                            DBSettings.$addDoc({ _id: 'shiftId', shiftId: msg.shiftId })
-                            .catch(function (error) { console.log(error); });
+                            return DBSettings.$addDoc({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID, shiftId: msg.shiftId });
+                            //.catch(function (error) { console.log(error); });
                             //LSFactory.set('shiftId', msg.shiftId);
                         }
+                        return null;
+                        //Đoạn này phải chạy tuần tự vì có trường hợp lỗi giữa add shiftId và removeId gây reload nhiều lần.
+                    })
+                    .then(function (data) {
+                        debugger;
+                        $scope.unNoticeTable = filterHasNoticeOrder($scope.tables);
+                        // angular.copy($scope.tables,$scope.copyTables);
+                        // var filterHasNoticeOrder($scope.copyTables);
+
+                        //Cập nhật lại sơ đồ bàn mới từ Server.
+                        $scope.tables = msg.tables;
+
+                        if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
+                        // console.log(msg);
+                        if ($scope.tables) {
+                            //Sửa lỗi server trả về tableStatus bị sai.
+                            for (var i = 0; i < $scope.tables.length; i++) {
+                                var tableStatus = tableIsActive($scope.tables[i]);
+                                if (tableStatus == true) {
+                                    $scope.tables[i].tableStatus = 1;
+                                }
+                            }
+                            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                var tableIndex = findIndex($scope.tables, 'tableUuid', $scope.tableIsSelected.tableUuid);
+                                $scope.tableIsSelected = $scope.tables[tableIndex];
+                            }
+                            $scope.$apply();
+                        }
+                        
+                        if (!$scope.tables) {
+                            Promise.all([
+                                DBSettings.$removeDoc({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID }),
+                                DBTables.$queryDoc({
+                                    selector: {
+                                        'store': { $eq: $scope.currentStore.storeID }
+                                        //'tableId': { $gte: null }
+                                    },
+                                    //sort: [{ tableId: 'asc' }]
+                                })
+                            ])
+                            .then(function (data) {
+                                console.log(data);
+                                data[1].docs.forEach(function (d) { d._deleted = true; });
+                                return DBTables.$manipulateBatchDoc(data[1].docs);
+                            })
+                            .then(function (data) {
+                                window.location.reload(true);
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            })
+                            //window.localStorage.removeItem('shiftId');
+                            //window.localStorage.removeItem($scope.currentStore.storeID);
+                            //window.location.reload(true);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
                     });
                     //$scope.shiftId = LSFactory.get('shiftId');
 
-
-                    $scope.unNoticeTable = filterHasNoticeOrder($scope.tables);
-                    // angular.copy($scope.tables,$scope.copyTables);
-                    // var filterHasNoticeOrder($scope.copyTables);
-                    
-                    //Cập nhật lại sơ đồ bàn mới từ Server.
-                    $scope.tables = msg.tables;
-
-                    if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
-                    // console.log(msg);
-                    if ($scope.tables) {
-                        //Sửa lỗi server trả về tableStatus bị sai.
-                        for (var i = 0; i < $scope.tables.length; i++) {
-                            var tableStatus = tableIsActive($scope.tables[i]);
-                            if (tableStatus == true) {
-                                $scope.tables[i].tableStatus = 1;
-                            }
-                        }
-                        if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
-                            var tableIndex = findIndex($scope.tables, 'tableUuid', $scope.tableIsSelected.tableUuid);
-                            $scope.tableIsSelected = $scope.tables[tableIndex];
-                        }
-                        $scope.$apply();
-                    }
-                    if (!$scope.tables) {
-                        Promise.all([
-                            DBSettings.$removeDoc({ _id: 'shiftId' }),
-                            DBTables.$queryDoc({
-                                selector: {
-                                    'store': { $eq: $scope.currentStore.storeID },
-                                    'tableId': { $gte: null }
-                                },
-                                sort: [{ tableId: 'asc' }]
-                            })
-                        ])
-                        .then(function (data) {
-                            console.log(data);
-                            data[1].docs.forEach(function (d) { d._deleted = true; });
-                            return DBTables.$manipulateBatchDoc(data[1].docs);
-                        })
-                        .then(function (data) {
-                            window.location.reload(true);
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        })
-                        //window.localStorage.removeItem('shiftId');
-                        //window.localStorage.removeItem($scope.currentStore.storeID);
-                        //window.location.reload(true);
-                    }
                 }
                 // console.log($scope.tables);
             });
+
+            var syncOrder = function (msg) {
+                debugger;
+                console.log(msg);
+                if (msg.storeId == $scope.currentStore.storeID) {
+                    for (var x = 0; x < $scope.tables.length; x++) {
+                        var t = $scope.tables[x];
+                        if (t.tableUuid == msg.tables[0].tableUuid) {
+                            $scope.tables[x] = msg.tables[0];
+                            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                var tableIndex = findIndex($scope.tables, 'tableUuid', $scope.tableIsSelected.tableUuid);
+                                $scope.tableIsSelected = $scope.tables[tableIndex];
+                            }
+                            DBTables.$queryDoc({
+                                selector: {
+                                    'store': { $eq: $scope.currentStore.storeID },
+                                    'tableUuid': { $eq: msg.tables[0].tableUuid }
+                                },
+                                fields: ['_id', '_rev']
+                            })
+                            .then(function (data) {
+                                //console.log(data);
+                                var table = JSON.parse(JSON.stringify(msg.tables[0]));
+                                table._id = data.docs[0]._id;
+                                table._rev = data.docs[0]._rev;
+                                table.store = $scope.currentStore.storeID;
+                                return DBTables.$addDoc(table);
+                            })
+                            .then(function (data) {
+                                //console.log(data);
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            })
+                        }
+                    }
+                    $scope.$apply();
+                }
+            };
+
+            socket.on('updateOrder', syncOrder);
+
+            socket.on('completeOrder', syncOrder);
 
             socket.on('printHelper', function (msg) {
                 if (msg.storeId == $scope.currentStore.storeID) {
@@ -839,9 +899,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             socket.on('exception', function (msg) {
                 // console.log(msg);
                 // console.log($scope.currentStore.storeID,msg.data.storeId);
+                //debugger;
                 if (msg.data.storeId == $scope.currentStore.storeID) {
                     if (msg.errorCode && msg.errorCode == 'invalidShift') {
-                        DBSettings.$removeDoc({ _id: 'shiftId' })
+                        DBSettings.$removeDoc({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                         .then(function (data) {
                             window.location.reload(true);
                         })
@@ -849,7 +910,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             console.log(error);
                         });
                         //window.localStorage.removeItem('shiftId');
-                        //window.location.reload(true);
+                        window.location.reload(true);
                     }
 
                     if (msg.errorCode && msg.errorCode == 'invalidStore') {
@@ -861,17 +922,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                 }
             });
-
             var ownerOrder = filterOwnerOrder($scope.tables, $scope.userSession.userId);
             data = angular.copy(ownerOrder);
             ownerOrder = filterInitOrder(data);
 
-            DBSettings.$getDocByID({ _id: 'shiftId' })
+            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
             .then(function (data) {
+                //debugger;
                 var shiftId = null;
                 if (data.docs.length > 0) {
                     shiftId = data.docs[0].shiftId;
                 }
+                debugger;
                 var initData = {
                     "companyId": $scope.userSession.companyId,
                     "storeId": $scope.currentStore.storeID,
@@ -884,7 +946,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 };
                 initData = angular.toJson(initData);
                 initData = JSON.parse(initData);
-                console.log(initData);
+                console.log('initData', initData);
                 socket.emit('initShift', initData);
             })
             .catch(function(error){
@@ -922,7 +984,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var array = [];
         tables.forEach(function (t) {
             var table = JSON.parse(JSON.stringify(t));
-            table._id = t.tableId.toString();
+            table._id = t.tableId.toString() + "_" + $scope.userSession.companyId + '_' + $scope.currentStore.storeID;
             table.store = $scope.currentStore.storeID;
             array.push(table);
         });
@@ -1122,7 +1184,23 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.changeCurrentStore = function (s) {
-        window.localStorage.setItem('currentStore', JSON.stringify(s));
+        //window.localStorage.setItem('currentStore', JSON.stringify(s));
+        DBSettings.$getDocByID({ _id: 'currentStore' })
+        .then(function (data) {
+            if (data.docs.length > 0) {
+                return DBSettings.$addDoc({ _id: data.docs[0]._id, _rev: data.docs[0]._rev, currentStore: s });
+            }
+            else {
+                return DBSettings.$addDoc({ _id: 'currentStore', currentStore: s });
+            }
+        })
+        .then(function (data) {
+            //console.log(data);
+            //log for debugging;
+        })
+        .catch(function (error) {
+            console.log(error);
+        })
         window.location.reload(true);
     }
 
@@ -1303,7 +1381,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
 
-            DBSettings.$getDocByID({ _id: 'shiftId' })
+            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -1424,7 +1502,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             
-            DBSettings.$getDocByID({ _id: 'shiftId' })
+            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -1537,7 +1615,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder.push($scope.tableIsSelected);
             // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
 
-            DBSettings.$getDocByID({ _id: 'shiftId' })
+            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -1878,12 +1956,19 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
                             shiftId = data.docs[0].shiftId;
                         }
+
+                        for (var x = 0; x < currentTableOrder.length; x++) {
+                            for (var y = 0; y < currentTableOrder[x].tableOrder.length; y++) {
+                                currentTableOrder[x].tableOrder[y].saleOrder.lastSyncID++;
+                            }
+                        }
+
                         var updateData = {
                             "companyId": $scope.userSession.companyId,
                             "storeId": $scope.currentStore.storeID,
@@ -1896,7 +1981,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                         updateData = angular.toJson(updateData);
                         updateData = JSON.parse(updateData);
-                        console.log('updateData', updateData);
+                        //console.log('updateData', updateData);
                         socket.emit('updateOrder', updateData);
                     })
                     .catch(function (error) {
@@ -1905,7 +1990,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     if ($scope.printSetting.printNoticeKitchen == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.kitchenPrinter.status)) {
                         // nếu không phải trên trình duyệt + cho phép in bếp + cho phép in hộ thì mới gửi lệnh in hộ lên socket
-                        DBSettings.$getDocByID({ _id: 'shiftId' })
+                        DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                         .then(function (data) {
                             var shiftId = null;
                             if (data.docs.length > 0) {
@@ -2099,7 +2184,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
 
-                    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -2134,7 +2219,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -2639,7 +2724,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         currentTableOrder.push(curtentTable);
                         currentTableOrder[0].tableOrder = [];
                         currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                        DBSettings.$getDocByID({ _id: 'shiftId' })
+                        DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                         .then(function (data) {
                             var shiftId = null;
                             if (data.docs.length > 0) {
@@ -2659,7 +2744,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             completeOrder = angular.toJson(completeOrder);
                             completeOrder = JSON.parse(completeOrder);
                             console.log('completeOrder', completeOrder);
-                            socket.emit('completeOrder', completeOrder);
+                            //socket.emit('completeOrder', completeOrder);
                         })
                         .catch(function (error) {
                             console.log(error);
@@ -2668,7 +2753,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
                             // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
 
-                            DBSettings.$getDocByID({ _id: 'shiftId' })
+                            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                             .then(function (data) {
                                 var shiftId = null;
                                 if (data.docs.length > 0) {
@@ -3033,6 +3118,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 tableStatus: 0,
                 tableOrder: [{
                     saleOrder: {
+                        //lastSyncID: 0,
                         orderDetails: []
                     }
                 }],
@@ -3062,6 +3148,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         tableStatus: 0,
                         tableOrder: [{
                             saleOrder: {
+                                //lastSyncID: 0,
                                 orderDetails: []
                             }
                         }],
@@ -3111,8 +3198,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if ($scope.modalEditTables) $scope.modalEditTables.hide();
 
         } else {
-            console.log('tableMap', $scope.tableMap);
-            console.log('newTableMap', $scope.newTableMap);
+            //console.log('tableMap', $scope.tableMap);
+            //console.log('newTableMap', $scope.newTableMap);
             if ($scope.tableMap.length == 0) {
                 $scope.modalEditTables.hide();
             }
@@ -3440,7 +3527,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
         asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
             if (data) {
-                $scope.modalStoreReport.hide();
+                if ($scope.modalStoreReport){
+                    $scope.modalStoreReport.hide();
+                }
                 toaster.pop('success', "", 'Đã cập nhật tồn quỹ đầu ca!');
             }
         }, function (error) {
@@ -3542,31 +3631,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 text: '<b>Xác nhận</b>',
                 type: 'button-positive',
                 onTap: function (e) {
-                   
-                    if ($scope.isSync) {
-                        DBSettings.$getDocByID({ _id: 'shiftId' })
-                        .then(function (data) {
-                            var shiftId = null;
-                            if (data.docs.length > 0) {
-                                shiftId = data.docs[0].shiftId;
-                            }
-                            var completeShift = {
-                                "companyId": $scope.userSession.companyId,
-                                "storeId": $scope.currentStore.storeID,
-                                "clientId": $scope.clientId,
-                                "shiftId": shiftId, //LSFactory.get('shiftId')
-                            }
-
-                            completeShift = angular.toJson(completeShift);
-                            completeShift = JSON.parse(completeShift);
-                            console.log('completeShift', completeShift);
-                            socket.emit('completeShift', completeShift);
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        });
-                    }
-
                     //window.localStorage.removeItem($scope.currentStore.storeID);
                     Promise.all([
                         DBTables.$queryDoc({
@@ -3574,15 +3638,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 'store': { $eq: $scope.currentStore.storeID }
                             },
                         }),
-                        DBSettings.$removeDoc({ _id: 'zones'})
+                        DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                     ])
                     .then(function (data) {
-                        //console.log(data);
                         data[0].docs.forEach(function (d) { d._deleted = true; });
                         return DBTables.$manipulateBatchDoc(data[0].docs);
                     })
                     .then(function (data) {
-                        //console.log(data);
+                        //debugger;
                         $scope.updateBalance(0);
                         audit(5, 'Kết ca cuối ngày', '');
                         if ($scope.modalStoreReport) $scope.modalStoreReport.hide();
@@ -3592,10 +3655,62 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         if (!$scope.isSync) {
                             window.location.reload(true);
                         }
+                        else {
+                            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
+                            .then(function (data) {
+                                //debugger;
+                                var shiftId = null;
+                                if (data.docs.length > 0) {
+                                    shiftId = data.docs[0].shiftId;
+                                    DBSettings.$removeDoc({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
+                                    .then(function (data) {
+                                        //console.log(data)
+                                        //log for debugging.
+                                    })
+                                    .catch(function (error) { throw error }); //throw error to outer catch 
+                                }
+                                var completeShift = {
+                                    "companyId": $scope.userSession.companyId,
+                                    "storeId": $scope.currentStore.storeID,
+                                    "clientId": $scope.clientId,
+                                    "shiftId": shiftId, //LSFactory.get('shiftId')
+                                }
+
+                                completeShift = angular.toJson(completeShift);
+                                completeShift = JSON.parse(completeShift);
+                                console.log('completeShift', completeShift);
+                                socket.emit('completeShift', completeShift);
+                            })
+                        }
                     })
                     .catch(function (error) {
                         console.log(error);
                     });
+
+                    //if ($scope.isSync) {
+                    //    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    //    .then(function (data) {
+                    //        var shiftId = null;
+                    //        if (data.docs.length > 0) {
+                    //            shiftId = data.docs[0].shiftId;
+                    //        }
+                    //        var completeShift = {
+                    //            "companyId": $scope.userSession.companyId,
+                    //            "storeId": $scope.currentStore.storeID,
+                    //            "clientId": $scope.clientId,
+                    //            "shiftId": shiftId, //LSFactory.get('shiftId')
+                    //        }
+
+                    //        completeShift = angular.toJson(completeShift);
+                    //        completeShift = JSON.parse(completeShift);
+                    //        console.log('completeShift', completeShift);
+                    //        socket.emit('completeShift', completeShift);
+                    //    })
+                    //    .catch(function (error) {
+                    //        console.log(error);
+                    //    });
+                    //}
+
                 }
             }]
         });
@@ -3615,13 +3730,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             DBSettings.$removeDoc({ _id: 'setting' }),
             DBSettings.$removeDoc({ _id: 'store' }),
             DBSettings.$removeDoc({ _id: 'token' }),
-            DBSettings.$removeDoc({ _id: 'user' })
+            DBSettings.$removeDoc({ _id: 'user' }),
+            DBSettings.$removeDoc({ _id: 'printDevice' }),
+            DBSettings.$removeDoc({ _id: 'printHelper' })
         ]).then(function (data) {
             $scope.popoverSettings.hide();
             $state.go('login');
             $timeout(function () {
                 $ionicHistory.clearCache();
             }, 200);
+            window.location.reload(true);
         })
     }
 
@@ -3655,7 +3773,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                 } else {
                     // Nếu tắt đồng bộ
-                    DBSettings.$getDocByID({ _id: 'shiftId' })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -3678,7 +3796,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     });
 
                     Promise.all([
-                        DBSettings.$removeDoc({ _id: 'shiftId' }),
+                        DBSettings.$removeDoc({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID }),
                         DBTables.$queryDoc({
                             selector: {
                                 'store': { $eq: $scope.currentStore.storeID }
@@ -3746,7 +3864,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder.push(curtentTable);
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-            DBSettings.$getDocByID({ _id: 'shiftId' })
+            DBSettings.$getDocByID({ _id: 'shiftId' + "_" + $scope.userSession.companyId + "_" + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -4343,6 +4461,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     };
 
     var updateTableToDB = function () {
+        //console.log('fired');
         var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;
         var tableUuid = $scope.tableIsSelected.tableUuid;
@@ -4353,11 +4472,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             },
             fields: ['_id', '_rev']
         }).then(function (data) {
-            var table = JSON.parse(JSON.stringify($scope.tableIsSelected));
-            table._id = data.docs[0]._id;
-            table._rev = data.docs[0]._rev;
-            table.store = store;
-            return DBTables.$addDoc(table);
+            //Check docs length để tránh trường hợp khi client dùng lần đầu tiên tạo phòng bàn thì tableIsSelected thay đổi
+            //dẫn đến callback này gọi trong khi chưa có dữ liệu dưới DB Local gây lỗi _id of undefined.
+            if(data.docs.length > 0){
+                var table = JSON.parse(JSON.stringify($scope.tableIsSelected));
+                table._id = data.docs[0]._id;
+                table._rev = data.docs[0]._rev;
+                table.store = store;
+                return DBTables.$addDoc(table);
+            }
+            return null;
         }).then(function (data) {
             //console.log(data);
             return null;
