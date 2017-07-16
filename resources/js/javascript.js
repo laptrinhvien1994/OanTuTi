@@ -14,6 +14,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
     ";)": 'url'
   }
 })
+.value('$socket', null)
 .config(function($routeProvider, $locationProvider){
   $routeProvider
   .when('/', {
@@ -262,7 +263,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
     $scope.$apply();
   });
 }])
-.controller('chatController', ['$scope', '$uibModal', '$timeout', function($scope, $uibModal, $timeout){
+.controller('chatController', ['$scope', '$uibModal', '$timeout', '$socket', function($scope, $uibModal, $timeout, socket){
   $scope.$on('userName', function(event, args){
   });
 
@@ -288,7 +289,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
   $scope.thisUser = null;
   //Socket connect to Server
   var userID = Math.floor(Math.random()*10000);
-  var socket = io.connect('http://localhost:9999',{ query : "userID="+ userID });
+  socket = io.connect('http://localhost:9999',{ query : "userID="+ userID });
 
   socket.on('server-message-content', function(data){
     var lastItem = getLastItem();
@@ -367,7 +368,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
 
   }
 }])
-.controller('profileController', ['$scope', function($scope){
+.controller('profileController', ['$scope', '$socket', '$timeout', function($scope, socket, $timeout){
   $scope.$on('userName', function(event, args){
 
   });
@@ -381,6 +382,40 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
   $scope.$on('userName', function(event, args){
 
   });
+  $scope.choice = function(type){
+    socket.emit('client-send-choice', type);
+  };
+
+  socket.on('server-send-result', function(data){
+
+  });
+
+  //Bắt đầu -> đếm giờ -> hết giờ hoặc cả 2 đều khóa thì trả về kết quả
+  $scope.start = function(){
+    socket.emit('client-send-start-signal');
+  };
+
+  $scope.second = null;
+
+  socket.on('server-send-start-signal', funciton(data){
+      //Receive countdown from server.
+      $scope.second = data.second;
+      countdownTime();
+  });
+
+  var countdownTime = function(){
+    var interval = window.setInterval(function(){
+      $scope.second--;
+      $scope.$apply();
+      if($scope.second == 0){
+        window.clearInterval(interval);
+        socket.emit('client-send-end-signal');
+      }
+    }, 1000);
+  }
+
+
+  $scope.result = null;
 }]);
 
 

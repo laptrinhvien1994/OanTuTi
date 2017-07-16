@@ -36,8 +36,12 @@ io.on('connection', function(socket){
   .on('client-typing-stopped', function(data){
     socket.broadcast.emit('server-typing-stopped', data);
   })
-  // .emit('',)
-  // .emit('',);
+  .on('client-send-choice', function(){
+
+  })
+  .on('client-send-start-signal', function(){
+
+  })
 
 });
 
