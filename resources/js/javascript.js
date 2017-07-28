@@ -180,8 +180,9 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
   var getImage = function(){
     return new Promise(function(resolve, reject){
       FB.api('/'+$scope.userID, 'GET',
-        {"fields":"name,picture.width(150).height(150)"},
+        {"fields":"name,picture.width(150).height(150),email"},
         function(data) {
+          console.log(data);
           if(data.picture){
             resolve({ name: data.name, url: data.picture.data.url });
           }
@@ -397,7 +398,7 @@ angular.module('app', ['ngRoute', 'ngSanitize', 'ui.bootstrap'])
 
   $scope.second = null;
 
-  socket.on('server-send-start-signal', funciton(data){
+  socket.on('server-send-start-signal', function(data){
       //Receive countdown from server.
       $scope.second = data.second;
       countdownTime();
