@@ -1,3 +1,44 @@
+angular.module('fmapp', [''])
+.controller('inboxController', ['$scope', '$http', function($scope, $http){
+  var init = function(){
+    //Gọi API để lấy pageID từ DB hoặc lấy từ localStorage.
+    $scope.pageID = '...';
+    //Sau đó khởi tạo kết nối socket
+    $scope.socket = io.('Node server URL', {query: { pageID: $scope.pageID}});
+
+    //Đăng ký các sự kiện.
+    socket.on('sv-send-threadID', function(data){
+      var conversationID = data.threadID;
+      var url = "/" + conversationID + "/messages";
+      FB.api(url, function(msg){
+        //Xử lý đưa ra trên tập dữ liệu trả về và đưa ra view.
+      });
+    });
+    //Load danh sách các tin nhắn bên tay trái.
+  };
+  init();
+
+  $scope.sendMsg = function(msgContent, conversationID){
+
+  };
+
+  var makeHTTPRequest = function(url, method, data = null, callback, eCallback){
+    $http({
+      method: method,
+      url: url,
+      headers: {
+        'Content-Type': 'application/json charset-utf8'
+      },
+      data: data
+    })
+    .then(callback)
+    .catch(eCallback);
+  }
+
+}]);
+
+//https://developers.facebook.com/docs/graph-api/reference/v2.10/conversation/messages
+
 $(document).ready(function(){
   var token = 'EAACEdEose0cBAIoYFTbrvSnMCDsAkQFbC1FDK7fLjZCCQOzFZBHzf67isTbjZAMzvcHLeNbqeIEStXk34bpIkrtl86n6mGoZCt6UMvjn4tL9bJYpiQbZCHD0VpuSzKOCgAvWnoWgomQnggW0sHZBmmohONj4errhegR2wC9QwUhtdbRRo8xqWX7tcXJyuSYU55crEDPfhxzwZDZD';
   var url = 'https://graph.facebook.com/v2.10/me/messages?access_token=' + token;
@@ -22,7 +63,7 @@ $(document).ready(function(){
   $.ajax(url, setting);
 });
 
-//Page ID dùng để xác định Room.
+//Page ID lấy từ DB dùng để xác định Room.
 var pageID = null;
 //var socket = io.connect('http://localhost:9999',{ query : "pageID="+ pageID });
 
