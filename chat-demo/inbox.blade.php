@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     <div class="reply-form">
-                        <textarea ng-model="msgContent" ng-key-down enter-handler="sendMsg()" typing-handler="sendIsTypingSignal()" placeholder="Nhập nội dung tin nhắn"></textarea>
+                        <textarea ng-model="msgContent" ng-key-down enter-handler="sendMsg()" placeholder="Nhập nội dung tin nhắn"></textarea>
                         <button ng-click="sendMsg()" class="btn btn-link btn-upload-img"><i class="fa fa2 fa-camera"></i></button>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                     <div class="header-c-info">
                         <h4>Thông tin khách hàng</h4>
                         <p><i class="fa fa-user"></i> [[ customerName ]]</p>
-                        <p><i class="fa fa-phone"></i> [[ customerPHone ]]</p>
+                        <p><i class="fa fa-phone"></i> [[ customerPhone ]]</p>
                         <p><i class="fa fa-location-arrow"></i> [[ customerAddress ]].</p>
                         <!-- <p>Chưa có thông tin khách hàng</p>
                         <button class="btn btn-primary btn-sm">Tìm khách hàng trên Suno.vn</button> -->

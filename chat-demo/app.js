@@ -8,11 +8,11 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 
-//Set up middlewares
+/* //Set up middlewares
 app.use(bodyParser.json());
 app.use('/resources', express.static('resources'));
 //route for API.
-app.use('/api',router);
+app.use('/api',router); */
 
 //Khi có kết nối từ Server là server node kia  hoặc từ client
 //kết nối client vào room.
@@ -71,7 +71,7 @@ io.on('connection', function(socket){
     }
 
     //Hoặc là gửi thẳng xuống User xử lý, User tự đi request lấy conversation.
-    io.to(pageID).emit('sv-send-threadID', data);
+    io.to(pageID).emit('sv-send-messageID', data);
   });
 
   //Lắng nghe tín hiệu khi User gửi accessToken.
