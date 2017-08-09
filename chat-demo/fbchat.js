@@ -258,15 +258,59 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 	$scope.msgContent = null; //Hiển thị nội dung tin nhắn trong textarea.
 	var socket = null; //Kết nối socket của page hiện tại.
 
+
+	//Hàm lấy nội dung tin nhắn khi chọn conversation
+	//Lấy msg của mỗi customer với page khi chọn vào 1 conversation trong ds conversations bên phía tay trái.
+	var getFacebookMessage = function(conversation) {
+		var deferred = $q.defer();
+		var url = conversation.thread_id+'?fields=messages{message,from,created_time,tags,id,attachments}&access_token=' + $scope.pageAccessToken;
+		FB.api(
+			url,
+			function (response) {
+				if(response.someStatusCode){
+					deferred.resolve(response);
+				}
+				//Kiểm tra trường hợp mà lấy msg ko thành công thì hiển thị để thử lại
+				else if(response.someStatusCode){
+					deferred.reject({
+						error: response,
+						description: 'Tải tin nhắn không thành công, xin thử lại.'
+					});
+				}
+			});
+			return deferred.promise;
+		};
+
+
 	//Hàm chọn conversation.
 	$scope.selectConversation = function(conversation){
 		$scope.isExistingSelectedConversation = true;
 		$scope.selectedConversation = conversation ;
+		var conversationID = conversation.thread_id;
 
 		//Sau khi chọn conversation thì load tin nhắn để hiển thị.
-		getFacebookMessage(conversation)
-		.then(function(rs){
-			$scope.selectedChatData = rs.messages;
+		//getFacebookMessage(conversation)
+		facebookService.getMessagesByConversationID(conversationID)
+		.then(function(data){
+			//Khởi tạo model để đưa ra view
+			var chatData = {
+				messages: [],
+				paging: data.message.paging,
+				conversationID: data.id
+			};
+			data.messages.data.forEach(function(d){
+				chatData.messages.push({
+					message: d.message,
+					senderID: d.from.id,
+					senderName: d.from.name,
+					senderEmail: d.from.email,
+					createdTime: d.created_time,
+					tags: d.tags.data,
+					isMine: d.from.id == $scope.pageID,
+					msgID: d.id
+				});
+			});
+			$scope.selectedChatData = chatData.messages; //Xem fmappModel để rõ hơn.
 			var $BODY = $('body'),
 			$NAV_MENU = $('.nav_menu'),
 			$FOOTER = $('.footer_fixed'),
@@ -300,32 +344,10 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 		})
 	}
 
-	//Hàm lấy nội dung tin nhắn khi chọn conversation
-	//Lấy msg của mỗi customer với page khi chọn vào 1 conversation trong ds conversations bên phía tay trái.
-	var getFacebookMessage = function(conversation) {
-		var deferred = $q.defer();
-		var url = conversation.thread_id+'?fields=messages{message,from,created_time,tags,id,attachments}&access_token=' + $scope.pageAccessToken;
-		FB.api(
-			url,
-			function (response) {
-				if(response.someStatusCode){
-					deferred.resolve(response);
-				}
-				//Kiểm tra trường hợp mà lấy msg ko thành công thì hiển thị để thử lại
-				else if(response.someStatusCode){
-					deferred.reject({
-						error: response,
-						description: 'Tải tin nhắn không thành công, xin thử lại.'
-					});
-				}
-			});
-			return deferred.promise;
-		};
-
 		//Hàm lấy thông tin về đơn hang của customer
 		var getOrderInfoOfCustomer = function(){
 			var deferred = $q.defer();
-			var url = 'url để gọi API lấy thông tin về các đang hàng mà user dã từng mua trc đây';
+			var url = 'url để gọi API lấy thông tin về các đang hàng mà user đã từng mua trc đây';
 			FMAPP.asynRequest($http, 'GET', api.getOrderInfoOfCustomer , null, function(data, status) {
 				if(data) {
 					$scope.chatSession = data.data.token;
@@ -347,13 +369,13 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 		//Hàm khởi tạo kết nối socket - chạy khi Init
 		var openSocketConnection = function(pID){
 			//Kết nối tới server node.
-			socket = io.io.(url.NodeServer, { query : { pageID : pID } });
+			socket = io(url.NodeServer, { query : { pageID : pID } });
 
 			//Đăng ký các sự kiện.
 			//khi có tin nhắn mới được được server gửi xuống
 			socket.on('sv-send-messageID', function(data){
 				var messageID = data.messageID;
-				var conversationID = data.conversationID;
+				var conversationID = data.id; // Xem fmappModel để rõ hơn.
 				//gọi Facebook API để lấy nội dung tin nhắn
 				facebookService.getMessageByMessageID(messageID)
 				.then(function(data){
@@ -362,10 +384,13 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 					//Cập nhật trạng thái nếu là đúng với lại conversation đang chọn thì đi lấy tin nhắn và thêm vào, ko thì cập nhật bên trái.
 					if(conversationID == $scope.selectedConversation.thread_id){
 						var chatDataObj = {
-							avatarUrl: 'url',
 							message: data.message,
-							created_time: data.time,
-							isMine: id == $scope.pageID
+							created_time: data.created_time,
+							msgID: data.id,
+							senderID: data.from.id,
+							senderName: data.sender.name,
+							senderEmail: data.sender.email
+							isMine: data.from.id == $scope.pageID
 						};
 						$scope.selectedChatData.data.push(chatDataObj);
 						$scope.$apply();
@@ -383,7 +408,7 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 
 		//Gửi tin nhắn
 		$scope.sendMsg = function(){
-			var conversationID =  $scope.selectedConversation.conversationID;
+			var conversationID =  $scope.selectedConversation.thread_id;
 			var msgContent = $scope.msgContent;
 			//Refresh lại textarea.
 			$scope.msgContent = null;

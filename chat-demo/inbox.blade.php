@@ -23,7 +23,7 @@
                 </ul>
             </div>
         </div>
-        <div class="col col-sm-9" ng-if="isExistingSelectedConversation && selectedChatData.data.length > 0">
+        <div class="col col-sm-9" ng-if="isExistingSelectedConversation && selectedChatData.length > 0">`
             <div class="col col-sm-6">
                 <div class="headder-chat-list">
                     <div class="u-info">
@@ -38,7 +38,7 @@
                 </div>
                 <div class="content-chat-list">
                     <div class="w-body-chat" id="message-list">
-                        <div class="linechat" ng-repeat="message in selectedChatData.data | orderBy: '-created_time':true track by $index" ng-class="{'me' : message.from.id == pId, 'you' : message.from.id != pId }">
+                        <div class="linechat" ng-repeat="message in selectedChatData | orderBy: '-created_time':true track by $index" ng-class="isMine ? 'me' : 'you'">
                             <div class="chatavar">
                                 <img src="http://graph.facebook.com/1466951893357705/picture?width=40&height=40">
                             </div>
@@ -46,7 +46,7 @@
                                 [[message.message]]
                             </div>
                             <div class="chattime">
-                                <small>11:22</small>
+                                <small>[[message.createTime]]</small>
                             </div>
                         </div>
                     </div>

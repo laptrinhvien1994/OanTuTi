@@ -43,32 +43,32 @@ io.on('connection', function(socket){
     io.of(pageID).accessToken = socket.handshake.query.accessToken;
   }
 
-  //Gửi tín hiệu xuống server node kia để server node bên kia gửi thread conversation lên server.
+  //Gửi tín hiệu xuống server node kia để server node bên kia gửi conversation lên server.
   socket.emit('sv-nodesv-is-connected');
 
   //Lắng nghe tín hiệu từ phía server node.
-  socket.on('clt-send-conversation', function(data){
-    var threadID = data.threadId;
-    //Nếu có accessToken rồi thì đi lấy nội dung của conversation
-    if(io.of(pageID).accessToken){
-      var queryStr = threadID + '...';
-      //Gọi API của Facebook để lấy nội dung của conversation.
-      sendRequest('https://facebook.com', queryStr, 'GET', function(res){
-        //Nhận xong thì gửi xuống cho User.
-        res.on('data', function(chunk){
-          //Gửi dữ liệu xuống cho User
-          io.to(pageID).emit('sv-send-conversation', chunk);
-          //Ngắt kết nối socket.
-          socket.disconnection(true);
-        });
-      });
-    }
-    //Nếu ko có accessToken thì lấy accessToken từ User
-    else{
-      var data = { threadID: threadID };
-      //Lưu trữ threadID
-      io.to(pageID).emit('sv-request-accesstoken', data);
-    }
+  socket.on('clt-send-messageID', function(data){
+    //var threadID = data.threadId;
+    // //Nếu có accessToken rồi thì đi lấy nội dung của conversation
+    // if(io.of(pageID).accessToken){
+    //   var queryStr = threadID + '...';
+    //   //Gọi API của Facebook để lấy nội dung của conversation.
+    //   sendRequest('https://facebook.com', queryStr, 'GET', function(res){
+    //     //Nhận xong thì gửi xuống cho User.
+    //     res.on('data', function(chunk){
+    //       //Gửi dữ liệu xuống cho User
+    //       io.to(pageID).emit('sv-send-conversation', chunk);
+    //       //Ngắt kết nối socket.
+    //       socket.disconnection(true);
+    //     });
+    //   });
+    // }
+    // //Nếu ko có accessToken thì lấy accessToken từ User
+    // else{
+    //   var data = { threadID: threadID };
+    //   //Lưu trữ threadID
+    //   io.to(pageID).emit('sv-request-accesstoken', data);
+    // }
 
     //Hoặc là gửi thẳng xuống User xử lý, User tự đi request lấy conversation.
     io.to(pageID).emit('sv-send-messageID', data);
