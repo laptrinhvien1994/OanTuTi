@@ -1,7 +1,7 @@
 'use strict';
 var request = require('request');
 var FB = require('fb');
-var kue = require('kue'), 
+var kue = require('kue'),
   queue = kue.createQueue({
     prefix: 'q',
     redis: {
@@ -15,7 +15,7 @@ var kue = require('kue'),
 exports.verify = function(req, res) {
   if (req.query['hub.verify_token'] === 'fmapp!@#3') {
       res.send(req.query['hub.challenge'])
-   } else{ 
+   } else{
      res.send('Error, wrong token')
    }
 };
@@ -44,26 +44,65 @@ exports.receiver = function(req, res) {
 
 var io = require('socket.io-client');
 // Thực hiện task conversations
-queue.process('get_conversations', (job, done) => { 
+queue.process('get_conversations', (job, done) => {
   FB.setAccessToken(job.data.page_token);
-  FB.api(job.data.thread_key, {fields: 'messages.limit(1){message,from}'}, function (res) {
+  //Đi query lấy messages
+  //Reference https://developers.facebook.com/docs/graph-api/reference/v2.10/message
+  FB.api(job.data.thread_key, {fields: 'messages.limit(1){message,from,created_time}'}, function (res) {
     if(!res || res.error) {
       console.log(!res ? 'error occurred' : res.error);
       return;
     }
     console.log(res.messages.data);
 
-    //Tạo kết nối socket với Server node kia.
-    var url = 'url của server node bên kia';
-    var pID = res.messages.prop //pageID để kết nối đến.
-    var socket = io(url, { query : { pageID : pID } });
+    var pID = job.data.page_id; //pageID để kết nối đến.
+    //Nếu tin nhắn này được gửi từ customer của Page thì gửi xuống cho Server node bên kia.
+    if(res.messages.data[0].from.id != pID){
+      //Tạo kết nối socket với Server node kia.
+      var url = 'url của server node bên kia';
+      var socket = io(url, { query : { pageID : pID } });
 
-    //Lắng nghe sự kiện kết nối thành công với Server node bên kia để gửi conversation.
-    socket.on('sv-nodesv-is-connected', function(){
-      var data = { messageID : 'Lấy dữ liệu msgID bỏ vào đây' } //Dữ liệu gửi cho Server node bên kia.
-      socket.emit('clt-send-messageID', data);
-      socket.disconnect();
-    });
+      //Lắng nghe sự kiện kết nối thành công với Server node bên kia để gửi messages.
+      socket.on('sv-nodesv-is-connected', function(){
+        //Tạo model gửi thông tin cho Server node bên kia.
+        // model = {
+        //   messages: [{
+        //     msgID: number,
+        //     msgContent: string,
+        //     senderID: number
+        //     senderName: string,
+        //     senderEmail: string,
+        //     createdTime: dateTime
+        //   }];
+        //   paging: {
+        //     cursors:{
+        //       before: string,
+        //       after: string
+        //     },
+        //     next: string
+        //   },
+        //   conversationID: string
+        // }
+        var messages = [];
+        res.messages.data.forEach(function(d){
+          messages.push({
+            msgID: d.id,
+            msgContent: d.message,
+            senderID: d.from.id,
+            senderName: d.from.name,
+            senderEmail: d.from.email,
+            createdTime: d.created_time
+          });
+        });
+        var data = {
+          messages: messages,
+          paging: res.messages.paging,
+          conversationID: res.messages.id
+        }
+        socket.emit('clt-send-message-content', data);
+        socket.disconnect();
+      });
+    }
   });
   done();
 });

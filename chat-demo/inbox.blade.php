@@ -46,7 +46,7 @@
                                 [[message.message]]
                             </div>
                             <div class="chattime">
-                                <small>[[message.createTime]]</small>
+                                <small>[[message.createdTime]]</small>
                             </div>
                         </div>
                     </div>

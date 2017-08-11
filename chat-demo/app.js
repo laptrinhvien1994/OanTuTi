@@ -47,7 +47,7 @@ io.on('connection', function(socket){
   socket.emit('sv-nodesv-is-connected');
 
   //Lắng nghe tín hiệu từ phía server node.
-  socket.on('clt-send-messageID', function(data){
+  socket.on('clt-send-message-content', function(data){
     //var threadID = data.threadId;
     // //Nếu có accessToken rồi thì đi lấy nội dung của conversation
     // if(io.of(pageID).accessToken){
@@ -71,7 +71,7 @@ io.on('connection', function(socket){
     // }
 
     //Hoặc là gửi thẳng xuống User xử lý, User tự đi request lấy conversation.
-    io.to(pageID).emit('sv-send-messageID', data);
+    io.to(pageID).emit('sv-send-message-content', data);
   });
 
   //Lắng nghe tín hiệu khi User gửi accessToken.
