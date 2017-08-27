@@ -204,6 +204,7 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 	$scope.selectedChatData = null; //Nội dung tin nhắn của conversation đang được chọn.
 	$scope.pageAccessToken = null; //page Access Token để call Facebook API.
 	$scope.pageID = null; //page ID của page đang thao tác hiện tại.
+	$scope.pageName = null; //tên của page đang thao tác hiện tại.
 	$scope.conversations = null; //Danh sách các conversation bên tay trái.
 	$scope.chatSession = null; //----------------------chat session của anh Đạt
 	var pageIndex = 1; // Index để biết vị trí lấy tin nhắn.
@@ -303,9 +304,9 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 					message: d.message,
 					senderID: d.from.id,
 					senderName: d.from.name,
-					senderEmail: d.from.email,
+					//senderEmail: d.from.email,
 					createdTime: d.created_time,
-					tags: d.tags.data,
+					//tags: d.tags.data,
 					isMine: d.from.id == $scope.pageID,
 					msgID: d.id
 				});
@@ -373,35 +374,42 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 
 			//Đăng ký các sự kiện.
 			//khi có tin nhắn mới được được server gửi xuống
-			socket.on('sv-send-messageID', function(data){
-				var messageID = data.messageID;
-				var conversationID = data.id; // Xem fmappModel để rõ hơn.
-				//gọi Facebook API để lấy nội dung tin nhắn
-				facebookService.getMessageByMessageID(messageID)
-				.then(function(data){
+			socket.on('sv-send-message-content', function(data){
+				// model = {
+        //   messages: [{
+        //     msgID: number,
+        //     msgContent: string,
+        //     senderID: number
+        //     senderName: string,
+        //     senderEmail: string,
+        //     createdTime: dateTime
+        //   }];
+        //   paging: {
+        //     cursors:{
+        //       before: string,
+        //       after: string
+        //     },
+        //     next: string
+        //   },
+        //   conversationID: string
+        // }
+				var conversationID = data.conversationID;
 					//Đưa conversation đang chọn lên đầu danh sách conversation.
 					pushConversationToTopList(conversationID);
-					//Cập nhật trạng thái nếu là đúng với lại conversation đang chọn thì đi lấy tin nhắn và thêm vào, ko thì cập nhật bên trái.
+					//Cập nhật trạng thái nếu là đúng với lại conversation đang chọn thì thêm tin nhắn vào, ko thì cập nhật bên trái.
 					if(conversationID == $scope.selectedConversation.thread_id){
 						var chatDataObj = {
-							message: data.message,
-							created_time: data.created_time,
-							msgID: data.id,
-							senderID: data.from.id,
-							senderName: data.sender.name,
-							senderEmail: data.sender.email
-							isMine: data.from.id == $scope.pageID
+							message: data.messages[0].msgContent,
+							createdTime: data.messages[0].createdTime,
+							msgID: data.messages[0].msgID,
+							senderID: data.messages[0].senderID,
+							senderName: data.messages[0].senderName,
+							//senderEmail: data.messages[0].senderEmail,
+							isMine: false //data.messages[0].senderID == $scope.pageID
 						};
 						$scope.selectedChatData.data.push(chatDataObj);
 						$scope.$apply();
-					}else{
-
 					}
-				})
-				.catch(function(e){
-					console.log(e);
-					//Thông báo lỗi nếu cần.
-				});
 			});
 		}
 		openSocketConnection($scope.pageID);
@@ -409,20 +417,22 @@ function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 		//Gửi tin nhắn
 		$scope.sendMsg = function(){
 			var conversationID =  $scope.selectedConversation.thread_id;
-			var msgContent = $scope.msgContent;
+			var msgContent = angular.copy($scope.msgContent);
 			//Refresh lại textarea.
 			$scope.msgContent = null;
 
 			facebookService.sendMessage(conversationID, msgContent)
 			.then(function(data){
 				//Sau khi gửi thành công thì thêm tin nhắn đã gửi vào nội dung conversation hiện tại.
-				var msgObj = {
-					message: msgContent
-					from: {
-						id: $scope.pageID
-					}
+				var chatDataObj = {
+					message: msgContent,
+					createdTime: new Date(),
+					msgID: data.id,
+					senderID: $scope.pageID,
+					senderName: $scope.pageName,
+					isMine: true
 				}
-				$scope.selectedChatData.data.push(msgObj);
+				$scope.selectedChatData.data.push(chatDataObj);
 				//Cập nhật lại danh sách conversations bên tay trái, đưa conversation hiện tại lên đầu tiên.
 				pushConversationToTopList($scope.selectedConversation.thread_id);
 			})
