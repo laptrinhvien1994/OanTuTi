@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+ 
+  "name": "Suno POS Plugin",
+  "version": "0.1.0",
+  "description": "Plugin hỗ trợ tạo đơn hàng trên PM QLBH Suno.vn từ Fanpage Facebook",  
+  "content_scripts": [{
+    "css": [
+      "css/style.css",
+      "css/font-awesome.css",
+      "css/jquery.mCustomScrollbar.min.css"
+    ],
+    "js": [
+      "js/jquery.min.js",
+      "js/jquery.mCustomScrollbar.concat.min.js",
+      "js/angular.min.js",
+      "js/angular-animate.min.js",
+      "js/content.js",
+      "js/app.js"
+    ],
+    "matches": ["https://www.facebook.com/*"],
+    "run_at": "document_end"
+  }],
+  "permissions":[
+        "contextMenus", 
+        "tabs",
+        "http://*/*",
+        "https://*/*"
+        ],
+ "web_accessible_resources": ["*.*"]
+}
