@@ -1,0 +1,274 @@
+#tao-don-hang{
+	position: fixed;
+    right: 10px;
+    top: 8px;
+    z-index: 999999;
+    height: 27px;
+    padding: 0 10px 1px;
+    margin-bottom: 0;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 28px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular', sans-serif;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: none;
+    border-radius: 2px;
+    
+    color: #fff;
+    background-color: #3b5998;
+    /*border-color: #;*/
+}
+
+#tao-don-hang:hover{
+	background: rgba(0, 0, 0, .1);
+    color: #fff;
+}
+
+.pos-panel{
+    width: 240px;
+    display: none;
+    height: 100%;
+    background: #e9ebee;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 999999;
+    border-left: 1px solid #d0d1d5;
+    transition: 0.7s;
+}
+
+.close{
+    border: none;
+    background: none;
+    position: absolute;
+    bottom: 30px;
+    right: 20px;
+}
+
+.close:hover{
+    border-bottom: 2px solid #d0d1d5; 
+}
+
+.form-control{
+    padding: 20px;
+}
+
+.form-control input{
+    background-color: #fff;
+    border: 1px solid #d0d1d5;
+    border-radius: 3px;
+    box-sizing: border-box;
+    height: 26px;
+    width: 100%;
+    overflow: hidden;
+    padding-left: 5px;
+    padding-right: 48px;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.form-control .btn-login{
+    border: 1px solid;
+    border-radius: 2px;
+    box-sizing: content-box;
+    font-size: 12px;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    justify-content: center;
+    padding: 4px 8px;
+    position: relative;
+    text-align: center;
+    text-shadow: none;
+    vertical-align: middle;
+    background-color: #f6f7f9;
+    border-color: #ced0d4;
+    color: #4b4f56;
+    transition: 200ms cubic-bezier(.08,.52,.52,1) background-color, 200ms cubic-bezier(.08,.52,.52,1) box-shadow, 200ms cubic-bezier(.08,.52,.52,1) transform;
+}
+
+.btn-login:hover{
+    background-color: #e9ebee;
+}
+
+.btn-login:active{
+    box-shadow: none;
+    transform: scale(.98);
+}
+
+.form-control p{
+    margin: 0;
+}
+
+.margin-bottom-10{
+    margin-bottom: 10px;
+}
+
+input:focus,.btn-login:focus {outline:0;}
+
+.notification-panel{
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 4px;
+    margin: 5px;
+}
+
+.notification-panel .n-header{
+    font-weight: 700;
+}
+
+.success{
+    background-color: #fff9d7;
+    border: 1px solid #e2c822;
+}
+
+.error{
+    background: #ffdc87;
+    color: #b3791c;
+}
+
+.pos-header{
+    height: 42px;
+    overflow: hidden;
+    line-height: 42px;
+    text-align: right;
+    background-color: #3b5998;
+    border-bottom: 1px solid #29487d;
+    color: #fff;
+}
+
+.pos-header p{
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    font-weight: bold;
+    padding-right: 20px;
+}
+
+.item-input-wrapper{
+    background: #fff;
+    position: relative;
+}
+
+.product-search .item-input-wrapper i.fa-search{
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.product-search{
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #d0d1d5;
+    height: 23px;
+    line-height: 23px;
+}
+
+.product-search input{
+    border: none;
+    padding-left: 20px;
+    width: 180px;
+}
+
+.search-result{
+    background: #fff;
+    padding: 10px;
+}
+
+.search-result li{
+    border-bottom: 1px solid #eee;
+    padding: 5px 0;
+}
+
+
+
+/* AUTOCOMPLETE */
+
+.autocomplete
+{
+    width: 100%;
+    position: relative;
+}
+
+    .autocomplete input
+    {
+        /*font-size: 1.2em;
+        width: 100%;
+        padding: 0.4em;*/
+        width: 100%;
+        padding: 0.4em;
+    }
+
+    .autocomplete ul
+    {
+        position: absolute;
+        top: 29px;
+        left: 0;
+        width: 100%;
+/*        border-left: 1px solid #888;
+        border-right: 1px solid #888;
+        border-bottom: 1px solid #888;*/
+        border: 1px solid #ccc;
+        z-index: 1000;
+        max-height: 400px;
+        margin: 0px !important;
+        margin-top: -5px;
+        display:block;
+        height: auto !important;
+        box-shadow: 0 4px 6px 2px rgba(0, 0, 0, .10);
+    }
+
+    .autocomplete li
+    {
+        text-align: left;
+        list-style: none;
+        width: 100%;
+        padding:5px 5px 5px 5px;
+        background-color: #fff;
+    }
+
+        .autocomplete li p
+        {
+            height: 18px;
+            line-height: 18px;
+        }
+
+        .autocomplete li.active
+        {
+            width: 100%;
+            /*background-color: #4bf;*/
+            background-color: #ECF0F7;
+        }
+
+    .autocomplete .highlight
+    {
+        /*background-color: #E2E2E2;*/
+        background-color: #f9f9f9;
+    }
+
+    .autocomplete li.active .highlight
+    {
+        /*background: #666;*/
+        background-color: #f9f9f9;
+        color: #fff;
+    }
+
+    .autocomplete #txtSuggestProduct{
+        border-radius: 3px;
+        border: 1px solid white;
+        height: 16px;
+    }
+
+
+
+
+
+

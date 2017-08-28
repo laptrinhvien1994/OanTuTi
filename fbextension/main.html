@@ -1,0 +1,147 @@
+<div id="viewport" ng-controller="MainController">
+	<button id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
+	<div class="pos-panel" ng-style="panel">
+		<button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button>
+		
+		<div class="pos-header">
+			<p ng-if="userSession"><i class="fa fa-user"></i> {{userSession.displayName}}!</p>
+            <a class="_5lxs _3qct _p" id="pageLoginAnchor" role="button"><div class="_5lxt f_click" id="userNavigationLabel">Cài đặt tài khoản</div></a>
+		</div>
+
+		<div class="pos-body">
+			<!-- Bảng thông báo -->
+			<div class="notification-panel {{nClass}}" ng-if="nActived">
+				<div class="n-header">
+					{{n.header}}
+				</div>
+				<div class="n-body">
+					{{n.body}}
+				</div>
+			</div>
+			<!-- Bắt đầu màn hình POS -->
+			<!-- Màn hình Login -->
+			<div ng-if="!userSession">
+				<div class="form-control">
+					<h3 class="margin-bottom-10">Đăng nhập</h3>
+					<p>Email / Mã đăng nhập</p>
+					<div>
+						<input type="text" name="username" ng-model="username" autocomplete="off">
+					</div>
+					<p>Mật khẩu</p>
+					<div class="margin-bottom-10">
+						<input type="password" name="password" ng-model='password' autocomplete="off">
+					</div>
+					<div>
+						<button class="btn btn-login" ng-click="login(username,password)">Đăng nhập</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Màn hình POS -->
+			<div ng-if="userSession">
+				<!--<div class="product-search">
+					<label class="item-input-wrapper">
+						<i class="fa fa-search"></i>
+						<input type="text" name="search" ng-model="searchKey" placeholder="Tìm hàng hóa ... " autocomplete="off" ng-change="get_search_rs(searchKey)">
+						<i class="fa fa-close" ng-show="searchKey" ng-click="searchKey = null"></i>
+					</label>
+				</div>
+				<ul class="search-result" ng-show="searchKey">
+					<li ng-repeat="p in searchList.items" ng-click="pickProduct(p)">
+						<div><b>{{p.itemName}}</b></div>
+						<div>
+							<span>{{p.barcode}}</span> | 
+							<span>Tồn: {{p.qtyAvailable}}</span> | 
+							<span>{{p.retailPrice | number}}</span>
+						</div>
+					</li>
+				</ul>-->
+                <autocomplete attr-id="suggestProduct" attr-inputid="txtSuggestProduct" ng-model="searchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm kiếm hàng hóa" on-select="selectProduct" on-type="get_search_rs" data="searchList.items"></autocomplete>
+                <script type="text/x-angular-template" id="SuggestProductTemplate">
+                    <li suggestion ng-repeat="item in suggestions track by $index" index="{{ $index }}" val="{{item}}" ng-class="{ active: ($index === selectedIndex) }" ng-click="select(item, true)" style="cursor:pointer;">
+                        <table class="width-100">
+                            <tbody>
+                                <tr>
+                                    <td class="text-left">
+                                        <b>{{item.itemName}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-right nowrap">
+                                        Giá: <b>{{item.retailPrice}}</b> | Số lượng: <b>{{item.qtyAvailable}}</b>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                </script>
+				<div class="pos-orders">
+					<ul>
+						<li ng-repeat="item in selectedOrder.saleOrder.orderDetails">
+							<div>{{item.itemName}}</div>
+							<div>
+								<span>{{item.retailPrice | number}} x {{item.quantity}} = {{item.retailPrice * item.quantity | number}}</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+
+						<div class="uiContextualLayer _5v-0 _53il uiContextualLayerBelowRight" style="right: 0px;">
+						  <div class="_54nq _9jo _558b _2n_z" id="BLUE_BAR_ID_DO_NOT_USE">
+						      <div class="_54ng">
+						          <div class="uiScrollableArea fade uiScrollableAreaWithShadow">
+						              <div class="uiScrollableAreaWrap scrollable" id="js_10f" style="max-height: 500px;">
+						                  <div class="uiScrollableAreaBody" style="margin-right: -17px;">
+						                      <div class="uiScrollableAreaContent">
+						                          <ul class="_54nf" role="menu">
+						                              <li class="_54ni navSubmenu __MenuItem" role="presentation">
+						                                  <a class="_54nc" role="menuitem">
+						                                      <span>
+						                                          <span class="_54nh">Tạo đơn hàng</span>
+						                                      </span>
+						                                  </a>
+						                              </li>
+						                              <li class="_54ak __MenuItem" role="separator"></li>
+						                              <li class="_54ni navSubmenu __MenuItem" role="presentation" >
+						                                  <a class="_54nc" href="#" rel="dialog" role="menuitem">
+						                                      <span>
+						                                          <span class="_54nh">Tạo khách hàng</span>
+						                                      </span>
+						                                  </a>
+						                              </li>
+						                              <li class="_54ak __MenuItem" role="separator"></li>
+						                              <li class="_54ni navSubmenu __MenuItem" role="presentation" >
+						                                  <a class="_54nc" href="/campaign/landing.php?placement=tcr&amp;campaign_id=276899725739312&amp;extra_1=auto" role="menuitem">
+						                                      <span>
+						                                          <span class="_54nh">Quản lý</span>
+						                                      </span>
+						                                  </a>
+						                              </li>
+						                              <li class="_54ak __MenuItem" role="separator"></li>
+						                          <li class="_54ni navSubmenu __MenuItem" role="presentation">
+						                              <a class="_54nc" href="#" role="menuitem">
+						                                  <span>
+						                                      <span class="_54nh">
+						                                          <form class="_w0d" action="https://www.facebook.com/logout.php?button_name=logout&amp;button_location=settings" id="show_me_how_logout_1" method="post" onsubmit="return window.Event &amp;&amp; Event.__inlineSubmit &amp;&amp; Event.__inlineSubmit(this,event)">
+						                                              <input type="hidden" name="fb_dtsg" value="AQEJBMZxcp8M:AQFqV--Vg7Us" autocomplete="off">
+						                                              <input type="hidden" autocomplete="off" name="ref" value="mb">
+						                                              <input type="hidden" autocomplete="off" name="h" value="Afcn2Yel0aqTjeTm">
+						                                          </form>Đăng xuất
+						                                      </span>
+						                                  </span>
+						                              </a>
+						                          </li>
+						                      </ul>
+						                  </div>
+						              </div>
+						          </div>
+						          <div class="uiScrollableAreaTrack hidden_elem" style="opacity: 0;">
+						              <div class="">  </div>
+			                     </div>
+                             </div>
+                         </div>
+                    </div>
+                    <i class="_53io" style="left: 100%; margin-left: -28px;"></i>
+	</div>
+</div>
+
