@@ -198,7 +198,7 @@ window.FMAPPMODULE = angular.module('fbchat', [], function($interpolateProvider)
 			);
 		});
 	};
-});
+})
 .controller('Conversations', ['$scope', '$http', '$q', '$timeout', 'facebookService' ConversationsCtrl]);
 function ConversationsCtrl($scope, $http, $q, $timeout, facebookService){
 	$scope.selectedChatData = null; //Nội dung tin nhắn của conversation đang được chọn.
