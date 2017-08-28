@@ -95,6 +95,11 @@ window.addEventListener("load", function() {
 			$scope.closePanel = function(){
 				$scope.panel = {'display':'none'};
 			}
+
+			$scope.isShowMenu = false;
+			$scope.showHideMenu = function(){
+				$scope.isShowMenu = !$scope.isShowMenu;
+			}
 			
 			var saleOrder = {
 				"storeId": null,
@@ -251,6 +256,10 @@ window.addEventListener("load", function() {
 				    asynRequest($http, 'GET', url, null, $scope.userSession.accessToken, function(res,status){
 				      if(res){
 				        $scope.searchList = res.data;
+				        console.log(res.data);
+				        $scope.searchList.items.forEach(function(d){
+				        	d.img = d.image.thumbnail ? d.image.thumbnail : 'https://pos.suno.vn/Content/themes/ace/img/no-image.png';
+				        });
 				        $timeout(function(){
 							$('.search-result').mCustomScrollbar({
 								setHeight: 300,
@@ -270,9 +279,11 @@ window.addEventListener("load", function() {
 			}
 
 			$scope.pickProduct = function(item){
+				console.log(item);
 				item.quantity = 1;
 				$scope.selectedOrder.saleOrder.orderDetails.push(item);
 			}
+
 		});
 
 	    /* --- Made by justgoscha and licensed under MIT license --- */
