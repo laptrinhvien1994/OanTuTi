@@ -89,14 +89,18 @@ window.addEventListener("load", function() {
 				$scope.currentStore = $scope.stores.stores[0];
 			}
 			// Helper function
+			$scope.isOpening = false;
 			$scope.openPanel = function(){
 				$scope.panel = {'display':'block'};
+				$scope.isOpening = true;
 			}
 			$scope.closePanel = function(){
 				$scope.panel = {'display':'none'};
+				$scope.isOpening = false;
 			}
 
 			$scope.isShowMenu = false;
+
 			$scope.showHideMenu = function(){
 				$scope.isShowMenu = !$scope.isShowMenu;
 			}
@@ -299,7 +303,7 @@ window.addEventListener("load", function() {
                                 '<ul ng-show="completing" class="mCustomScrollbar" data-mcs-axis="y">',
                                     '$AutocompleteTemplate$',
                                 '</ul>',
-                                '<ul ng-show="searchParam && (suggestions == null || suggestions.length == 0)"><li>Không tìm thấy kết quả phù hợp</li></ul>',
+                                '<ul id="no-result" ng-show="searchParam && (suggestions == null || suggestions.length == 0)"><li>Không tìm thấy kết quả phù hợp</li></ul>',
                             '</div>'];
 
 		    return {

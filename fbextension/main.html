@@ -1,6 +1,6 @@
 <div id="viewport" ng-controller="MainController">
-    <button id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
-    <div class="pos-panel" ng-style="panel">
+    <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
+    <div class="pos-panel" ng-style="panel" style="position: fixed;">
         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button>
 
         <div class="pos-header">
@@ -18,23 +18,23 @@
                                                 <li class="_54ni navSubmenu __MenuItem" role="presentation">
                                                     <a class="_54nc" role="menuitem">
                                                         <span>
-                                                                  <span class="_54nh">Tạo đơn hàng</span>
+                                                              <span class="_54nh">Tạo đơn hàng</span>
                                                         </span>
                                                     </a>
                                                 </li>
                                                 <li class="_54ak __MenuItem" role="separator"></li>
                                                 <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" href="#" rel="dialog" role="menuitem">
+                                                    <a class="_54nc" href="#" role="menuitem">
                                                         <span>
-                                                                  <span class="_54nh">Tạo khách hàng</span>
+                                                              <span class="_54nh">Tạo khách hàng</span>
                                                         </span>
                                                     </a>
                                                 </li>
                                                 <li class="_54ak __MenuItem" role="separator"></li>
                                                 <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" href="/campaign/landing.php?placement=tcr&amp;campaign_id=276899725739312&amp;extra_1=auto" role="menuitem">
+                                                    <a class="_54nc" href="https://pos.suno.vn" target="_blank" role="menuitem">
                                                         <span>
-                                                                  <span class="_54nh">Quản lý</span>
+                                                              <span class="_54nh">Quản lý</span>
                                                         </span>
                                                     </a>
                                                 </li>
@@ -43,11 +43,7 @@
                                                     <a class="_54nc" href="#" role="menuitem">
                                                         <span>
                                                               <span class="_54nh">
-                                                                  <form class="_w0d" action="https://www.facebook.com/logout.php?button_name=logout&amp;button_location=settings" id="show_me_how_logout_1" method="post" onsubmit="return window.Event &amp;&amp; Event.__inlineSubmit &amp;&amp; Event.__inlineSubmit(this,event)">
-                                                                      <input type="hidden" name="fb_dtsg" value="AQEJBMZxcp8M:AQFqV--Vg7Us" autocomplete="off">
-                                                                      <input type="hidden" autocomplete="off" name="ref" value="mb">
-                                                                      <input type="hidden" autocomplete="off" name="h" value="Afcn2Yel0aqTjeTm">
-                                                                  </form>Đăng xuất
+                                                                    Đăng xuất
                                                               </span>
                                                         </span>
                                                     </a>
@@ -120,16 +116,16 @@
                 <autocomplete attr-id="suggestProduct" attr-inputid="txtSuggestProduct" ng-model="searchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm kiếm hàng hóa" on-select="pickProduct" on-type="get_search_rs" data="searchList.items"></autocomplete>
                 <script type="text/x-angular-template" id="SuggestProductTemplate">
                     <li suggestion ng-repeat="item in suggestions track by $index" index="{{ $index }}" val="{{item}}" ng-class="{ active: ($index === selectedIndex) }" ng-click="select(item)" style="cursor:pointer;">
-                        <table class="width-100" border="1">
+                        <table class="width-100">
                             <tbody>
                                 <tr>
-                                    <td rowspan="2"><img width="24" ng-src="{{item.img}}"/></td>
+                                    <td rowspan="2"><img width="31" height="31" style="border: 1px solid #ccc" ng-src="{{item.img}}"/></td>
                                     <td class="text-left">
                                         <b>{{item.itemName}}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="text-right nowrap">
+                                    <td class="text-right nowrap" style="padding-left: 3px;">
                                         Giá: <b>{{item.retailPrice}}</b> | Số lượng: <b>{{item.qtyAvailable}}</b>
                                     </td>
                                 </tr>
