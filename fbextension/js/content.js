@@ -100,9 +100,45 @@ window.addEventListener("load", function() {
 			}
 
 			$scope.isShowMenu = false;
+			$scope.isOpenDiscountPopOver = false;
 
 			$scope.showHideMenu = function(){
 				$scope.isShowMenu = !$scope.isShowMenu;
+			}
+
+			$scope.focusInput = function(){
+				if($scope.isShowMenu){
+					$scope.isShowMenu = false;	
+				} 
+			}
+
+			$scope.removeItem = function(item){
+				console.log(item);
+			}
+
+			//Prevent negative or null value in quantity textbox of item.
+			$scope.quantityChange = function(item){
+				if(item.quantity == null || item.quantity == 'undefined' || item.quantity == 0 || item.quantity < 1){
+					item.quantity = 1;
+				}
+			}
+
+			$scope.itemHover = function($event){
+				$event.currentTarget.childNodes[9].style.backgroundImage = "url('https://www.facebook.com/rsrc.php/v3/yx/r/ogYrclupeJV.png')";
+			}
+
+			$scope.itemLeave = function($event){
+				$event.currentTarget.childNodes[9].style.backgroundImage = "none";
+			}
+
+			$scope.showHideDiscountPopOver = function(item){
+				$scope.isOpenDiscountPopOver = !$scope.isOpenDiscountPopOver;
+				console.log($('#id_'+item.itemId).position());
+				console.log($('#pos-orders').outerHeight());
+			}
+
+			$scope.closeDiscountPopOver = function(){
+				$scope.isOpenDiscountPopOver = false;
 			}
 			
 			var saleOrder = {
@@ -280,24 +316,46 @@ window.addEventListener("load", function() {
 
 			$scope.selectedOrder = {
 				'saleOrder' : saleOrder
-			}
+			};
+
+
 
 			$scope.pickProduct = function(item){
-				console.log(item);
-				item.quantity = 1;
-				$scope.selectedOrder.saleOrder.orderDetails.push(item);
+				var index = $scope.selectedOrder.saleOrder.orderDetails.findIndex(function(i){
+					return i.itemId == item.itemId;
+				});
+				if(index != -1){
+					$scope.selectedOrder.saleOrder.orderDetails[index].quantity++;
+				}
+				else{
+					item.quantity = 1;
+					$scope.selectedOrder.saleOrder.orderDetails.push(item);
+				}
+			}
+
+			$scope.removeItem = function(item){
+				var index = $scope.selectedOrder.saleOrder.orderDetails.indexOf(item);
+				$scope.selectedOrder.saleOrder.orderDetails.splice(index, 1);
 			}
 
 		});
 
 	    /* --- Made by justgoscha and licensed under MIT license --- */
-
+	    app.filter('charLimit', function(){
+	    	return function(text, maxChar){
+	    		if(text.length > maxChar){
+	    			var txt = text.slice(0, maxChar) + "...";
+	    			return txt;
+	    		}
+	    		return text;
+	    	}
+	    })
 		app.directive('autocomplete', ['$compile', function ($compile) {
 		    var index = -1;
 
 		    var template = ['<div class="autocomplete {{attrs.class}}" id="{{attrs.id}}">',
                                 '<span class="input-icon input-icon-right" style="width:100%;">',
-                                    '<input type="text" ng-model="searchParam" placeholder="{{attrs.placeholder}}" class="{{attrs.inputclass}}" id="{{attrs.inputid}}" autocomplete="off" />',
+                                    '<input type="text" ng-model="searchParam" placeholder="{{attrs.placeholder}}" class="{{attrs.inputclass}}" id="{{attrs.inputid}}" autocomplete="off" ng-focus="onFocus()" />',
                                     '<i class="icon-remove red" style="cursor:pointer;" ng-show="searchParam" ng-click="removeText()"></i>',
                                 '</span>',
                                 '<ul ng-show="completing" class="mCustomScrollbar" data-mcs-axis="y">',
@@ -312,7 +370,8 @@ window.addEventListener("load", function() {
 		            searchParam: '=ngModel',
 		            suggestions: '=data',
 		            onType: '=onType',
-		            onSelect: '=onSelect'
+		            onSelect: '=onSelect',
+		            onFocus: '=onFocus'
 		        },
 		        controller: ['$scope', '$element', '$attrs', '$timeout', function ($scope, $element, $attrs, $timeout) {
 		            function $scopeApply() {

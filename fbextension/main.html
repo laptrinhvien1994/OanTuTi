@@ -4,7 +4,7 @@
         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button>
 
         <div class="pos-header">
-            <p ng-if="userSession" style="cursor: pointer;" ng-click="showHideMenu()"><i class="fa fa-user"></i> {{userSession.displayName}}</p>
+            <p ng-if="userSession" style="cursor: pointer;" ng-click="showHideMenu()">{{userSession.displayName}}</p>
 
                 <!--div Logout PopOver-->
                 <div ng-if="isShowMenu" class="uiContextualLayer _5v-0 _53il uiContextualLayerBelowRight" style="right: 10px; top: 25px; z-index: 1000;">
@@ -113,15 +113,15 @@
                         </div>
                     </li>
                 </ul>-->
-                <autocomplete attr-id="suggestProduct" attr-inputid="txtSuggestProduct" ng-model="searchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm kiếm hàng hóa" on-select="pickProduct" on-type="get_search_rs" data="searchList.items"></autocomplete>
+                <autocomplete attr-id="suggestProduct" attr-inputid="txtSuggestProduct" ng-model="searchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm kiếm hàng hóa" on-select="pickProduct" on-type="get_search_rs" on-focus="focusInput" data="searchList.items"></autocomplete>
                 <script type="text/x-angular-template" id="SuggestProductTemplate">
                     <li suggestion ng-repeat="item in suggestions track by $index" index="{{ $index }}" val="{{item}}" ng-class="{ active: ($index === selectedIndex) }" ng-click="select(item)" style="cursor:pointer;">
                         <table class="width-100">
                             <tbody>
                                 <tr>
-                                    <td rowspan="2"><img width="31" height="31" style="border: 1px solid #ccc" ng-src="{{item.img}}"/></td>
+                                    <td rowspan="2"><img width="31" height="31" style="border: 1px solid #e2e2e2" ng-src="{{item.img}}"/></td>
                                     <td class="text-left">
-                                        <b>{{item.itemName}}
+                                        <b>{{item.itemName | charLimit:27}}
                                     </td>
                                 </tr>
                                 <tr>
@@ -133,15 +133,32 @@
                         </table>
                     </li>
                 </script>
-                <div class="pos-orders">
-                    <ul>
-                        <li ng-repeat="item in selectedOrder.saleOrder.orderDetails">
-                            <div>{{item.itemName}}</div>
-                            <div>
-                                <span>{{item.retailPrice | number}} x {{item.quantity}} = {{item.retailPrice * item.quantity | number}}</span>
+                <div id="pos-orders" ng-if="selectedOrder.saleOrder.orderDetails.length > 0">
+                    <ul class="mCustomScrollbar" data-mcs-axis="y">
+                        <li ng-repeat="item in selectedOrder.saleOrder.orderDetails" class="items-in-orderList" ng-mouseleave="itemLeave($event)" ng-mouseover="itemHover($event)">
+                            <div class="item-name">
+                                <a ng-href="https://pos.suno.vn/Manage/#/product/detail/{{item.productId}}" target="_blank" title="{{item.itemName}}">{{item.itemName | charLimit:30}}</a> &nbsp;
+                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="15" height="15" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
                             </div>
+                            <div>
+                                <span class="color-1">Đơn giá: {{item.retailPrice | number}}</span>
+                            </div>
+                            <div>
+                                <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"/> </span>
+                            </div>
+                            <div>
+                                <span class="color-1">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>
+                            </div>
+                            <div class="remove-button" ng-click="removeItem(item)"></div>
                         </li>
                     </ul>
+                </div>
+
+                <div class="mypopover" ng-if="isOpenDiscountPopOver">
+                    <div class="triangle"></div>
+                    <div class="popover-content">
+                        
+                    </div>
                 </div>
             </div>
         </div>
