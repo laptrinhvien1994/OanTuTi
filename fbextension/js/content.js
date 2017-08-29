@@ -133,10 +133,21 @@ window.addEventListener("load", function() {
 
 			$scope.showHideDiscountPopOver = function(item){
 				$scope.isOpenDiscountPopOver = !$scope.isOpenDiscountPopOver;
-				console.log($('#id_'+item.itemId).position());
-				console.log($('#pos-orders').outerHeight());
-			}
-
+			// 	var index = $scope.selectedOrder.saleOrder.orderDetails.findIndex(function(i){
+			// 		return i.itemId == item.itemId;
+			// 	}); 
+			// 	var coordinate = $('#id_'+item.itemId).position(); 
+			// 	var liHeight = $('.items-in-orderList')[0].offsetHeight;
+			// 	var topHeight = coordinate.top;
+			// 	var itemHeight = ($scope.selectedOrder.saleOrder.orderDetails.length - index - 1) * liHeight;
+			// 	var topValue = topHeight - liHeight + 15 - itemHeight; //14px is img gift height
+			// 	var leftValue = coordinate.left - 44;
+			// 	$('div#popover2').css({ 
+			// 		'top' : topValue + 'px',
+			// 		'left' : leftValue + 'px'
+			// 	});
+			// 	console.log($('#mCSB_2_container'));
+			 }
 			$scope.closeDiscountPopOver = function(){
 				$scope.isOpenDiscountPopOver = false;
 			}

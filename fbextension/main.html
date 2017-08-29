@@ -137,8 +137,7 @@
                     <ul class="mCustomScrollbar" data-mcs-axis="y">
                         <li ng-repeat="item in selectedOrder.saleOrder.orderDetails" class="items-in-orderList" ng-mouseleave="itemLeave($event)" ng-mouseover="itemHover($event)">
                             <div class="item-name">
-                                <a ng-href="https://pos.suno.vn/Manage/#/product/detail/{{item.productId}}" target="_blank" title="{{item.itemName}}">{{item.itemName | charLimit:30}}</a> &nbsp;
-                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="15" height="15" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
+                                <a ng-href="https://pos.suno.vn/Manage/#/product/detail/{{item.productId}}" target="_blank" title="{{item.itemName}}">{{item.itemName | charLimit:33}}</a>
                             </div>
                             <div>
                                 <span class="color-1">Đơn giá: {{item.retailPrice | number}}</span>
@@ -147,18 +146,16 @@
                                 <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"/> </span>
                             </div>
                             <div>
-                                <span class="color-1">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>
+                                <span class="color-1">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>&nbsp;&nbsp;
+                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
                             </div>
                             <div class="remove-button" ng-click="removeItem(item)"></div>
                         </li>
+                        <div class="mypopover" id="popover2" ng-show="isOpenDiscountPopOver">
+                            <div class="triangle"></div>
+                            <div class="popover-content"></div>
+                        </div>
                     </ul>
-                </div>
-
-                <div class="mypopover" ng-if="isOpenDiscountPopOver">
-                    <div class="triangle"></div>
-                    <div class="popover-content">
-                        
-                    </div>
                 </div>
             </div>
         </div>
