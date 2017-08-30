@@ -2,68 +2,66 @@
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
     <div class="pos-panel" ng-style="panel" style="position: fixed;">
         <div id="backdrop" ng-show="isOpenDiscountPopOver" ng-click="hideBackdrop()"></div>
-<!--         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button> -->
+        <!--         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button> -->
 
         <div class="pos-header">
             <p ng-if="userSession" style="cursor: pointer;" ng-click="showHideMenu()">{{userSession.displayName}}</p>
 
-                <!--div Logout PopOver-->
-                <div ng-if="isShowMenu" class="uiContextualLayer _5v-0 _53il uiContextualLayerBelowRight" style="right: 10px; top: 25px; z-index: 1000;">
-                    <div class="_54nq _9jo _558b _2n_z" id="BLUE_BAR_ID_DO_NOT_USE">
-                        <div class="_54ng">
-                            <div class="uiScrollableArea fade uiScrollableAreaWithShadow">
-                                <div class="uiScrollableAreaWrap scrollable" id="js_10f" style="max-height: 500px;">
-                                    <div class="uiScrollableAreaBody" style="margin-right: -17px;">
-                                        <div class="uiScrollableAreaContent">
-                                            <ul class="_54nf" role="menu">
-                                                <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" role="menuitem">
-                                                        <span>
-                                                              <span class="_54nh">Tạo đơn hàng</span>
+            <!--div Logout PopOver-->
+            <div ng-if="isShowMenu" class="uiContextualLayer _5v-0 _53il uiContextualLayerBelowRight" style="right: 10px; top: 25px; z-index: 1000;">
+                <div class="_54nq _9jo _558b _2n_z" id="BLUE_BAR_ID_DO_NOT_USE">
+                    <div class="_54ng">
+                        <div class="uiScrollableArea fade uiScrollableAreaWithShadow">
+                            <div class="uiScrollableAreaWrap scrollable" id="js_10f" style="max-height: 500px;">
+                                <div class="uiScrollableAreaBody" style="margin-right: -17px;">
+                                    <div class="uiScrollableAreaContent">
+                                        <ul class="_54nf" role="menu">
+                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
+                                                <a class="_54nc" role="menuitem">
+                                                    <span>
+                                                        <span class="_54nh">Tạo đơn hàng</span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="_54ak __MenuItem" role="separator"></li>
+                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
+                                                <a class="_54nc" href="#" role="menuitem">
+                                                    <span>
+                                                        <span class="_54nh">Tạo khách hàng</span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="_54ak __MenuItem" role="separator"></li>
+                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
+                                                <a class="_54nc" href="https://pos.suno.vn" target="_blank" role="menuitem">
+                                                    <span>
+                                                        <span class="_54nh">Quản lý</span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="_54ak __MenuItem" role="separator"></li>
+                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
+                                                <a class="_54nc" href="#" role="menuitem">
+                                                    <span>
+                                                        <span class="_54nh">
+                                                            Đăng xuất
                                                         </span>
-                                                    </a>
-                                                </li>
-                                                <li class="_54ak __MenuItem" role="separator"></li>
-                                                <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" href="#" role="menuitem">
-                                                        <span>
-                                                              <span class="_54nh">Tạo khách hàng</span>
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="_54ak __MenuItem" role="separator"></li>
-                                                <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" href="https://pos.suno.vn" target="_blank" role="menuitem">
-                                                        <span>
-                                                              <span class="_54nh">Quản lý</span>
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="_54ak __MenuItem" role="separator"></li>
-                                                <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                    <a class="_54nc" href="#" role="menuitem">
-                                                        <span>
-                                                              <span class="_54nh">
-                                                                    Đăng xuất
-                                                              </span>
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
-                                <div class="uiScrollableAreaTrack hidden_elem" style="opacity: 0;">
-                                    <div class=""> </div>
-                                </div>
+                            </div>
+                            <div class="uiScrollableAreaTrack hidden_elem" style="opacity: 0;">
+                                <div class=""> </div>
                             </div>
                         </div>
                     </div>
-                    <i class="_53io" style="left: 100%; margin-left: -28px;"></i>
                 </div>
-                <!--End div Logout PopOver-->
-
-
+                <i class="_53io" style="left: 100%; margin-left: -28px;"></i>
+            </div>
+            <!--End div Logout PopOver-->
         </div>
 
         <div class="pos-body">
@@ -108,8 +106,8 @@
                     <li ng-repeat="p in searchList.items" ng-click="pickProduct(p)">
                         <div><b>{{p.itemName}}</b></div>
                         <div>
-                            <span>{{p.barcode}}</span> | 
-                            <span>Tồn: {{p.qtyAvailable}}</span> | 
+                            <span>{{p.barcode}}</span> |
+                            <span>Tồn: {{p.qtyAvailable}}</span> |
                             <span>{{p.retailPrice | number}}</span>
                         </div>
                     </li>
@@ -120,9 +118,9 @@
                         <table class="width-100">
                             <tbody>
                                 <tr>
-                                    <td rowspan="2"><img width="31" height="31" style="border: 1px solid #e2e2e2" ng-src="{{item.img}}"/></td>
+                                    <td rowspan="2"><img width="31" height="31" style="border: 1px solid #e2e2e2" ng-src="{{item.img}}"></td>
                                     <td class="text-left">
-                                        <b>{{item.itemName | charLimit:27}}
+                                        <b>{{item.itemName | charLimit:27}}</b>
                                     </td>
                                 </tr>
                                 <tr>
@@ -143,10 +141,10 @@
                             <div>
                                 <span class="color-1">Đơn giá: {{item.retailPrice | number}}</span>
                                 &nbsp;
-                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
+                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png" /></span>
                             </div>
                             <div>
-                                <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"/> </span>
+                                <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"> </span>
                             </div>
                             <div>
                                 <span class="color-1" data-title="Title" data-content="Content..." data-placement="right">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>&nbsp;&nbsp;
@@ -169,7 +167,7 @@
                                         <span class="label">Giá mới</span>
                                     </td>
                                     <td>
-                                        <input class="input" type="text"/>
+                                        <input class="input" type="text">
                                     </td>
                                     <td class="td3">
                                         <span ng-show="isDiscountByPercent" class="percent-sign">%</span>
@@ -181,36 +179,99 @@
                                         <span class="label">Giảm giá</span>
                                     </td>
                                     <td>
-                                        <input class="input" type="text"/>
+                                        <input class="input" type="text">
                                     </td>
                                     <td>
                                         <label class="switch">
-                                          <input type="checkbox" ng-model="isDiscountByPercent">
-                                          <span class="slider"></span>
+                                            <input type="checkbox" ng-model="isDiscountByPercent">
+                                            <span class="slider"></span>
                                         </label>
                                     </td>
                                 </tr>
                             </table>
-                            
+
                             <span class="group-control">
                                 &nbsp;
-                                <input type="button" class="button" value="5%"/>
-                                <input type="button" class="button" value="10%"/>
-                                <input type="button" class="button" value="15%"/>
+                                <input type="button" class="button" value="5%">
+                                <input type="button" class="button" value="10%">
+                                <input type="button" class="button" value="15%">
                             </span>
                         </div>
                     </div>
                 </div>
+
                 <div id="pay">
-                    <span>Tiền hàng: </span><br/>
-                    <span>Giảm giá: </span><br/>
-                    <span>Số lượng: </span><br/>
-                    <span>Phí vận chuyển: </span><br/>
-                    <span>Thanh toán: </span><br/>
-                    <span>Khách đưa: </span><br/>
-                    <span>Còn nợ: </span><br/>
-                    <span>Tiền thừa: </span><br/>
-                    <span>Khách hàng: </span>
+
+                    <table>
+                        <tr>
+                            <td>
+                                <span>Tiền hàng:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span>Giảm giá:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="separator2"></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <span title="Phí vận chuyển">Phí VC:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span>Tổng cộng:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="separator2"></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <span>Thanh toán:</span>
+                            </td>
+                            <td>
+                                100000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span>Khách đưa:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td>
+                                <span>Còn nợ:</span>
+                            </td>
+                            <td>
+                                100.000
+                            </td>
+                        </tr>
+                    </table>
+                    <div id="toolbar">
+                        <span id="total">TỔNG CỘNG: 100.000</span>
+                        <span class="toolbar-icon icon1"></span>
+                        <span class="toolbar-icon icon2"></span>
+                    </div>
                 </div>
             </div>
         </div>
