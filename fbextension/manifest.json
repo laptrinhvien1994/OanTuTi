@@ -8,7 +8,8 @@
     "css": [
       "css/style.css",
       "css/font-awesome.css",
-      "css/jquery.mCustomScrollbar.min.css"
+      "css/jquery.mCustomScrollbar.min.css",
+      "css/jquery.webui-popover.css"
     ],
     "js": [
       "js/jquery.min.js",
@@ -16,9 +17,10 @@
       "js/angular.min.js",
       "js/angular-animate.min.js",
       "js/content.js",
-      "js/app.js"
+      "js/app.js",
+      "js/jquery.webui-popover.js"
     ],
-    "matches": ["file:///C:/Users/HP/Desktop/OanTuTi/fbextension/index.html"],
+    "matches": ["file:///D:/OanTuTi/fbextension/index.html"],
     "run_at": "document_end"
   }],
   "permissions":[

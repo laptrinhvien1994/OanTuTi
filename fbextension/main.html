@@ -1,7 +1,8 @@
 <div id="viewport" ng-controller="MainController">
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
     <div class="pos-panel" ng-style="panel" style="position: fixed;">
-        <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button>
+        <div id="backdrop" ng-show="isOpenDiscountPopOver" ng-click="hideBackdrop()"></div>
+<!--         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button> -->
 
         <div class="pos-header">
             <p ng-if="userSession" style="cursor: pointer;" ng-click="showHideMenu()">{{userSession.displayName}}</p>
@@ -141,21 +142,75 @@
                             </div>
                             <div>
                                 <span class="color-1">Đơn giá: {{item.retailPrice | number}}</span>
+                                &nbsp;
+                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
                             </div>
                             <div>
                                 <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"/> </span>
                             </div>
                             <div>
-                                <span class="color-1">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>&nbsp;&nbsp;
-                                <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
+                                <span class="color-1" data-title="Title" data-content="Content..." data-placement="right">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>&nbsp;&nbsp;
                             </div>
                             <div class="remove-button" ng-click="removeItem(item)"></div>
                         </li>
-                        <div class="mypopover" id="popover2" ng-show="isOpenDiscountPopOver">
-                            <div class="triangle"></div>
-                            <div class="popover-content"></div>
-                        </div>
                     </ul>
+                </div>
+                <div class="mypopover" id="popover2" ng-show="isOpenDiscountPopOver">
+                    <div class="triangle"></div>
+                    <div class="popover-content">
+                        <div class="popover-title">
+                            <span>Giảm giá</span>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="popover-body">
+                            <table>
+                                <tr>
+                                    <td>
+                                        <span class="label">Giá mới</span>
+                                    </td>
+                                    <td>
+                                        <input class="input" type="text"/>
+                                    </td>
+                                    <td class="td3">
+                                        <span ng-show="isDiscountByPercent" class="percent-sign">%</span>
+                                        <span ng-show="!isDiscountByPercent" class="currency-sign">VNĐ</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="label">Giảm giá</span>
+                                    </td>
+                                    <td>
+                                        <input class="input" type="text"/>
+                                    </td>
+                                    <td>
+                                        <label class="switch">
+                                          <input type="checkbox" ng-model="isDiscountByPercent">
+                                          <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <span class="group-control">
+                                &nbsp;
+                                <input type="button" class="button" value="5%"/>
+                                <input type="button" class="button" value="10%"/>
+                                <input type="button" class="button" value="15%"/>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="pay">
+                    <span>Tiền hàng: </span><br/>
+                    <span>Giảm giá: </span><br/>
+                    <span>Số lượng: </span><br/>
+                    <span>Phí vận chuyển: </span><br/>
+                    <span>Thanh toán: </span><br/>
+                    <span>Khách đưa: </span><br/>
+                    <span>Còn nợ: </span><br/>
+                    <span>Tiền thừa: </span><br/>
+                    <span>Khách hàng: </span>
                 </div>
             </div>
         </div>

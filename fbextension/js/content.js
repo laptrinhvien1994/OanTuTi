@@ -133,23 +133,58 @@ window.addEventListener("load", function() {
 
 			$scope.showHideDiscountPopOver = function(item){
 				$scope.isOpenDiscountPopOver = !$scope.isOpenDiscountPopOver;
-			// 	var index = $scope.selectedOrder.saleOrder.orderDetails.findIndex(function(i){
-			// 		return i.itemId == item.itemId;
-			// 	}); 
-			// 	var coordinate = $('#id_'+item.itemId).position(); 
-			// 	var liHeight = $('.items-in-orderList')[0].offsetHeight;
-			// 	var topHeight = coordinate.top;
-			// 	var itemHeight = ($scope.selectedOrder.saleOrder.orderDetails.length - index - 1) * liHeight;
-			// 	var topValue = topHeight - liHeight + 15 - itemHeight; //14px is img gift height
-			// 	var leftValue = coordinate.left - 44;
-			// 	$('div#popover2').css({ 
-			// 		'top' : topValue + 'px',
-			// 		'left' : leftValue + 'px'
-			// 	});
-			// 	console.log($('#mCSB_2_container'));
+				//Nếu mà hiện thì mới tính position.
+				if($scope.isOpenDiscountPopOver){
+					$timeout(function(){
+					console.log($('div#popover2').offset());
+					console.log($('#id_'+item.itemId).offset());
+					var popOverPosition = $('div#popover2').offset();
+					var giftButtonPosition = $('#id_'+item.itemId).offset();
+					var topOffset = giftButtonPosition.top + 15;
+					var leftOffset = giftButtonPosition.left - 94;
+					$('div#popover2').offset({ top: topOffset, left: leftOffset });
+					}, 0);	
+				}
+				else{
+					$('div#popover2').css({
+						top : 0,
+						left : -9999
+					});
+				}
+				
+				
+				// var index = $scope.selectedOrder.saleOrder.orderDetails.findIndex(function(i){
+				// 	return i.itemId == item.itemId;
+				// }); 
+				// console.log($('#id_'+item.itemId).offset());
+				// console.log($('div#popover2').offset());
+				// var coordinate = $('#id_'+item.itemId).position(); 
+				// var liHeight = $('.items-in-orderList')[0].offsetHeight;
+				// var topHeight = coordinate.top;
+				// var itemHeight = ($scope.selectedOrder.saleOrder.orderDetails.length - index - 1) * liHeight;
+				// var topValue = topHeight - liHeight + 15 - itemHeight; //14px is img gift height
+				// var leftValue = coordinate.left - 44;
+				// $('div#popover2').css({ 
+				// 	'top' : topValue + 'px',
+				// 	'left' : leftValue + 'px'
+				// });
+				// //console.log($('#mCSB_2_container'));
+				//$('#id_' + item.itemId).webuiPopover({title:'Title111',content:'Content'});
 			 }
+
 			$scope.closeDiscountPopOver = function(){
 				$scope.isOpenDiscountPopOver = false;
+			}
+
+			$scope.hideBackdrop = function(){
+				$scope.isOpenDiscountPopOver = false;
+			}
+
+			$scope.isDiscountByPercent = false;
+
+			$scope.changeDiscountMethod = function(){
+				debugger;
+				$scope.isDiscountByPercent = !$scope.isDiscountByPercent;
 			}
 			
 			var saleOrder = {

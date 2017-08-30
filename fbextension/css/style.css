@@ -348,7 +348,7 @@ input:focus,.btn-login:focus {outline:0;}
 
 .img-gift{
     position: absolute;
-    top: 63px;
+    top: 28px;
     cursor: pointer;
 }
 
@@ -360,34 +360,190 @@ input:focus,.btn-login:focus {outline:0;}
     height: 0px;
     position: relative;
     top: 0px;
-    left: 50px;
-    z-index: 98;
+    left: -9999px;
+    z-index: 2501;
 }
 
 .triangle{
     position: absolute;
     top: 0px;
-    left: 43px;
+    left: 93px;
     background-image: url('https://www.facebook.com/rsrc.php/v3/y6/r/1UKIfoIqCEo.png');
     background-repeat: no-repeat;
     background-size: auto;
     background-position: -134px -196px;
     height: 8px;
     width: 16px;
-    z-index: 100;
+    z-index: 1003;
 }
 
 .popover-content{
     position: absolute;
     top: 7px;
-    width: 100px;
-    height: 100px;
-    z-index: 99;
+    width: 200px;
+    height: 133px;
+    z-index: 1002;
     background-clip: padding-box;
     background-color: #fff;
     border: 1px solid rgba(0, 0, 0, .15);
     border-radius: 3px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+}
+
+.popover-content .popover-title{
+    width: 100%;
+    height: 25px;
+    text-align: center;
+    padding-top: 9px;
+    font-weight: bold;
+}
+
+.popover-content .popover-body{
+    width: 93%;
+    height: 85px;
+    margin-left: 3.5%;
+    margin-top: 8px;
+}
+
+.popover-content .popover-body .input{
+    width: 75px;
+    text-align: center;
+    border: 1px solid rgb(226, 226, 226);
+    border-radius: 3px;
+}
+
+.popover-content .popover-body .button{
+    background-color: #4267b2;
+    border: 1px solid #4267b2;
+    color: white;
+    font-weight: bold;
+    border-radius: 2px;
+    padding: 3px 16px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.popover-content .popover-body .label{
+    font-weight: bold;
+}
+
+.popover-content .popover-body .td3{
+    position: relative;
+}
+
+.popover-content .popover-body .percent-sign{
+    position: absolute;
+    top: 27px;
+    left: 8px;
+    font-size: 9px;
+    font-weight: bold;
+    z-index: 1005;
+    color: white;
+}
+
+.popover-content .popover-body .currency-sign{
+    position: absolute;
+    top: 28px;
+    left: 17px;
+    font-size: 8px;
+    font-weight: bold;
+    z-index: 1005;
+    color: white;
+}
+
+.popover-content .popover-body .group-control{
+    
+}
+
+.separator {
+    width: 92%;
+    height: 1px;
+    border-top: 1px solid #e2e2e2;
+    margin-left: 4%;
+}
+
+#backdrop{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    z-index: 1001;
+}
+
+
+
+/*RECTANGLE CHECKBOX*/
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 35px;
+  height: 16px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {display:none;}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #a0a7b2;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 3px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 10px;
+  width: 10px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #4267b2;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4267b2;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(19px);
+  -ms-transform: translateX(19px);
+  transform: translateX(19px);
+}
+
+
+/*PAY CSS*/
+#pay{
+    padding: 7px;
+    height: 200px;
+    width: 100%;
+    background-color: #fff;
+    position: fixed;
+    bottom: 0px;
+    border-radius: 3px;
+    border: 1px solid;
+    border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+}
+
+#pay span{
+    font-weight: bold;
+    padding-bottom: 20px;
 }
 
 
