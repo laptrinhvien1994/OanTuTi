@@ -20,7 +20,7 @@
       "js/app.js",
       "js/jquery.webui-popover.js"
     ],
-    "matches": ["file:///D:/OanTuTi/fbextension/index.html"],
+    "matches": ["file:///C:/Users/HP/Desktop/OanTuTi/fbextension/index.html"],
     "run_at": "document_end"
   }],
   "permissions":[

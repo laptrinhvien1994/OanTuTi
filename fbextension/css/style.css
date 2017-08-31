@@ -732,7 +732,7 @@ input:checked + .slider:before {
     width: 240px;
     background-color: #fff;
     position: fixed;
-    bottom: 225px;
+    bottom: 210px;
     border-radius: 3px;
     border: 1px solid;
     border-color: #e5e6e9 #dfe0e4 #d0d1d5;
@@ -802,4 +802,28 @@ input:checked + .slider:before {
 }
 
 
-
+/*CREATE CUSTOMER POP OVER*/
+/*310 - 105*/
+#createCustomerPopOver{
+    width: 450px;
+    height: 300px;
+    z-index: 10000;
+    position: absolute;
+    background-color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
+    font-family: Helvetica, Arial, sans-serif;
+    top: 150px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin: 0px auto;
+    transition: all 0.5s ease;
+}
+/*
+#createCustomerPopOver:hover{
+    width: 500px;
+    height: 200px;
+    top: 200px;
+}
+*/

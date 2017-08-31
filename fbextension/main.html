@@ -1,5 +1,50 @@
 <div id="viewport" ng-controller="MainController">
     <div id="backdrop-doc" ng-show="isOpenDiscountPopOver"></div>
+    <div id="createCustomerPopOver" ng-show="isOpenDiscountPopOver">
+        <div class="header">
+            <span>Tạo mới khách hàng</span>
+            <span class="close-button"></span>
+        </div>
+        <div class="content">
+            <table border="1">
+                <tr>
+                    <td class="title">Tên khách hàng</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Mã khách hàng</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Số điện thoại</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Email</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Địa chỉ</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Ghi chú</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Sinh nhật</td>
+                    <td><input class="input" type="text"></td>
+                </tr>
+                <tr>
+                    <td class="title">Giới tính</td>
+                    <td><input class="input" name="gender" checked="" type="radio"><input class="input" name="gender" type="radio"></td>
+                </tr>
+            </table>
+        </div>
+        <div class="footer">
+            <a href="#">Tạo</a>
+        </div>
+    </div>
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
     <div class="pos-panel" ng-style="panel" style="position: fixed;">
         <div id="backdrop" ng-show="isOpenDiscountPopOver || isOpenConfigPopOver" ng-click="hideBackdrop()"></div>
