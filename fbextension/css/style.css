@@ -296,7 +296,7 @@ input:focus,.btn-login:focus {outline:0;}
 
 #pos-orders ul{
     height: auto !important;
-    max-height: 400px;
+    max-height: 500px;
 }
 
 #pos-orders .items-in-orderList{
@@ -355,7 +355,7 @@ input:focus,.btn-login:focus {outline:0;}
 
 /*CSS POPOVER*/
 
-.mypopover{
+.discount-popover{
     width: 0px;
     height: 0px;
     position: relative;
@@ -364,7 +364,7 @@ input:focus,.btn-login:focus {outline:0;}
     z-index: 2501;
 }
 
-.triangle{
+.discount-popover .triangle{
     position: absolute;
     top: 0px;
     left: 93px;
@@ -377,7 +377,7 @@ input:focus,.btn-login:focus {outline:0;}
     z-index: 1003;
 }
 
-.popover-content{
+.discount-popover .popover-content{
     position: absolute;
     top: 7px;
     width: 200px;
@@ -390,7 +390,7 @@ input:focus,.btn-login:focus {outline:0;}
     box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
 }
 
-.popover-content .popover-title{
+.discount-popover .popover-content .popover-title{
     width: 100%;
     height: 25px;
     text-align: center;
@@ -398,21 +398,21 @@ input:focus,.btn-login:focus {outline:0;}
     font-weight: bold;
 }
 
-.popover-content .popover-body{
+.discount-popover .popover-content .popover-body{
     width: 93%;
     height: 85px;
     margin-left: 3.5%;
     margin-top: 8px;
 }
 
-.popover-content .popover-body .input{
+.discount-popover .popover-content .popover-body .input{
     width: 75px;
     text-align: center;
     border: 1px solid rgb(226, 226, 226);
     border-radius: 3px;
 }
 
-.popover-content .popover-body .button{
+.discount-popover .popover-content .popover-body .button{
     background-color: #4267b2;
     border: 1px solid #4267b2;
     color: white;
@@ -423,15 +423,15 @@ input:focus,.btn-login:focus {outline:0;}
     margin-top: 8px;
 }
 
-.popover-content .popover-body .label{
+.discount-popover .popover-content .popover-body .label{
     font-weight: bold;
 }
 
-.popover-content .popover-body .td3{
+.discount-popover .popover-content .popover-body .td3{
     position: relative;
 }
 
-.popover-content .popover-body .percent-sign{
+.discount-popover .popover-content .popover-body .percent-sign{
     position: absolute;
     top: 27px;
     left: 8px;
@@ -441,7 +441,7 @@ input:focus,.btn-login:focus {outline:0;}
     color: white;
 }
 
-.popover-content .popover-body .currency-sign{
+.discount-popover .popover-content .popover-body .currency-sign{
     position: absolute;
     top: 28px;
     left: 17px;
@@ -451,7 +451,7 @@ input:focus,.btn-login:focus {outline:0;}
     color: white;
 }
 
-.popover-content .popover-body .group-control{
+.discount-popover .popover-content .popover-body .group-control{
     
 }
 
@@ -480,6 +480,18 @@ input:focus,.btn-login:focus {outline:0;}
     height: 100%;
     background-color: transparent;
     z-index: 1001;
+}
+
+#backdrop-doc{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 2000;
+    opacity: .6;
+    transition: opacity .3s;
 }
 
 
@@ -540,7 +552,7 @@ input:checked + .slider:before {
 
 /*PAY CSS*/
 #pay{
-    height: 200px;
+    height: 204px;
     width: 240px;
     background-color: #fff;
     position: fixed;
@@ -549,17 +561,31 @@ input:checked + .slider:before {
     border: 1px solid;
     border-color: #e5e6e9 #dfe0e4 #d0d1d5;
     margin-bottom: 19px;
+    margin: 0;
+    padding: 0;
 }
 
 #pay table{
-    padding-left: 7px;
-    padding-right: 7px;
-    padding-top: 7px;
+    margin: 7px;
+    color: #333;
 }
 
-#pay span{
+#pay table #img-gift-relative{
+    position: relative;
+}
+
+#pay table #img-gift{
+}
+
+#pay table td.title{
+    text-align: right;
+    width: 70px;
+    padding-right:0px;
+    color: #666;
+}
+
+#pay table td span{
     font-weight: bold;
-    padding-bottom: 20px;
 }
 
 #toolbar{
@@ -576,10 +602,41 @@ input:checked + .slider:before {
     padding-left: 7px;
 }
 
+#pay #toolbar button{
+    border-radius: 2px;
+    background-color: #4267b2;
+    color: #ffffff;
+    line-height: 22px;
+    padding: 0 8px;
+    border: 1px solid #4267b2;
+    font-weight: bold;
+    position: relative;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+/*#pay #toolbar button span{
+    margin-left: 12px;
+    width: 50px;
+}*/
+
+#pay .plus-icon{
+    width: 8px;
+    height: 9px;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yZ/r/KqaLyYf3kjd.png');
+    background-position: -37px -106px;
+    background-repeat: no-repeat;
+    position: absolute;
+    z-index: 10000px;
+    margin-top: 7px;
+}
+
 #pay #toolbar .toolbar-icon{
     width: 14px;
     height: 14px;
 }
+
+
 
 .icon1{
     background-image: url('https://www.facebook.com/rsrc.php/v3/yK/r/H2EUMHd8NY-.png');
@@ -597,6 +654,151 @@ input:checked + .slider:before {
     position: absolute;
     top: 7px;
     right: 7px;
+    cursor: pointer;
+}
+
+/*CONFIG POPOVER*/
+
+#config-popover {
+    position: relative;
+    background-color: white;
+    height: 5px;
+    width: 5px;
+    background-color: 1px solid black;
+    z-index: 3000;
+}
+
+#config-popover .triangle {
+    position: absolute;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -200px -196px;
+    height: 10px;
+    width: 16px;
+    bottom: 0px;
+    right: -14.5px;
+    z-index: 3002;
+}
+
+#config-popover .popover-content{
+    background-color: white;
+    position: absolute;
+    z-index: 3001;
+    top: -207px;
+    left: -127px;
+    height: 197px;
+    width: 145px;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    border-radius: 3px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+}
+
+#config-popover .popover-content li{
+    padding-left: 22px;    
+}
+
+#config-popover .popover-content li:hover{
+    background-color: #4267b2;
+    color: white;
+}
+
+#config-popover .popover-content li.checked{
+    background: url('https://www.facebook.com/rsrc.php/v3/yo/r/Iv23J4ZCwP5.png') left 10px no-repeat;
+    font-weight: bold;
+}
+
+#config-popover .popover-content li.checked:hover{
+    background-position: left -50px;
+    background-color: #4267b2;
+}
+
+#config-popover .popover-content .seperator2{
+    height: 1px;
+    background-color: #e9ebee;
+    margin: 5px;
+}
+
+#config-popover .popover-content ul{
+    margin-top: 5px;
+}
+
+
+/*CREATE ORDER*/
+
+#create-order {
+    height: 50px;
+    width: 240px;
+    background-color: #fff;
+    position: fixed;
+    bottom: 225px;
+    border-radius: 3px;
+    border: 1px solid;
+    border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+    margin-bottom: 19px;
+    margin: 0;
+    padding: 0;
+}
+
+#create-order #left{
+    width: 119px;
+    height: 100%;
+    float: left;
+    text-align: center;
+}
+
+#create-order #left p{
+    padding: 0px;
+    margin: 0px;
+}
+
+#create-order #left p#title{
+    font-weight: bold;
+    color: #666;
+    margin-top: 7px;
+}
+
+#create-order #left p#total{
+    font-size: 16px;
+    color: #333;
+}
+
+#create-order #right{
+    margin-top: 14px;
+    width: 119px;
+    height: 100%;
+    float: right;
+}
+
+#create-order #right a{
+    background-color: #f6f7f9;
+    color: #4b4f56;
+    line-height: 22px;
+    transition: 200ms cubic-bezier(.08,.52,.52,1) background-color, 200ms cubic-bezier(.08,.52,.52,1) box-shadow, 200ms cubic-bezier(.08,.52,.52,1) transform;
+    border: 1px solid #ced0d4;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0 8px;
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+    text-decoration: none;
+}
+
+#create-order #right a:hover{
+    background-color: #e8e9ea;
+}
+
+#create-order #right #plus-icon{
+    width: 8px;
+    height: 9px;
+    background-position: -37px -106px;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yZ/r/KqaLyYf3kjd.png');
+    background-size: auto;
+    background-repeat: no-repeat;
+    display: inline-block;
 }
 
 

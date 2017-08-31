@@ -178,6 +178,7 @@ window.addEventListener("load", function() {
 
 			$scope.hideBackdrop = function(){
 				$scope.isOpenDiscountPopOver = false;
+				$scope.isOpenConfigPopOver = false;
 			}
 
 			$scope.isDiscountByPercent = false;
@@ -185,6 +186,12 @@ window.addEventListener("load", function() {
 			$scope.changeDiscountMethod = function(){
 				debugger;
 				$scope.isDiscountByPercent = !$scope.isDiscountByPercent;
+			}
+
+			$scope.isOpenConfigPopOver = false;
+
+			$scope.showHideConfig = function(){
+				$scope.isOpenConfigPopOver = !$scope.isOpenConfigPopOver;
 			}
 			
 			var saleOrder = {
