@@ -6,40 +6,43 @@
             <span class="close-button"></span>
         </div>
         <div class="content">
-            <table border="1">
-                <tr>
-                    <td class="title">Tên khách hàng</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Mã khách hàng</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Số điện thoại</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Email</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Địa chỉ</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Ghi chú</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Sinh nhật</td>
-                    <td><input class="input" type="text"></td>
-                </tr>
-                <tr>
-                    <td class="title">Giới tính</td>
-                    <td><input class="input" name="gender" checked="" type="radio"><input class="input" name="gender" type="radio"></td>
-                </tr>
-            </table>
+            <div class="group-control">
+                <div class="title">Tên khách hàng</div>
+                <input class="input" type="text" placeholder="Nhập tên khách hàng...">
+            </div>
+            <div class="group-control">
+                <div class="title">Mã khách hàng</div>
+                <input class="input" type="text" placeholder="Nhập mã khách hàng (tự động sinh nếu để trống)...">
+            </div>
+            <div class="group-control">
+                <div class="title">Số điện thoại</div>
+                <input class="input" type="text" placeholder="Nhập số điện thoại của khách hàng...">
+            </div>
+            <div class="group-control">
+                <div class="title">Email</div>
+                <input class="input" type="text" placeholder="Nhập email (ví dụ: kh01@gmail.com)...">
+            </div>
+            <div class="group-control">
+                <div class="title">Địa chỉ</div>
+                <input class="input" type="text" placeholder="Nhập địa chỉ của khách hàng...">
+            </div>
+            <div class="group-control">
+                <div class="title">Ghi chú</div>
+                <input class="input" type="text" placeholder="Nhập ghi chú của khách hàng...">
+            </div>
+            <div class="group-control">
+                <div class="title">Ngày sinh</div>
+                <input class="input" type="text" placeholder="Nhập ngày sinh của khách hàng...">
+            </div>
+            <div class="group-control">
+                <div class="title">Giới tính</div>
+                <div class="radio-group">
+                    <input class="radio-btn" name="gender" checked="" type="radio"><span>Nam</span>
+                </div>
+                <div class="radio-group">
+                    <input class="radio-btn" name="gender" type="radio"><span>Nữ</span>
+                </div>
+            </div>
         </div>
         <div class="footer">
             <a href="#">Tạo</a>

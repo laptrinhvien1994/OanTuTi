@@ -805,15 +805,15 @@ input:checked + .slider:before {
 /*CREATE CUSTOMER POP OVER*/
 /*310 - 105*/
 #createCustomerPopOver{
-    width: 450px;
-    height: 300px;
+    width: 500px;
+    height: 659px;
     z-index: 10000;
     position: absolute;
     background-color: #fff;
     border-radius: 3px;
     box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
     font-family: Helvetica, Arial, sans-serif;
-    top: 150px;
+    top: 100px;
     bottom: 0px;
     left: 0px;
     right: 0px;
@@ -827,3 +827,95 @@ input:checked + .slider:before {
     top: 200px;
 }
 */
+
+#createCustomerPopOver .header{
+    color: #1d2129;
+    font-size: 14px;
+    background-color: #f6f7f9;
+    border-bottom: 1px solid #e5e5e5;
+    border-radius: 3px 3px 0 0;
+    font-weight: bold;
+    line-height: 19px;
+    padding: 10px 12px;
+}
+
+#createCustomerPopOver .header span.close-button{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -41px -217px;
+    height: 12px;
+    width: 12px
+}
+
+#createCustomerPopOver .content{
+    margin: 12px;
+}
+
+#createCustomerPopOver .content .group-control{
+    margin-bottom: 12px;
+}
+
+#createCustomerPopOver .content .group-control .title{
+    height: 18px;
+    font-size: 15px;
+    color: rgb(102, 102, 102);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+
+#createCustomerPopOver .content .group-control .input{
+    width: 466px;
+    height: 21px;
+    padding: 4px;
+    border: 1px solid #bdc7d8;
+    font-size: 12px;
+}
+
+#createCustomerPopOver .content .group-control .radio-btn{
+    font-size: 12px;
+    border: 1px solid #bdc7d8;
+    margin: 0 5px 0 0;
+    position: relative;
+    top: 1px;
+}
+
+#createCustomerPopOver .content .group-control .radio-group{
+    margin-bottom: 5px;
+    height: 13px;
+}
+
+#createCustomerPopOver .content .group-control .radio-group span{
+
+}
+
+#createCustomerPopOver .content .group-control span{
+    margin-top: -5px;
+}
+
+#createCustomerPopOver .footer{
+    height: 30px;
+    margin: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e5;
+}
+
+#createCustomerPopOver .footer a{
+    float: right;   
+    color: white;
+    padding: 6px 33px;
+    border: 1px solid #4267b2;
+    background-color: #4267b2;
+    text-align: center;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 2px;
+    border-color: #4267b2;
+    vertical-align: middle;
+}
+
+#createCustomerPopOver .footer a:hover{
+    background-color: #365899;
+    border-color: #365899;
+}
