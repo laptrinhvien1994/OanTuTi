@@ -231,6 +231,8 @@ window.addEventListener("load", function() {
 					$('#user-menu').offset({ top: topOffset, left: leftOffset});
 				},100)
 			}
+
+			//$('[id^="profile_pic_header"]');
 			
 			var saleOrder = {
 				"storeId": null,

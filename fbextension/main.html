@@ -48,6 +48,11 @@
             <a href="#">Tạo</a>
         </div>
     </div>
+    <div id="receiverPopOver">
+        <div class="header">
+        </div>
+        <div
+    </div>
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
     <div class="pos-panel" style="position: fixed;">
         <div id="backdrop" ng-show="isOpenDiscountPopOver || isOpenConfigPopOver" ng-click="hideBackdrop()"></div>
@@ -243,7 +248,6 @@
                     </div>
                     <div id="right">
                         <a id="create-button" href="#">
-                            <i id="plus-icon"></i>
                             Tạo đơn hàng
                         </a>
                     </div>
@@ -310,11 +314,11 @@
                     </table>
                 </div>
                 <div id="toolbar">
-                    <!-- <span id="total">TỔNG CỘNG: 100.000</span> -->
-                    <!--                         <span class="toolbar-icon icon1"></span> -->
-                    <!-- <button><i class="plus-icon"></i><span>Tạo đơn hàng<span></button> -->
-                    <!-- <button>Tạo đơn hàng</button> -->
-                    <div class="toolbar-icon icon2" ng-click="showHideConfig()"></div>
+                    <span class="note icon1"></span>
+                    <span class="discount icon2"></span>
+                    <span class="delivery icon3"></span>
+                    <span class="paid icon4"></span>
+                    <span class="toolbar-icon icon5" ng-click="showHideConfig()"></span> 
                 </div>
                 <div id="config-popover" ng-show="isOpenConfigPopOver">
                     <div class="popover-content">

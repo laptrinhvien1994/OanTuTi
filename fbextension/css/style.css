@@ -56,6 +56,7 @@ autocomplete ul: 1
     border-left: 1px solid #d0d1d5;
     transition: all 0.4s linear;
     overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .close{
@@ -328,7 +329,7 @@ input:focus,.btn-login:focus {outline:0;}
         margin-top: -5px;
         display:block;
         height: auto !important;
-        box-shadow: 0 4px 6px 2px rgba(0, 0, 0, .10);
+/*        box-shadow: 0 4px 6px 2px rgba(0, 0, 0, .10);*/
     }
 
     .autocomplete li
@@ -354,9 +355,9 @@ input:focus,.btn-login:focus {outline:0;}
         }
 
         .autocomplete ul#no-result{
-            width: 101%; 
+            width: 100%; 
             border: 1px solid #ccc;
-            box-shadow: 0 0 0 0 rgba(0, 0, 0, .10);
+            /*box-shadow: 0 0 0 0 rgba(0, 0, 0, .10);*/
         }
 
         .autocomplte ul#no-result li{
@@ -766,28 +767,6 @@ input:checked + .slider:before {
     margin-top: 0px;
 }
 
-#toolbar #total{
-    font-weight: bold;
-    padding-left: 7px;
-}
-
-#toolbar button{
-    border-radius: 2px;
-    background-color: #4267b2;
-    color: #ffffff;
-    line-height: 22px;
-    padding: 0 8px;
-    border: 1px solid #4267b2;
-    font-weight: bold;
-    position: relative;
-    margin-left: 10px;
-    cursor: pointer;
-}
-
-/*#pay #toolbar button span{
-    margin-left: 12px;
-    width: 50px;
-}*/
 
 #pay .plus-icon{
     width: 8px;
@@ -805,18 +784,59 @@ input:checked + .slider:before {
     height: 14px;
 }
 
+#toolbar .delivery{
+    width: 14px;
+    height: 14px;
+}
 
+#toolbar .paid{
+    width: 14px;
+    height: 14px;
+}
+
+#toolbar .discount{
+    width: 14px;
+    height: 14px;
+}
+
+#toolbar .note{
+    width: 14px;
+    height: 14px;
+}
 
 .icon1{
-    background-image: url('https://www.facebook.com/rsrc.php/v3/yK/r/H2EUMHd8NY-.png');
-    background-repeat: no-repeat;
-    background-position: 1px -216px;
     position: absolute;
     top: 7px;
-    right: 28px;
+    right: 127px;
+    cursor: pointer;
+    background-color: #545454;
 }
 
 .icon2{
+    position: absolute;
+    top: 7px;
+    right: 96px;
+    cursor: pointer;
+    background-color: #545454;
+}
+
+.icon3{
+    position: absolute;
+    top: 7px;
+    right: 65px;
+    cursor: pointer;
+    background-color: #545454;
+}
+
+.icon4{
+    position: absolute;
+    top: 7px;
+    right: 35px;
+    cursor: pointer;
+    background-color: #545454;
+}
+
+.icon5{
     background-image: url('https://www.facebook.com/rsrc.php/v3/yK/r/H2EUMHd8NY-.png');
     background-repeat: no-repeat;
     background-position: 1px -216px;
@@ -917,7 +937,7 @@ input:checked + .slider:before {
 }
 
 #create-order #left{
-    width: 119px;
+    width: 129px;
     height: 100%;
     float: left;
     text-align: center;
@@ -940,18 +960,18 @@ input:checked + .slider:before {
 }
 
 #create-order #right{
-    margin-top: 14px;
-    width: 119px;
+    margin-top: 13px;
+    width: 109px;
     height: 100%;
     float: right;
 }
 
 #create-order #right a{
-    background-color: #f6f7f9;
-    color: #4b4f56;
+    background-color: #4267b2;
+    color: #ffffff;
     line-height: 22px;
     transition: 200ms cubic-bezier(.08,.52,.52,1) background-color, 200ms cubic-bezier(.08,.52,.52,1) box-shadow, 200ms cubic-bezier(.08,.52,.52,1) transform;
-    border: 1px solid #ced0d4;
+    border: 1px solid #4267b2;
     border-radius: 2px;
     font-size: 12px;
     font-weight: bold;
@@ -963,7 +983,7 @@ input:checked + .slider:before {
 }
 
 #create-order #right a:hover{
-    background-color: #e8e9ea;
+    background-color: #385899;
 }
 
 #create-order #right #plus-icon{
