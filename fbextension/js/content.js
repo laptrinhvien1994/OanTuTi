@@ -93,22 +93,28 @@ window.addEventListener("load", function() {
 			$scope.openPanel = function(){
 				$scope.panel = {'display':'block'};
 				$scope.isOpening = true;
+				$timeout(function(){
+					$('.pos-panel').css('width', '240px');
+				}, 50);
 			}
 			$scope.closePanel = function(){
 				$scope.panel = {'display':'none'};
-				$scope.isOpening = false;
+				//delay 0.55s để kịp ẩn pos-panel
+				$timeout(function(){
+					$('.pos-panel').css('width', '0px');
+				}, 50)
+				.then(function(){
+					$timeout(function(){
+						$scope.isOpening = false;
+					}, 550);
+				});
 			}
 
-			$scope.isShowMenu = false;
 			$scope.isOpenDiscountPopOver = false;
 
-			$scope.showHideMenu = function(){
-				$scope.isShowMenu = !$scope.isShowMenu;
-			}
-
 			$scope.focusInput = function(){
-				if($scope.isShowMenu){
-					$scope.isShowMenu = false;	
+				if($scope.isShowContextMenu){
+					$scope.isShowContextMenu = false;	
 				} 
 			}
 
@@ -136,9 +142,9 @@ window.addEventListener("load", function() {
 				//Nếu mà hiện thì mới tính position.
 				if($scope.isOpenDiscountPopOver){
 					$timeout(function(){
-					console.log($('div#popover2').offset());
-					console.log($('#id_'+item.itemId).offset());
-					var popOverPosition = $('div#popover2').offset();
+					//console.log($('div#popover2').offset());
+					//console.log($('#id_'+item.itemId).offset());
+					//var popOverPosition = $('div#popover2').offset();
 					var giftButtonPosition = $('#id_'+item.itemId).offset();
 					var topOffset = giftButtonPosition.top + 15;
 					var leftOffset = giftButtonPosition.left - 94;
@@ -151,29 +157,14 @@ window.addEventListener("load", function() {
 						left : -9999
 					});
 				}
-				
-				
-				// var index = $scope.selectedOrder.saleOrder.orderDetails.findIndex(function(i){
-				// 	return i.itemId == item.itemId;
-				// }); 
-				// console.log($('#id_'+item.itemId).offset());
-				// console.log($('div#popover2').offset());
-				// var coordinate = $('#id_'+item.itemId).position(); 
-				// var liHeight = $('.items-in-orderList')[0].offsetHeight;
-				// var topHeight = coordinate.top;
-				// var itemHeight = ($scope.selectedOrder.saleOrder.orderDetails.length - index - 1) * liHeight;
-				// var topValue = topHeight - liHeight + 15 - itemHeight; //14px is img gift height
-				// var leftValue = coordinate.left - 44;
-				// $('div#popover2').css({ 
-				// 	'top' : topValue + 'px',
-				// 	'left' : leftValue + 'px'
-				// });
-				// //console.log($('#mCSB_2_container'));
-				//$('#id_' + item.itemId).webuiPopover({title:'Title111',content:'Content'});
-			 }
+			}
 
 			$scope.closeDiscountPopOver = function(){
 				$scope.isOpenDiscountPopOver = false;
+				$('div#popover2').css({
+					top: 0,
+					left: -9999
+				});
 			}
 
 			$scope.hideBackdrop = function(){
@@ -192,6 +183,53 @@ window.addEventListener("load", function() {
 
 			$scope.showHideConfig = function(){
 				$scope.isOpenConfigPopOver = !$scope.isOpenConfigPopOver;
+				$timeout(function(){
+					var btnPosition = $('#toolbar').offset();
+					var topOffset = btnPosition.top + 4;
+					var leftOffset = btnPosition.left + 214;
+					$('#config-popover').offset({ top: topOffset, left: leftOffset });
+				}, 100);
+			}
+
+			$scope.isOpenDiscountOrderPopOver = false;
+
+			$scope.showHideDiscountOrder = function(){
+				$scope.isOpenDiscountOrderPopOver = !$scope.isOpenDiscountOrderPopOver;
+				$timeout(function(){
+					var btnPosition = $('#discount-order').offset();
+					var topOffset = btnPosition.top - 134;
+					var leftOffset = btnPosition.left - 95;
+					$('#popover1').offset({ top: topOffset, left: leftOffset });
+				}, 100);
+			}
+
+			$scope.isShowHideCreateCustomer = false;
+			$scope.showHideCreateCustomer = function(){
+				$scope.isShowHideCreateCustomer = !$scope.isShowHideCreateCustomer;
+				$scope.isOpenConfigPopOver = false;
+				$('body').on('mousewheel touchmove', function(e) {
+					      e.preventDefault();
+					});
+				$('body').on('scroll', function(e){
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				})
+			}
+
+			$scope.closeCreateCustomerPopOver = function(){
+				$scope.isShowHideCreateCustomer = false;
+			}
+
+			$scope.isShowContextMenu = false;
+			$scope.showHideUserContextMenu = function(){
+				$scope.isShowContextMenu = !$scope.isShowContextMenu;
+				$timeout(function(){
+					var btnPosition = $('#menu').offset();
+					var topOffset = btnPosition.top + 29;
+					var leftOffset = btnPosition.left - 79.5;
+					$('#user-menu').offset({ top: topOffset, left: leftOffset});
+				},100)
 			}
 			
 			var saleOrder = {

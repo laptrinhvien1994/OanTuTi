@@ -1,9 +1,9 @@
 <div id="viewport" ng-controller="MainController">
-    <div id="backdrop-doc" ng-show="isOpenDiscountPopOver"></div>
-    <div id="createCustomerPopOver" ng-show="isOpenDiscountPopOver">
+    <div id="backdrop-doc" ng-show="isShowHideCreateCustomer" ng-click="closeCreateCustomerPopOver()"></div>
+    <div id="createCustomerPopOver" ng-show="isShowHideCreateCustomer">
         <div class="header">
             <span>Tạo mới khách hàng</span>
-            <span class="close-button"></span>
+            <span class="close-button" ng-click="closeCreateCustomerPopOver()"></span>
         </div>
         <div class="content">
             <div class="group-control">
@@ -36,12 +36,12 @@
             </div>
             <div class="group-control">
                 <div class="title">Giới tính</div>
-                <div class="radio-group">
+                <span class="radio-group">
                     <input class="radio-btn" name="gender" checked="" type="radio"><span>Nam</span>
-                </div>
-                <div class="radio-group">
+                </span> &nbsp;
+                <span class="radio-group">
                     <input class="radio-btn" name="gender" type="radio"><span>Nữ</span>
-                </div>
+                </span>
             </div>
         </div>
         <div class="footer">
@@ -49,68 +49,14 @@
         </div>
     </div>
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
-    <div class="pos-panel" ng-style="panel" style="position: fixed;">
+    <div class="pos-panel" style="position: fixed;">
         <div id="backdrop" ng-show="isOpenDiscountPopOver || isOpenConfigPopOver" ng-click="hideBackdrop()"></div>
-        <!--         <button class="close" ng-click="closePanel()"><i class="fa fa-power-off"></i> <small>Đóng</small></button> -->
 
         <div class="pos-header">
-            <p ng-if="userSession" style="cursor: pointer;" ng-click="showHideMenu()">{{userSession.displayName}}</p>
-
-            <!--div Logout PopOver-->
-            <div ng-if="isShowMenu" class="uiContextualLayer _5v-0 _53il uiContextualLayerBelowRight" style="right: 10px; top: 25px; z-index: 1000;">
-                <div class="_54nq _9jo _558b _2n_z" id="BLUE_BAR_ID_DO_NOT_USE">
-                    <div class="_54ng">
-                        <div class="uiScrollableArea fade uiScrollableAreaWithShadow">
-                            <div class="uiScrollableAreaWrap scrollable" id="js_10f" style="max-height: 500px;">
-                                <div class="uiScrollableAreaBody" style="margin-right: -17px;">
-                                    <div class="uiScrollableAreaContent">
-                                        <ul class="_54nf" role="menu">
-                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                <a class="_54nc" role="menuitem">
-                                                    <span>
-                                                        <span class="_54nh">Tạo đơn hàng</span>
-                                                    </span>
-                                                </a>
-                                            </li>
-                                            <li class="_54ak __MenuItem" role="separator"></li>
-                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                <a class="_54nc" href="#" role="menuitem">
-                                                    <span>
-                                                        <span class="_54nh">Tạo khách hàng</span>
-                                                    </span>
-                                                </a>
-                                            </li>
-                                            <li class="_54ak __MenuItem" role="separator"></li>
-                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                <a class="_54nc" href="https://pos.suno.vn" target="_blank" role="menuitem">
-                                                    <span>
-                                                        <span class="_54nh">Quản lý</span>
-                                                    </span>
-                                                </a>
-                                            </li>
-                                            <li class="_54ak __MenuItem" role="separator"></li>
-                                            <li class="_54ni navSubmenu __MenuItem" role="presentation">
-                                                <a class="_54nc" href="#" role="menuitem">
-                                                    <span>
-                                                        <span class="_54nh">
-                                                            Đăng xuất
-                                                        </span>
-                                                    </span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="uiScrollableAreaTrack hidden_elem" style="opacity: 0;">
-                                <div class=""> </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <i class="_53io" style="left: 100%; margin-left: -28px;"></i>
-            </div>
-            <!--End div Logout PopOver-->
+            <span id="collapse-btn" title="Ẩn SUNO POS" ng-click="closePanel()">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span id="username" ng-if="userSession" style="cursor: pointer;" ng-click="showHideUserContextMenu()">{{userSession.displayName}}
+            </span>
+            <span class="context-menu" ng-if="userSession" ng-class="isShowContextMenu ? 'active' : ''" ng-click="showHideUserContextMenu()" id="menu">&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
 
         <div class="pos-body">
@@ -128,7 +74,7 @@
             <div ng-if="!userSession">
                 <div class="form-control">
                     <h3 class="margin-bottom-10">Đăng nhập</h3>
-                    <p>Email / Mã đăng nhập</p>
+                    <p>Tài khoản SUNO</p>
                     <div>
                         <input type="text" name="username" ng-model="username" autocomplete="off">
                     </div>
@@ -144,23 +90,6 @@
 
             <!-- Màn hình POS -->
             <div ng-if="userSession">
-                <!--<div class="product-search">
-                    <label class="item-input-wrapper">
-                        <i class="fa fa-search"></i>
-                        <input type="text" name="search" ng-model="searchKey" placeholder="Tìm hàng hóa ... " autocomplete="off" ng-change="get_search_rs(searchKey)">
-                        <i class="fa fa-close" ng-show="searchKey" ng-click="searchKey = null"></i>
-                    </label>
-                </div>
-                <ul class="search-result" ng-show="searchKey">
-                    <li ng-repeat="p in searchList.items" ng-click="pickProduct(p)">
-                        <div><b>{{p.itemName}}</b></div>
-                        <div>
-                            <span>{{p.barcode}}</span> |
-                            <span>Tồn: {{p.qtyAvailable}}</span> |
-                            <span>{{p.retailPrice | number}}</span>
-                        </div>
-                    </li>
-                </ul>-->
                 <autocomplete attr-id="suggestProduct" attr-inputid="txtSuggestProduct" ng-model="searchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm kiếm hàng hóa" on-select="pickProduct" on-type="get_search_rs" on-focus="focusInput" data="searchList.items"></autocomplete>
                 <script type="text/x-angular-template" id="SuggestProductTemplate">
                     <li suggestion ng-repeat="item in suggestions track by $index" index="{{ $index }}" val="{{item}}" ng-class="{ active: ($index === selectedIndex) }" ng-click="select(item)" style="cursor:pointer;">
@@ -182,13 +111,16 @@
                     </li>
                 </script>
                 <div id="pos-orders" ng-if="selectedOrder.saleOrder.orderDetails.length > 0">
+                <div id="detail-title">CHI TIẾT ĐƠN HÀNG</div>
                     <ul class="mCustomScrollbar" data-mcs-axis="y">
                         <li ng-repeat="item in selectedOrder.saleOrder.orderDetails" class="items-in-orderList" ng-mouseleave="itemLeave($event)" ng-mouseover="itemHover($event)">
                             <div class="item-name">
                                 <a ng-href="https://pos.suno.vn/Manage/#/product/detail/{{item.productId}}" target="_blank" title="{{item.itemName}}">{{item.itemName | charLimit:33}}</a>
                             </div>
                             <div>
-                                <span class="color-1">Đơn giá: {{item.retailPrice | number}}</span>
+                                <span class="color-1">Đơn giá: {{item.retailPrice | number}}
+                                    <span class="discount-value">(giảm 200)</span>
+                                </span>
                                 &nbsp;
                                 <span class="img-gift" id="id_{{item.itemId}}" ng-click="showHideDiscountPopOver(item)" title="Giảm giá sản phẩm"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png" /></span>
                             </div>
@@ -201,6 +133,16 @@
                             <div class="remove-button" ng-click="removeItem(item)"></div>
                         </li>
                     </ul>
+                </div>
+                <div id="user-menu" ng-show="isShowContextMenu">
+                    <div class="triangle"></div>
+                    <div class="popover-content">
+                        <ul>
+                            <li class="checked item">Quản lí</li>
+                            <li class="seperator2"></li>
+                            <li class="checked item">Đăng xuất</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="discount-popover" id="popover2" ng-show="isOpenDiscountPopOver">
                     <div class="triangle"></div>
@@ -246,6 +188,51 @@
                                 <input type="button" class="button" value="15%">
                             </span>
                         </div>
+                        <div class="remove-btn" ng-click="closeDiscountPopOver()"></div>
+                    </div>
+                </div>
+
+                <div class="discount-popover" id="popover1" ng-show="isOpenDiscountOrderPopOver">
+                    <div class="triangle"></div>
+                    <div class="popover-content">
+                        <div class="popover-title">
+                            <span>Giảm giá</span>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="popover-body">
+                            <table>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="td3">
+                                        <span ng-show="isDiscountByPercent" class="percent-sign">%</span>
+                                        <span ng-show="!isDiscountByPercent" class="currency-sign">VNĐ</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="label">Giảm giá</span>
+                                    </td>
+                                    <td>
+                                        <input class="input" type="text">
+                                    </td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" ng-model="isDiscountByPercent">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <span class="group-control">
+                                &nbsp;
+                                <input type="button" class="button" value="5%">
+                                <input type="button" class="button" value="10%">
+                                <input type="button" class="button" value="15%">
+                            </span>
+                        </div>
+                        <div class="remove-btn" ng-click="showHideDiscountOrder()"></div>
                     </div>
                 </div>
 
@@ -278,7 +265,7 @@
                             </td>
                             <td id="img-gift-relative">
                                 100.000
-                                <span id="img-gift" title="Giảm giá đơn hàng"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png"/></span>
+                                <span id="discount-order" ng-click="showHideDiscountOrder()" title="Giảm giá đơn hàng"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png" /></span>
                             </td>
                         </tr>
                     </table>
@@ -292,14 +279,6 @@
                                 100.000
                             </td>
                         </tr>
-<!--                         <tr>
-                            <td class="title">
-                                <span>Tổng cộng:</span>
-                            </td>
-                            <td>
-                                100.000
-                            </td>
-                        </tr> -->
                     </table>
                     <div class="separator2"></div>
                     <table>
@@ -329,31 +308,29 @@
                             </td>
                         </tr>
                     </table>
-                    <div id="toolbar">
-                        <!-- <span id="total">TỔNG CỘNG: 100.000</span> -->
-<!--                         <span class="toolbar-icon icon1"></span> -->
-                        <!-- <button><i class="plus-icon"></i><span>Tạo đơn hàng<span></button> -->
-                        <!-- <button>Tạo đơn hàng</button> -->
-                        <span class="toolbar-icon icon2" ng-click="showHideConfig()">
-                            <span id="config-popover" ng-show="isOpenConfigPopOver">
-                                <div class="popover-content">
-                                    <ul>
-                                        <li class="checked">Vận chuyển</li>
-                                        <div class="seperator2"></div>
-                                        <li class="checked">Thanh toán</li>
-                                        <div class="seperator2"></div>
-                                        <li>Thêm khách hàng</li>
-                                        <div class="seperator2"></div>
-                                        <li>Thêm ghi chú</li>
-                                        <div class="seperator2"></div>
-                                        <li>Ghi chú giao hàng</li>
-                                    </ul>
-                                </div>
-                            <div class="triangle"></div>
-                        </span>
-
-                        </span>
+                </div>
+                <div id="toolbar">
+                    <!-- <span id="total">TỔNG CỘNG: 100.000</span> -->
+                    <!--                         <span class="toolbar-icon icon1"></span> -->
+                    <!-- <button><i class="plus-icon"></i><span>Tạo đơn hàng<span></button> -->
+                    <!-- <button>Tạo đơn hàng</button> -->
+                    <div class="toolbar-icon icon2" ng-click="showHideConfig()"></div>
+                </div>
+                <div id="config-popover" ng-show="isOpenConfigPopOver">
+                    <div class="popover-content">
+                        <ul>
+                            <li class="checked item">Vận chuyển</li>
+                            <li class="seperator2"></li>
+                            <li class="checked item">Thanh toán</li>
+                            <li class="seperator2"></li>
+                            <li class="item" ng-click="showHideCreateCustomer()">Thêm khách hàng</li>
+                            <li class="seperator2"></li>
+                            <li class="item">Thêm ghi chú</li>
+                            <li class="seperator2"></li>
+                            <li class="item">Ghi chú giao hàng</li>
+                        </ul>
                     </div>
+                    <div class="triangle"></div>
                 </div>
             </div>
         </div>

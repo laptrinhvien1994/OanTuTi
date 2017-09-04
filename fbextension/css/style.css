@@ -1,3 +1,14 @@
+/*button tạo đơn hàng: 999999
+pos-panel: 999
+backdrop-doc: 1000
+backdrop: 2
+autocomplete ul: 1
+.discount-popover: 3
+#config-popover: 3
+#pay: 1
+#create-order: 1
+*/
+
 #tao-don-hang{
 	position: fixed;
     right: 10px;
@@ -35,16 +46,16 @@
 }
 
 .pos-panel{
-    width: 240px;
-    display: none;
+    width: 0px;
     height: 100%;
     background: #e9ebee;
     position: absolute;
     top: 0;
     right: 0;
-    z-index: 999999;
+    z-index: 999;
     border-left: 1px solid #d0d1d5;
-    transition: 0.7s;
+    transition: all 0.4s linear;
+    overflow-x: hidden;
 }
 
 .close{
@@ -144,13 +155,101 @@ input:focus,.btn-login:focus {outline:0;}
     background-color: #3b5998;
     border-bottom: 1px solid #29487d;
     color: #fff;
+    position: relative;
 }
 
-.pos-header p{
+.pos-header span#username{
     margin: 0;
     -webkit-font-smoothing: antialiased;
     font-weight: bold;
-    padding-right: 20px;
+    padding: 10px;
+    padding-right: 5px;
+}
+
+.pos-header span.context-menu{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yD/r/r_iJz4bH88K.png');
+    background-repeat: no-repeat;
+    background-position: 0 -189px;
+    height: 16px;
+    width: 160px;
+    opacity: 0.6;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.pos-header span.active{
+    background-position: 0 -139px;
+    opacity: 1;
+}
+
+.pos-header span#collapse-btn{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-position: -91px -215px;
+    height: 16px;
+    width: 16px;
+    opacity: 0.4;
+    margin-left: 10px;
+    cursor: pointer;
+    -webkit-font-smoothing: antialiased;
+    position: absolute;
+    left: 0px;
+    top: 14px;
+}
+
+.pos-body #user-menu{
+    position: relative;
+    top: 0px;
+    left: -9999px;
+    height: 0px;
+    width: 0px;
+    z-index: 3;
+}
+
+.pos-body #user-menu .triangle{
+    position: absolute;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y6/r/1UKIfoIqCEo.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -134px -196px;
+    top: -7px;
+    left: 80px;
+    height: 8px;
+    width: 16px;
+    z-index: 3;
+}
+
+.pos-body #user-menu .popover-content{
+    background-color: white;
+    width: 100px;
+    height: 75px;
+    position: absolute;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+    z-index: 2;
+}
+
+.pos-body #user-menu ul{
+    margin-top: 7px;
+}
+
+.pos-body #user-menu .popover-content li.item{
+    height: 24px;
+    line-height: 24px;
+    padding: 0 22px;
+}
+
+.pos-body #user-menu .popover-content li.seperator2{
+    height: 1px;
+    background-color: #e9ebee;
+    margin: 6px;
+}
+
+.pos-body #user-menu .popover-content li.item:hover{
+    background-color: #4267b2;
+    color: white;
 }
 
 .item-input-wrapper{
@@ -223,7 +322,7 @@ input:focus,.btn-login:focus {outline:0;}
         border-right: 1px solid #888;
         border-bottom: 1px solid #888;*/
         border: 1px solid #ccc;
-        z-index: 1000;
+        z-index: 1;
         max-height: 400px;
         margin: 0px !important;
         margin-top: -5px;
@@ -306,6 +405,15 @@ input:focus,.btn-login:focus {outline:0;}
     position: relative;
 }
 
+#pos-orders #detail-title{
+    font-weight: bold;
+    color: rgb(102, 102, 102);
+    text-align: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background-color: #f5f5f5;
+}
+
 #pos-orders .items-in-orderList:hover{
     background-color: #ECF0F7;
 }
@@ -333,17 +441,21 @@ input:focus,.btn-login:focus {outline:0;}
     height: 11px;
 }
 
+#pos-orders .items-in-orderList .discount-value{
+    font-size: 11px;
+}
+
 #pos-orders .items-in-orderList .remove-button:hover{
     background-image: url('https://www.facebook.com/rsrc.php/v3/yx/r/ogYrclupeJV.png');
     background-position: 0px 12px;
 }
 
 .color-1{
-    color: #2b2b2b;
+    color: #545454;
 }
 
 .sum{
-    color: #2b2b2b;
+    color: #545454;
 }
 
 .img-gift{
@@ -361,7 +473,12 @@ input:focus,.btn-login:focus {outline:0;}
     position: relative;
     top: 0px;
     left: -9999px;
-    z-index: 2501;
+    z-index: 3;
+}
+
+#popover1{
+    top: 0px;
+    left: -9999px;
 }
 
 .discount-popover .triangle{
@@ -375,6 +492,20 @@ input:focus,.btn-login:focus {outline:0;}
     height: 8px;
     width: 16px;
     z-index: 1003;
+}
+
+.discount-popover .remove-btn{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yx/r/ogYrclupeJV.png');
+    background-position: 0px 48px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 11px;
+    height: 11px;
+}
+
+.discount-popover .remove-btn:hover{
+    background-position: 0px 12px;
 }
 
 .discount-popover .popover-content{
@@ -405,8 +536,12 @@ input:focus,.btn-login:focus {outline:0;}
     margin-top: 8px;
 }
 
+.discount-popover .popover-content table{
+    width: 186px;
+}
+
 .discount-popover .popover-content .popover-body .input{
-    width: 75px;
+    width: 84px;
     text-align: center;
     border: 1px solid rgb(226, 226, 226);
     border-radius: 3px;
@@ -425,6 +560,7 @@ input:focus,.btn-login:focus {outline:0;}
 
 .discount-popover .popover-content .popover-body .label{
     font-weight: bold;
+    color: rgb(102, 102, 102);
 }
 
 .discount-popover .popover-content .popover-body .td3{
@@ -449,6 +585,36 @@ input:focus,.btn-login:focus {outline:0;}
     font-weight: bold;
     z-index: 1005;
     color: white;
+}
+
+#popover1 .popover-content .popover-body .currency-sign{
+    top: 10px;
+}
+
+#popover1 .popover-content .popover-body .percent-sign{
+    top: 9px;
+}
+
+#popover1 .popover-content{
+    height: 115px;
+}
+
+#popover1 .popover-content .popover-body{
+    margin-top: 5px;
+    height: 75px;
+}
+
+#popover1 .triangle{
+    position: absolute;
+    top: 123px;
+    left: 93px;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -200px -196px;
+    height: 10px;
+    width: 16px;
+    z-index: 1003;
 }
 
 .discount-popover .popover-content .popover-body .group-control{
@@ -479,7 +645,7 @@ input:focus,.btn-login:focus {outline:0;}
     width: 100%;
     height: 100%;
     background-color: transparent;
-    z-index: 1001;
+    z-index: 2;
 }
 
 #backdrop-doc{
@@ -489,11 +655,10 @@ input:focus,.btn-login:focus {outline:0;}
     width: 100%;
     height: 100%;
     background-color: #000;
-    z-index: 2000;
+    z-index: 1000;
     opacity: .6;
     transition: opacity .3s;
 }
-
 
 
 /*RECTANGLE CHECKBOX*/
@@ -517,7 +682,7 @@ input:focus,.btn-login:focus {outline:0;}
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #a0a7b2;
+  background-color: rgb(102, 102, 102);
   -webkit-transition: .4s;
   transition: .4s;
   border-radius: 3px;
@@ -552,17 +717,18 @@ input:checked + .slider:before {
 
 /*PAY CSS*/
 #pay{
-    height: 204px;
+    height: 175px;
     width: 240px;
     background-color: #fff;
     position: fixed;
-    bottom: 0px;
+    bottom: 29px;
     border-radius: 3px;
     border: 1px solid;
     border-color: #e5e6e9 #dfe0e4 #d0d1d5;
     margin-bottom: 19px;
     margin: 0;
     padding: 0;
+    z-index: 1;
 }
 
 #pay table{
@@ -574,7 +740,8 @@ input:checked + .slider:before {
     position: relative;
 }
 
-#pay table #img-gift{
+#pay table #discount-order{
+    cursor: pointer;
 }
 
 #pay table td.title{
@@ -589,20 +756,22 @@ input:checked + .slider:before {
 }
 
 #toolbar{
+    width: 240px;
     height: 29px;
     background-color: #f6f7f9;
     border-top: 1px solid #dddfe2;
     line-height: 29px;
-    position: relative;
+    position: fixed;
+    bottom: 0px;
     margin-top: 0px;
 }
 
-#pay #toolbar #total{
+#toolbar #total{
     font-weight: bold;
     padding-left: 7px;
 }
 
-#pay #toolbar button{
+#toolbar button{
     border-radius: 2px;
     background-color: #4267b2;
     color: #ffffff;
@@ -631,7 +800,7 @@ input:checked + .slider:before {
     margin-top: 7px;
 }
 
-#pay #toolbar .toolbar-icon{
+#toolbar .toolbar-icon{
     width: 14px;
     height: 14px;
 }
@@ -662,10 +831,12 @@ input:checked + .slider:before {
 #config-popover {
     position: relative;
     background-color: white;
-    height: 5px;
-    width: 5px;
+    height: 0px;
+    width: 0px;
     background-color: 1px solid black;
-    z-index: 3000;
+    z-index: 3;
+    top: 0px;
+    left: -9999px;
 }
 
 #config-popover .triangle {
@@ -676,18 +847,18 @@ input:checked + .slider:before {
     background-position: -200px -196px;
     height: 10px;
     width: 16px;
-    bottom: 0px;
-    right: -14.5px;
-    z-index: 3002;
+    bottom: -5px;
+    right: -19.5px;
+    z-index: 2;
 }
 
 #config-popover .popover-content{
     background-color: white;
     position: absolute;
-    z-index: 3001;
-    top: -207px;
-    left: -127px;
-    height: 197px;
+    z-index: 1;
+    top: -198px;
+    left: -122px;
+    height: 192px;
     width: 145px;
     background-clip: padding-box;
     border: 1px solid rgba(0, 0, 0, 0.35);
@@ -695,29 +866,32 @@ input:checked + .slider:before {
     box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
 }
 
-#config-popover .popover-content li{
-    padding-left: 22px;    
+#config-popover .popover-content li.item{
+    padding-left: 22px;
+    height: 26px;
+    line-height: 26px;
+    cursor: pointer;
 }
 
-#config-popover .popover-content li:hover{
+#config-popover .popover-content li.item:hover{
     background-color: #4267b2;
     color: white;
 }
 
 #config-popover .popover-content li.checked{
-    background: url('https://www.facebook.com/rsrc.php/v3/yo/r/Iv23J4ZCwP5.png') left 10px no-repeat;
+    background: url('https://www.facebook.com/rsrc.php/v3/yo/r/Iv23J4ZCwP5.png') left 9px no-repeat;
     font-weight: bold;
 }
 
 #config-popover .popover-content li.checked:hover{
-    background-position: left -50px;
+    background-position: left -51px;
     background-color: #4267b2;
 }
 
 #config-popover .popover-content .seperator2{
     height: 1px;
     background-color: #e9ebee;
-    margin: 5px;
+    margin: 6px;
 }
 
 #config-popover .popover-content ul{
@@ -739,6 +913,7 @@ input:checked + .slider:before {
     margin-bottom: 19px;
     margin: 0;
     padding: 0;
+    z-index: 1;
 }
 
 #create-order #left{
@@ -806,14 +981,14 @@ input:checked + .slider:before {
 /*310 - 105*/
 #createCustomerPopOver{
     width: 500px;
-    height: 659px;
+    height: 615px;
     z-index: 10000;
     position: absolute;
     background-color: #fff;
     border-radius: 3px;
     box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
     font-family: Helvetica, Arial, sans-serif;
-    top: 100px;
+    top: 10px;
     bottom: 0px;
     left: 0px;
     right: 0px;
@@ -837,6 +1012,7 @@ input:checked + .slider:before {
     font-weight: bold;
     line-height: 19px;
     padding: 10px 12px;
+    position: relative;
 }
 
 #createCustomerPopOver .header span.close-button{
@@ -845,7 +1021,11 @@ input:checked + .slider:before {
     background-size: auto;
     background-position: -41px -217px;
     height: 12px;
-    width: 12px
+    width: 12px;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    cursor: pointer;
 }
 
 #createCustomerPopOver .content{
@@ -853,15 +1033,15 @@ input:checked + .slider:before {
 }
 
 #createCustomerPopOver .content .group-control{
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 #createCustomerPopOver .content .group-control .title{
-    height: 18px;
-    font-size: 15px;
+    height: 17px;
+    font-size: 14px;
     color: rgb(102, 102, 102);
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
 
