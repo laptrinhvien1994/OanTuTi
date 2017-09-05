@@ -16,7 +16,7 @@
             </div>
             <div class="group-control">
                 <div class="title">Số điện thoại</div>
-                <input class="input" type="text" placeholder="Nhập số điện thoại của khách hàng...">
+                <input class="input" type="text" placeholder="Nhập số điện thoại của khách hàng ( ví dụ: )...">
             </div>
             <div class="group-control">
                 <div class="title">Email</div>
@@ -32,7 +32,7 @@
             </div>
             <div class="group-control">
                 <div class="title">Ngày sinh</div>
-                <input class="input" type="text" placeholder="Nhập ngày sinh của khách hàng...">
+                <input class="input" type="date" placeholder="Nhập ngày sinh của khách hàng...">
             </div>
             <div class="group-control">
                 <div class="title">Giới tính</div>
@@ -48,10 +48,64 @@
             <a href="#">Tạo</a>
         </div>
     </div>
-    <div id="receiverPopOver">
-        <div class="header">
+
+    <div class="paid-popover">
+        <div class="popover-content">
+            <div class="popover-title">
+                <span ng-show="!addCustomer">Thanh toán</span>
+                <span ng-show="addCustomer">Thêm khách hàng</span>
+                <span class="close-button"></span>
+            </div>
+            <div class="separator"></div>
+            <div class="popover-body">
+                <div ng-show="!addCustomer">
+                    <autocomplete id="customer-autocomplete" attr-id="suggestCustomer" attr-inputid="txtSuggestCustomer" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm khách hàng" on-select="pickProduct" on-type="getCustomerSearchResult" on-focus="focusInput" data="searchList.items"></autocomplete>
+                    <p>Hình thức thanh toán</p>
+                    <input type="radio" checked name="paymentMethod"><span>Tiền mặt</span>
+                    <br/>
+                    <input type="radio" name="paymentMethod"><span>Thẻ</span>
+                    <br/>
+                    <input type="radio" name="paymentMethod"><span>Chuyển khoản</span>
+                    <br/>
+                    <p>Khách đưa</p>
+                    <input type="text">
+                    <p>Còn nợ hoặc tiền thừa</p>
+                    <p>100.000</p>
+                </div>
+                <div ng-show="addCustomer">
+                    <table>
+                        <tr>
+                            <td>Họ tên</td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>Mã KH</td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>Đ. Chỉ</td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>SĐT</td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>Ngày sinh</td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>Giới tính</td>
+                            <td><input type="text"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="footer" ng-show="addCustomer">
+                <a class="cancel" href="#">Hủy</a>
+                <a class="create" href="#">Tạo</a>
+            </div>
         </div>
-        <div
     </div>
     <button ng-if="!isOpening" id="tao-don-hang" ng-click="openPanel()"><i class="fa fa-desktop"></i> SUNO POS</button>
     <div class="pos-panel" style="position: fixed;">

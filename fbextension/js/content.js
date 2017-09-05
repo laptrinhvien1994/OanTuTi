@@ -407,6 +407,19 @@ window.addEventListener("load", function() {
 				}
 			}
 
+			$scope.getCustomerSearchResult = function(key){
+				if(key.length > 3){
+					var url = Api.customers + key + '&storeId='+$scope.currentStore.storeID;
+					asynRequest($http, 'GET', url, null, $scope.userSession.accessToken, function(response, status){
+						if(response){
+							$scope.customerList = response.data;
+						}
+					}, function(error, status){
+						$scope.setNotification('error', 'Lỗi', error.responseStatus.message);
+					}, 'get_search_customer');
+				}
+			}
+
 			$scope.selectedOrder = {
 				'saleOrder' : saleOrder
 			};

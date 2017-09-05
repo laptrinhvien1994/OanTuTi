@@ -1119,3 +1119,40 @@ input:checked + .slider:before {
     background-color: #365899;
     border-color: #365899;
 }
+
+
+/*CSS PAID POPOVER*/
+.paid-popover{
+    width: 200px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: white;
+    border-radius: 3px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+    padding: 5px 9px 9px 9px;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+
+.paid-popover .popover-content .popover-title{
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.paid-popover .popover-content .separator{
+    margin: 0px;
+}
+
+div#suggestCustomer{
+    margin-left: 0px;
+}
+
+#txtSuggestCustomer{
+    height: 20px;
+    padding: 0 0 0 5px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(226, 226, 226);
+}
