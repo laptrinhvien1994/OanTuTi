@@ -1123,23 +1123,23 @@ input:checked + .slider:before {
 
 /*CSS DELIVERY POPOVER*/
 
-.delivery-popover{
-    width: 300px;
-    height: 300px;
+#deliveryPopOver{
+    width: 310px;
+    height: 330px;
     z-index: 10000;
     position: absolute;
     background-color: #fff;
     border-radius: 3px;
     box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
     font-family: Helvetica, Arial, sans-serif;
-    top: 10px;
+    top: 100px;
     bottom: 0px;
     left: 0px;
     right: 0px;
     margin: 0px auto;
 }
 
-.delivery-popover .header{
+#deliveryPopOver .header, #orderDetailPopOver .header{
     color: #1d2129;
     font-size: 14px;
     background-color: #f6f7f9;
@@ -1151,14 +1151,115 @@ input:checked + .slider:before {
     position: relative;
 }
 
-.delivery-popover .header p{
+#deliveryPopOver .header .close-button, #orderDetailPopOver .header .close-button{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -41px -217px;
+    height: 12px;
+    width: 12px;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    cursor: pointer;
+}
+
+#deliveryPopOver .header p{
     margin: 0px;
 }
 
-.delivery-popover .content{
+#deliveryPopOver .content, #orderDetailPopOver .content{
     margin: 10px;
 }
 
+#deliveryPopOver .content .group-control .title, #orderDetailPopOver .content .group-control .title{
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
+    margin-top: 12px;
+    color: rgb(102, 102, 102);
+}
+
+#deliveryPopOver .content .group-control .input,
+#deliveryPopOver .content .group-control #txtSuggestShipper,
+#orderDetailPopOver .content .group-control .input{
+    height: 21px;
+    padding: 4px;
+    width: 280px;
+    border: 1px solid #bdc7d8;
+    font-size: 14px;
+}
+
+#deliveryPopOver .content .group-control #txtSuggestShipper{
+    position: relative;
+    left: -3px;
+}
+
+#deliveryPopOver .content .group-control textarea,
+#orderDetailPopOver .content .group-control textarea{
+    width: 280px;
+    max-width: 280px;
+    height: 50px !important;
+    font-size: 14px;
+}
+
+#deliveryPopOver .footer a,
+#orderDetailPopOver .footer a{
+    float: right;   
+    color: #55565a;
+    padding: 6px 20px;
+    border: 1px solid #b9bcc7;
+    background-color: rgb(233, 235, 238);
+    text-align: center;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 2px;
+    border-color: #c2c5cd;
+    vertical-align: middle;
+    position: relative;
+    right: 10px;
+    top: -2px;
+}
+
+#deliveryPopOver .footer a:hover,
+#orderDetailPopOver .footer a:hover{
+    background-color: rgb(233, 235, 238);
+    border-color: rgb(233, 235, 238);
+}
+
+/*CSS ORDER DETAIL POPOVER*/
+#orderDetailPopOver{
+    width: 310px;
+    height: 398px;
+    z-index: 10000;
+    position: absolute;
+    background-color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
+    font-family: Helvetica, Arial, sans-serif;
+    top: 100px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin: 0px auto;
+}
+
+#orderDetailPopOver .header p{
+    margin: 0px;
+}
+
+#orderDetailPopOver .content .group-control p{
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0px;
+}
+
+#orderDetailPopOver .content .group-control [type="datetime-local"]{
+    padding: 4px;
+    width: 280px;
+    border: 1px solid #bdc7d8;
+    font-size: 14px;
+}
 
 /*CSS PAID POPOVER*/
 .paid-popover{

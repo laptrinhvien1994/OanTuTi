@@ -49,17 +49,52 @@
         </div>
     </div>
 
-    <div class="delivery-popover">
+    <div id="deliveryPopOver" ng-show="isShow">
         <div class="header">
             <p>Thông tin giao hàng</p>
             <span class="close-button" ng-click="closeCreateCustomerPopOver()"></span>
         </div>
         <div class="content">
-            Nhập phí vận chuyển
-            <input type="text" placeholder="Nhập phí vận chuyển">
-            <br/>
-            Chọn đơn vị vận chuyển
-            <autocomplete id="customer-autocomplete" attr-id="suggestCustomer" attr-inputid="txtSuggestCustomer" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm đơn vị vận chuyển" on-select="pickProduct" on-type="getSupplierSearch" on-focus="focusInput" data="searchList.items"></autocomplete>
+            <div class="group-control">
+                <div class="title">Nhập phí vận chuyển</div>
+                <input class="input" type="text" placeholder="Nhập phí vận chuyển (Có thể để trống)">
+            </div>
+            <div class="group-control">
+                <div class="title">Chọn đơn vị vận chuyển</div>
+                <autocomplete id="customer-autocomplete" attr-id="suggestShipper" attr-inputid="txtSuggestShipper" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm đơn vị vận chuyển (Có thể để trống)" on-select="pickProduct" on-type="getShipperSearch" on-focus="focusInput" data="searchList.items"></autocomplete>
+            </div>
+            <div class="group-control">
+                <div class="title">Ghi chú khi giao hàng</div>
+                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)"></textarea>
+            </div>
+        </div>
+        <div class="footer">
+            <a href="#">Đóng</a>
+        </div>
+    </div>
+
+    <div id="orderDetailPopOver">
+        <div class="header">
+            <p>Thông tin thêm về đơn hàng</p>
+            <span class="close-button" ng-click="closeCreateCustomerPopOver()"></span>
+        </div>
+        <div class="content">
+            <div class="group-control">
+                <div class="title">Người tạo phiếu</div>
+                <input class="input" type="text" disabled="true" value="{{userSession.displayName}}">
+            </div>
+            <div class="group-control">
+                <div class="title">Mã phiếu</div>
+                <input class="input" type="text" disabled="true" value="Hệ thống sẽ tạo tự động.">
+            </div>
+            <div class="group-control">
+                <div class="title">Ngày tạo phiếu</div>
+                <input type="datetime-local">
+            </div>
+            <div class="group-control">
+                <div class="title">Ghi chú cho đơn hàng</div>
+                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)"></textarea>
+            </div>
         </div>
         <div class="footer">
             <a href="#">Đóng</a>
