@@ -1124,35 +1124,160 @@ input:checked + .slider:before {
 /*CSS PAID POPOVER*/
 .paid-popover{
     width: 200px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.35);
     background: white;
     border-radius: 3px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
-    padding: 5px 9px 9px 9px;
+    padding: 9px 9px 9px 9px;
     position: absolute;
     left: 10px;
     top: 10px;
 }
 
+.paid-popover .popover-content{
+    position: relative;
+}
+.paid-popover .popover-body{
+    position: relative;
+}
+
+.paid-popover .popover-content .close-button{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yx/r/ogYrclupeJV.png');
+    position: absolute;
+    top: 3px;
+    right: -1px;
+    width: 11px;
+    height: 11px;
+    background-position: 0px 48px;
+}
+
+.paid-popover .popover-content .close-button:hover{
+    background-position: 0px 12px;
+}
+
+.paid-popover .received-money{
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(226, 226, 226);
+    padding: 2px;
+    height: 14px;
+    width: 195px;   
+}
+
 .paid-popover .popover-content .popover-title{
     text-align: center;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 9px;
 }
 
 .paid-popover .popover-content .separator{
-    margin: 0px;
+    margin: 0px 0px 10px 0px;
+    width: 200px;
+}
+
+.paid-popover .popover-content .label{
+    color: rgb(102, 102, 102);
+    font-weight: bold;
+    margin: 8px 0px 5px 0px;
+    position: relative;
+    left: -3px;
+}
+
+
+.paid-popover .popover-content .remain-value{
+    margin-top: 5px;
+    margin-bottom: 0px;
+    font-weight: bold;
+}
+
+.paid-popover .popover-content .radio-btn{
+    margin-left: 0px;
+}
+
+.paid-popover .popover-content .radio-label{
+    position: relative;
+    top: -2px;
 }
 
 div#suggestCustomer{
     margin-left: 0px;
 }
 
+.paid-popover .popover-content .popover-body .create-customer{
+    height: 14px;
+    width: 14px;
+    position: absolute;
+    z-index: 2;
+    top: 4px;
+    right: 5px;
+    background-color: rgb(84, 84, 84);
+   /* background-image: url('https://www.facebook.com/rsrc.php/v3/yG/r/4qMXFLNXf1o.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: 0 -138px;
+    cursor: pointer;*/
+}
+
 #txtSuggestCustomer{
+    width: 168px;
     height: 20px;
-    padding: 0 0 0 5px;
+    padding: 0 25px 0 5px;
     border-radius: 3px;
     border-width: 1px;
     border-style: solid;
     border-color: rgb(226, 226, 226);
+}
+
+.paid-popover .popover-content .triangle{
+    position: absolute;
+    top: 251px;
+    left: 173px;
+    background-image: url('https://www.facebook.com/rsrc.php/v3/y7/r/LaoInooW6Pk.png');
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position: -200px -196px;
+    height: 10px;
+    width: 16px;
+}
+
+.paid-popover .popover-content .validation-msg{
+    height: 28px;
+    color: red;
+    text-align: center;
+    position: relative;
+    top: 3px;
+    font-weight: bold;
+}
+
+.paid-popover .popover-content .footer a{
+    padding: 2px 8px;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 2px;
+    border: 1px solid rgb(66, 103, 178);
+    background-color: rgb(66, 103, 178);
+    color: white;
+    position: relative;
+    top: -2px;
+    right: -119px;
+    text-decoration: none;
+}
+
+.paid-popover .popover-content .footer a:hover{
+    background-color: #385899;
+}
+
+.paid-popover .popover-content .popover-body .input{
+    /*border: 1px solid rgb(226, 226, 226);*/
+    /*padding-left: 5px;*/
+    width: 101.5%;
+    text-indent: 4px;
+}
+
+.paid-popover .popover-content .popover-body [type=date]{
+    width: 101%;
+}
+
+.paid-popover .popover-content .popover-body table td{
 }
