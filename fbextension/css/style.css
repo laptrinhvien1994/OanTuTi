@@ -1121,6 +1121,45 @@ input:checked + .slider:before {
 }
 
 
+/*CSS DELIVERY POPOVER*/
+
+.delivery-popover{
+    width: 300px;
+    height: 300px;
+    z-index: 10000;
+    position: absolute;
+    background-color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 2px 26px rgba(0, 0, 0, .3), 0 0 0 1px rgba(0, 0, 0, .1);
+    font-family: Helvetica, Arial, sans-serif;
+    top: 10px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin: 0px auto;
+}
+
+.delivery-popover .header{
+    color: #1d2129;
+    font-size: 14px;
+    background-color: #f6f7f9;
+    border-bottom: 1px solid #e5e5e5;
+    border-radius: 3px 3px 0 0;
+    font-weight: bold;
+    line-height: 19px;
+    padding: 10px 12px;
+    position: relative;
+}
+
+.delivery-popover .header p{
+    margin: 0px;
+}
+
+.delivery-popover .content{
+    margin: 10px;
+}
+
+
 /*CSS PAID POPOVER*/
 .paid-popover{
     width: 200px;
@@ -1281,3 +1320,5 @@ div#suggestCustomer{
 
 .paid-popover .popover-content .popover-body table td{
 }
+
+

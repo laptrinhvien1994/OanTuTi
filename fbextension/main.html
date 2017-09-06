@@ -49,7 +49,24 @@
         </div>
     </div>
 
-    <div class="paid-popover">
+    <div class="delivery-popover">
+        <div class="header">
+            <p>Thông tin giao hàng</p>
+            <span class="close-button" ng-click="closeCreateCustomerPopOver()"></span>
+        </div>
+        <div class="content">
+            Nhập phí vận chuyển
+            <input type="text" placeholder="Nhập phí vận chuyển">
+            <br/>
+            Chọn đơn vị vận chuyển
+            <autocomplete id="customer-autocomplete" attr-id="suggestCustomer" attr-inputid="txtSuggestCustomer" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm đơn vị vận chuyển" on-select="pickProduct" on-type="getSupplierSearch" on-focus="focusInput" data="searchList.items"></autocomplete>
+        </div>
+        <div class="footer">
+            <a href="#">Đóng</a>
+        </div>
+    </div>
+
+    <div class="paid-popover" ng-show="isShow">
         <div class="popover-content">
             <div class="popover-title">
                 <span ng-show="addCustomer">Thanh toán</span>
