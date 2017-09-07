@@ -1,5 +1,15 @@
 <div id="viewport" ng-controller="MainController">
     <div id="backdrop-doc" ng-show="isShowHideCreateCustomer" ng-click="closeCreateCustomerPopOver()"></div>
+    <div id="notification">
+        <div class="close-button"></div>
+        <div id="profile-img">
+            <img ng-src="{{temp}}" width="30" height="30">
+        </div>
+        <div id="content">
+            Bạn đã đăng nhập <b>SUNO POS</b> bằng tài khoản <b>{{userSession.displayName}}.</b>
+        </div>
+        <div class="clearfix"></div>
+    </div>
     <div id="createCustomerPopOver" ng-show="isShowHideCreateCustomer">
         <div class="header">
             <span>Tạo mới khách hàng</span>
@@ -72,8 +82,7 @@
             <a href="#">Đóng</a>
         </div>
     </div>
-
-    <div id="orderDetailPopOver">
+    <div id="orderDetailPopOver" ng-show="isShow">
         <div class="header">
             <p>Thông tin thêm về đơn hàng</p>
             <span class="close-button" ng-click="closeCreateCustomerPopOver()"></span>

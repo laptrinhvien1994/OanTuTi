@@ -1423,3 +1423,45 @@ div#suggestCustomer{
 }
 
 
+/*CSS NOTIFICATION*/
+
+#notification{
+    position: absolute;
+    top: 620px;
+    left: 50px;
+    width: 200px;
+    height: auto;
+    background-color: white;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    background: white;
+    border-radius: 3px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+    padding: 9px 9px 9px 9px;
+}
+
+#notification .close-button{
+    background-image: url('https://www.facebook.com/rsrc.php/v3/yx/r/ogYrclupeJV.png');
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 11px;
+    height: 11px;
+    background-position: 0px 48px;
+}
+
+#notification #profile-img{
+    width: 30px;
+    float: left;
+}
+
+#notification #content{
+    margin-left: 2px;
+    width: 164px;
+    float: right;
+}
+
+#notification #clearfix{
+    clear: both;
+}
+
+
