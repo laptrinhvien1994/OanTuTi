@@ -85,6 +85,18 @@ window.addEventListener("load", function() {
 			$scope.stores = JSON.parse(localStorage.getItem('sn_store_list'));
 			$scope.setting = JSON.parse(localStorage.getItem('sn_bootloader'));
 
+			$scope.isShowUserContext = false;
+			$scope.isShowDisCountItem = false;
+			$scope.isShowDisCountOrder = false;
+			$scope.isShowConfig = false;
+			$scope.isShowCreateCustomer = false;
+			$scope.isShowDelivery = false;
+			$scope.isShowPaid = false;
+			$scope.isShowDetail = false;
+			$scope.isShowNotification = false;
+			$scope.isShowPaidSection = false;
+			$scope.isShowDeliverySection = false;
+
 			if($scope.stores && $scope.stores.stores.length > 0){
 				$scope.currentStore = $scope.stores.stores[0];
 			}

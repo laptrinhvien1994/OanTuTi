@@ -1,6 +1,6 @@
 <div id="viewport" ng-controller="MainController">
     <div id="backdrop-doc" ng-show="isShowHideCreateCustomer" ng-click="closeCreateCustomerPopOver()"></div>
-    <div id="notification">
+    <div id="notification" ng-show="isShow">
         <div class="close-button"></div>
         <div id="profile-img">
             <img ng-src="{{temp}}" width="30" height="30">
