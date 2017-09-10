@@ -16,6 +16,11 @@
       "js/jquery.mCustomScrollbar.concat.min.js",
       "js/angular.min.js",
       "js/angular-animate.min.js",
+      "js/main.js",
+      "js/autocomplete.js",
+      "js/factories.js",
+      "js/services.js",
+      "js/saleOrder.js",
       "js/content.js",
       "js/app.js",
       "js/jquery.webui-popover.js"

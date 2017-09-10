@@ -67,15 +67,15 @@
         <div class="content">
             <div class="group-control">
                 <div class="title">Nhập phí vận chuyển</div>
-                <input class="input" type="text" placeholder="Nhập phí vận chuyển (Có thể để trống)">
+                <input class="input" type="text" placeholder="Nhập phí vận chuyển (Có thể để trống)" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.SubFee">
             </div>
             <div class="group-control">
                 <div class="title">Chọn đơn vị vận chuyển</div>
-                <autocomplete id="customer-autocomplete" attr-id="suggestShipper" attr-inputid="txtSuggestShipper" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm đơn vị vận chuyển (Có thể để trống)" on-select="pickProduct" on-type="getShipperSearch" on-focus="focusInput" data="searchList.items"></autocomplete>
+                <autocomplete id="customer-autocomplete" attr-id="suggestShipper" attr-inputid="txtSuggestShipper" ng-model="shipper" template-id="SuggestProductTemplate" attr-placeholder="Tìm đơn vị vận chuyển (Có thể để trống)" on-select="pickProduct" on-type="getShipperSearch" on-focus="focusInput" data="searchList.items"></autocomplete>
             </div>
             <div class="group-control">
                 <div class="title">Ghi chú khi giao hàng</div>
-                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)"></textarea>
+                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.shipper.comment"></textarea>
             </div>
         </div>
         <div class="footer">
@@ -94,7 +94,7 @@
             </div>
             <div class="group-control">
                 <div class="title">Mã phiếu</div>
-                <input class="input" type="text" disabled="true" value="Hệ thống sẽ tạo tự động.">
+                <input class="input" type="text" disabled="true" value="Hệ thống sẽ tạo tự động." ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Code">
             </div>
             <div class="group-control">
                 <div class="title">Ngày tạo phiếu</div>
@@ -102,7 +102,9 @@
             </div>
             <div class="group-control">
                 <div class="title">Ghi chú cho đơn hàng</div>
-                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)"></textarea>
+                <textarea class="input" rows="4" cols="50" maxlength="1000" placeholder="Nhập thông tin ghi chú (Có thể để trống)" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Comment">
+                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Comment}}
+                </textarea>
             </div>
         </div>
         <div class="footer">
@@ -123,14 +125,14 @@
                     <span class="create-customer"></span>
                     <autocomplete id="customer-autocomplete" attr-id="suggestCustomer" attr-inputid="txtSuggestCustomer" ng-model="customerSearchKey" template-id="SuggestProductTemplate" attr-placeholder="Tìm khách hàng" on-select="pickProduct" on-type="getCustomerSearchResult" on-focus="focusInput" data="searchList.items"></autocomplete>
                     <p class="label">Hình thức thanh toán</p>
-                    <input type="radio" class="radio-btn" checked name="paymentMethod"><span class="radio-label">Tiền mặt</span>
+                    <input type="radio" class="radio-btn" checked name="paymentMethod"><span class="radio-label" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.PaymentMethod">Tiền mặt</span>
                     <br/>
-                    <input type="radio" class="radio-btn" name="paymentMethod"><span class="radio-label">Thẻ</span>
+                    <input type="radio" class="radio-btn" name="paymentMethod"><span class="radio-label" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.PaymentMethod">Thẻ</span>
                     <br/>
-                    <input type="radio" class="radio-btn" name="paymentMethod"><span class="radio-label">Chuyển khoản</span>
+                    <input type="radio" class="radio-btn" name="paymentMethod"><span class="radio-label" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.PaymentMethod">Chuyển khoản</span>
                     <br/>
                     <p class="label">Tiền khách đã trả</p>
-                    <input type="text" class="received-money" placeholder="Tiền khách trả">
+                    <input type="text" class="received-money" placeholder="Tiền khách trả" ng-model="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.AmountPaid">
                     <p class="label">Còn nợ hoặc tiền thừa</p>
                     <p class="remain-value">100.000</p>
                 </div>
@@ -240,7 +242,7 @@
                 <div id="pos-orders" ng-if="selectedOrder.saleOrder.orderDetails.length > 0">
                 <div id="detail-title">CHI TIẾT ĐƠN HÀNG</div>
                     <ul class="mCustomScrollbar" data-mcs-axis="y">
-                        <li ng-repeat="item in selectedOrder.saleOrder.orderDetails" class="items-in-orderList" ng-mouseleave="itemLeave($event)" ng-mouseover="itemHover($event)">
+                        <li ng-repeat="item in saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Details" class="items-in-orderList" ng-mouseleave="itemLeave($event)" ng-mouseover="itemHover($event)">
                             <div class="item-name">
                                 <a ng-href="https://pos.suno.vn/Manage/#/product/detail/{{item.productId}}" target="_blank" title="{{item.itemName}}">{{item.itemName | charLimit:33}}</a>
                             </div>
@@ -255,7 +257,7 @@
                                 <span class="color-1">Số lượng: <input class="item-quantity" type="number" min="1" max="999" ng-model="item.quantity" ng-change="quantityChange(item)"> </span>
                             </div>
                             <div>
-                                <span class="color-1" data-title="Title" data-content="Content..." data-placement="right">Thành tiền: <b class="sum">{{item.retailPrice * item.quantity | number}}</b></span>&nbsp;&nbsp;
+                                <span class="color-1" data-title="Title" data-content="Content..." data-placement="right">Thành tiền: <b class="sum">{{(item.quantity * item.sellPrice) | number:0}}</b></span>&nbsp;&nbsp;
                             </div>
                             <div class="remove-button" ng-click="removeItem(item)"></div>
                         </li>
@@ -366,10 +368,10 @@
                 <div id="create-order">
                     <div id="left">
                         <p id="title">TỔNG CỘNG</p>
-                        <p id="total">100.000</p>
+                        <p id="total">{{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Total | number}}</p>
                     </div>
                     <div id="right">
-                        <a id="create-button" href="#">
+                        <a id="create-button" href="#" ng-click="confirmOrder()">
                             Tạo đơn hàng
                         </a>
                     </div>
@@ -382,7 +384,7 @@
                                 <span>Tiền hàng:</span>
                             </td>
                             <td>
-                                100.000
+                                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.SubTotal | number}}
                             </td>
                         </tr>
                         <tr>
@@ -390,7 +392,8 @@
                                 <span>Giảm giá:</span>
                             </td>
                             <td id="img-gift-relative">
-                                100.000
+                                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.Discount | number}}
+                                <span data-ng-show="saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.IsDiscountPercent == true">{{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.DiscountInPercent }} % </span>
                                 <span id="discount-order" ng-click="showHideDiscountOrder()" title="Giảm giá đơn hàng"><img width="14" height="14" src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/facebook/111/wrapped-present_1f381.png" /></span>
                             </td>
                         </tr>
@@ -402,7 +405,7 @@
                                 <span title="Phí vận chuyển">Phí VC:</span>
                             </td>
                             <td>
-                                100.000
+                                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.SubFee | number}}
                             </td>
                         </tr>
                     </table>
@@ -413,7 +416,7 @@
                                 <span>Thanh toán:</span>
                             </td>
                             <td>
-                                100000
+                                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.AmountPaid | number}}
                             </td>
                         </tr>
                         <tr>
@@ -427,10 +430,11 @@
                         </tr>
                         <tr>
                             <td class="title">
-                                <span>Còn nợ:</span>
+                                <span ng-show="moreAmountPaid <= 0">Còn nợ:</span>
+                                <span ng-show="moreAmountPaid > 0">Tiền thừa</span>
                             </td>
                             <td>
-                                100.000
+                                {{saleOrder.Items[saleOrder.SelectedOrderIndex].SaleOrder.PaymentBalance | number:0}}
                             </td>
                         </tr>
                     </table>
