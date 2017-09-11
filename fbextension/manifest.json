@@ -16,12 +16,15 @@
       "js/jquery.mCustomScrollbar.concat.min.js",
       "js/angular.min.js",
       "js/angular-animate.min.js",
-      "js/Core/main.js",
+      "js/Core/posFBController.js",
       "js/Core/autocomplete.js",
       "js/Core/saleOrder.js",
+      "js/Core/promotion.js",
+      "js/Core/serviceUrl.js",
+      "js/Core/settingsGlobal.js",
+      "js/Core/service.js",
       "js/content.js",
-      "js/app.js",
-      "js/jquery.webui-popover.js"
+      "js/app.js"
     ],
     "matches": ["file:///C:/Users/HP/Desktop/OanTuTi/fbextension/index.html"],
     "run_at": "document_end"

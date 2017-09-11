@@ -1,4 +1,4 @@
-appRoot.factory("saleOrders", ['$rootScope', 'userService', 'saleService', 'settingsGlobal', '$http', 'promotion', 'productService', 'promotionService', function ($rootScope, userService, saleService, settingsGlobal, $http, promotion, productService, promotionService) {
+app.factory("saleOrders", ['$rootScope', 'userService', 'saleService', 'settingsGlobal', '$http', 'promotion', 'productService', 'promotionService', function ($rootScope, userService, saleService, settingsGlobal, $http, promotion, productService, promotionService) {
     var setting = settingsGlobal.getSetting();
 
     function saleOrders(data) {

@@ -1,4 +1,4 @@
-.controller('onlineOrderController', ['$rootScope', '$scope', '$route', '$routeParams', '$location', '$http', 'saleOrders', 'customerService', 'pubsubProductService', 'printer', 'settingsGlobal', 'inventoryService', 'orderService', 'ngTableParams', '$modal', 'earningPointService', 
+app.controller('onlineOrderController', ['$rootScope', '$scope', '$route', '$routeParams', '$location', '$http', 'saleOrders', 'customerService', 'pubsubProductService', 'printer', 'settingsGlobal', 'inventoryService', 'orderService', 'ngTableParams', '$modal', 'earningPointService', 
 function ($rootScope, $scope, $route, $routeParams, $location, $http, saleOrders, customerService, pubsubProductService, printer, settingsGlobal, inventoryService, orderService, ngTableParams, $modal, earningPointService) {
     var setting = settingsGlobal.getSetting();
     var storeId = $('#dllInventory').length > 0 ? $('#dllInventory').val() : 0;

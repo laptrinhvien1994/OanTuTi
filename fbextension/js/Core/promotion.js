@@ -1,4 +1,4 @@
-appRoot.factory('promotion', ['promotionService', 'settingsGlobal', '$http',
+app.factory('promotion', ['promotionService', 'settingsGlobal', '$http',
     function (promotionService, settingsGlobal, $http) {
         var setting = settingsGlobal.getSetting();
         var storeIds = PosimGlobal.getGrantedStores(setting);
