@@ -1,4 +1,4 @@
-factory("settingsGlobal", ['$q', '$timeout', '$rootScope', 'settingService', 'printer', function ($q, $timeout, $rootScope, posimSettingService, printer) {
+app.factory("settingsGlobal", ['$q', '$timeout', '$rootScope', 'posimSettingService', 'printer', function ($q, $timeout, $rootScope, posimSettingService, printer) {
     return {
         initializeSetting: function (localtion) {
             var deferred = $q.defer();
