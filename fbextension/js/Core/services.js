@@ -130,3 +130,26 @@ app.service('promotionService', ['$http', function ($http) {
         POSIM.CallService($http, PosimGlobal.urlRequest.POS.Promotion.GetPromotionIdByCode + params, 'GET', null, callback, errorCallback)
     }
 }]);
+
+app.service('saleService', ['$http', function ($http) {
+    this.draftSaleOrder = function (data, callback, errorCallback) {
+        //POSIM.CallService($http, PosimGlobal.urlRequest.POS.Sale.DraftSaleOrder, 'POST', data, callback, errorCallback);
+        POSIM.CallUniqueService($http, PosimGlobal.urlRequest.POS.Sale.DraftSaleOrder, 'POST', data, callback, errorCallback, true, 'draftSaleOrder');
+    };
+
+    this.confirmSaleOrder = function (data, callback, errorCallback) {
+        //POSIM.CallService($http, PosimGlobal.urlRequest.POS.Sale.CompleteSaleOrder, 'POST', data, callback, errorCallback);
+        POSIM.CallUniqueService($http, PosimGlobal.urlRequest.POS.Sale.ConfirmSaleOrder, 'PUT', data, callback, errorCallback, true, 'confirmSaleOrder');
+    };
+    // service: OnDeliveryOnline
+    this.onDeliverySaleOrder = function (data, callback, errorCallback) {
+        //POSIM.CallService($http, PosimGlobal.urlRequest.POS.Sale.CompleteSaleOrder, 'POST', data, callback, errorCallback);
+        POSIM.CallUniqueService($http, PosimGlobal.urlRequest.POS.Sale.OnDeliverySaleOrder, 'PUT', data, callback, errorCallback, true, 'onDeliverySaleOrder');
+    };
+    
+    this.toDeliverySaleOrder = function (data, callback, errorCallback) {
+        POSIM.CallUniqueService($http, PosimGlobal.urlRequest.POS.Sale.CompleteSaleOrder, 'POST', data, callback, errorCallback, true, 'toDeliverySaleOrder');
+    };
+
+}]);
+
