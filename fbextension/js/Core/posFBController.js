@@ -1,5 +1,9 @@
 window.app = angular.module('SunoApp', []);
 app.controller('MainController', function ($scope,$http,$q,$timeout){
+	var FBColor = $('aria-label="Facebook"').css("background-color");
+	if(FBColor){
+		$('.pos-header').css('background-color', FBColor);
+	}
 	var Api = Suno.Api;
 	var asynRequest = Suno.asynRequest;
 	$scope.userSession = JSON.parse(localStorage.getItem('sn_ac_tk'));
