@@ -73,15 +73,15 @@ winston.level = 'debug';
          })
      ]
  })
-
+ 
  var devLog = function (logData) {
      devLogger.log('debug', logData);
  }
 
 var port = 8181;
-var DEBUG = false;
+var DEBUG = true;
 var CACHE_TIME_OUT = 104400000;
-var AUTH_URL = 'auth.hugate.demo';
+var AUTH_URL = 'localhost:6985';
 var https = require('http');
 var querystring = require('querystring');
 var cache = require('memory-cache');
@@ -94,11 +94,9 @@ var db;
 var io;
 
 // Connection URL 
-
-// Connection URL
 // var url = 'mongodb://172.16.1.3:27017/cafe?maxPoolSize=100';
 var url = 'mongodb://192.168.1.11:27017,192.168.1.6:27017,192.168.1.8:27017/cafe?replicaSet=rs0&maxPoolSize=100';
-// Use connect method to connect to the Server
+// Use connect method to connect to the Server 
 MongoClient.connect(url, function (err, database) {
     db = database;
     //initialize socket
@@ -122,14 +120,14 @@ MongoClient.connect(url, function (err, database) {
                     // logDebug(id);
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
-                       //io.sockets.emit('exception', data);
+                       //io.sockets.emit('exception', data);  
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                        logDebug('exception...' + data);
                     }
                     else
                     {
                         //update(id, data);
-                        debugger;
+                        //debugger;
                         initShift(id, data);
                     }
                 }
@@ -142,7 +140,7 @@ MongoClient.connect(url, function (err, database) {
         });
 
         socket.on('updateOrder', function (data) {
-            debugger;
+            //debugger;
             if (!data) return;
             doAuth(data, function(data){
                 try
@@ -154,7 +152,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + data);
-                       //io.sockets.emit('exception', data);
+                       //io.sockets.emit('exception', data);  
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -182,13 +180,12 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + data);
-                       //io.sockets.emit('exception', data);
+                       //io.sockets.emit('exception', data);  
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
                     {
-                        console.log(data);
-                        move(id, data);
+                        moveOrder(id, data);
                     }
                 }
                 catch(ex)
@@ -199,7 +196,7 @@ MongoClient.connect(url, function (err, database) {
             });
         });
         socket.on('completeOrder', function (data) {
-            debugger;
+            //debugger;
             if (!data) return;
             doAuth(data, function(data){
                 try
@@ -212,7 +209,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                         logDebug('exception...' + JSON.stringify(data));
-                        //io.sockets.emit('exception', data);
+                        //io.sockets.emit('exception', data);  
                         socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -240,7 +237,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + JSON.stringify(data));
-                       //io.sockets.emit('exception', data);
+                       //io.sockets.emit('exception', data);  
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -268,7 +265,7 @@ MongoClient.connect(url, function (err, database) {
                     if (id == '' || id == '_' || id == 'undefined_undefined')
                     {
                        logDebug('exception...' + JSON.stringify(data));
-                       //io.sockets.emit('exception', data);
+                       //io.sockets.emit('exception', data);  
                        socket.emit('exception', {errorCode: 'invalidStore', data: data});
                     }
                     else
@@ -286,7 +283,6 @@ MongoClient.connect(url, function (err, database) {
 
 
         var initShift = function (id, data) {
-            debugger;
             var shiftIdReq = data.shiftId;
             var shiftIdCur = null;
             var collection = db.collection('tableOrder');
@@ -294,7 +290,6 @@ MongoClient.connect(url, function (err, database) {
             collection.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
                 if (err) logError(err);
                 history.find({ companyId: data.companyId, storeId: data.storeId, shiftId: data.shiftId }).toArray(function (errHis, docHis) {
-                    debugger;
                     if (errHis) logError(errHis);
                     //Giai đoạn 1: Chuẩn bị data
                     //Nếu trong collection tableOrder không có documents nào thuộc companyId và storeId (Trường hợp Init shift lần đầu tiên).
@@ -305,7 +300,6 @@ MongoClient.connect(url, function (err, database) {
                         collection.insert(data, function (err, doc) { if (err) logDebug('Error:' + err); else { logDebug('Result:'); dirDebug(doc); }});
                         history.insert(data, function (err, doc) { if (err) logDebug('Error:' + err); else { logDebug('Result:'); dirDebug(doc); } });
                     }
-                    //Trường hợp Init Shift các lần sau
                     else
                     {
                         //Gán shiftId hiện tại là shiftId trong collection tableOrder.
@@ -330,11 +324,52 @@ MongoClient.connect(url, function (err, database) {
                                         var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
 
                                         //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
-                                        if (order && (data.tables[i].tableOrder[j].lastSyncID >= order.lastSyncID )){
-                                            t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
-                                        }
-                                        else if (order && data.tables[i].tableOrder[j].lastSyncID < order.lastSyncID) {
-                                            logDebug('order is out of date');
+                                        //Việc cập nhật là merge dữ liệu giữa Client và Server không phải overwrite.
+                                        debugger;
+                                        if (order) {
+                                            //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+
+                                            //Điều chỉnh data cho phù hợp
+                                            //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                            var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                return order.saleOrder.logs.findIndex(function (i) {
+                                                    return i.itemID == item.itemID && i.timestamp == item.timestamp && i.clientSyncID == item.clientSyncID;
+                                                }) < 0;
+                                            });
+                                            order.saleOrder.logs.concat(orderClient);
+
+                                            //B2: Tính toán lại số lượng dựa trên logs
+                                            var groupLog = groupBy(order.saleOrder.logs);
+
+                                            //B3: Cập nhật lại số lượng item
+                                            groupLog.forEach(function (log) {
+                                                var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                    return d.itemId == log.itemID;
+                                                });
+                                                if (log.totalQuantity > 0 && index < 0) {
+                                                    //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                    var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { d.itemId == log.itemID });
+                                                    order.saleOrder.orderDetails.push(itemDetail);
+                                                }
+                                                else if (log.totalQuantity > 0 && index >= 0) {
+                                                    //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                    var itemDetail = order.saleOrder.orderDetails.find(function (d) { d.itemId == log.itemID });
+                                                    itemDetail.quantity = log.totalQuantity;
+                                                }
+                                                else if (log.totalQuantity < 0 && index >= 0) {
+                                                    //Nếu số lượng trong log < 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                    var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { d.itemId == log.itemID });
+                                                    order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                }
+                                                else if (log.totalQuantity < 0 && index < 0) {
+                                                    //Nếu số lượng trong log < 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                }
+                                            });
+
+                                            //B4: Cập nhật status cho mỗi dòng log là đã cập nhật.
+                                            order.saleOrder.logs.forEach(function (log) {
+                                                if (!log.status) log.status = true;
+                                            });
                                         }
                                             //Nếu order chưa tồn tại thì kiểm tra trong collection tableOrderHistory
                                             //- Có thì đơn hàng Client gửi lên không hợp lệ (Trường hợp đăng nhập cùng 1 tài khoản trên 2 thiết bị, thoát 1 thiết bị nhưng vẫn còn lưu ở DB Local)
@@ -376,7 +411,7 @@ MongoClient.connect(url, function (err, database) {
                     //Chưa có shift nào 
                     if (shiftIdReq == '' || shiftIdReq == undefined || shiftIdReq == null) {
                         data.shiftId = shiftIdCur;
-                        io.to(id).emit('broadcastOrders', data);
+                        io.to(id).emit('initShift', data);
                     }
                     else {
                         //Thông tin shift không match. Trường hợp Client gửi lên shift cũ trong DB Local sau khi shift đó đã kết thúc.
@@ -385,343 +420,295 @@ MongoClient.connect(url, function (err, database) {
                         }
                             //Cập nhật thông tin shift
                         else {
-                            io.to(id).emit('broadcastOrders', data);
+                            io.to(id).emit('initShift', data);
                         }
                     }
                 });
             });
         };
 
+        var groupBy = function (arrLog) {
+            var result = arrLog.reduce(function (arr, item) {
+                var index = arr.findIndex(function (i) { return i.itemID == item.itemID });
+                if (index == -1) {
+                    //Chưa có
+                    var quantity = item.action == "BB" ? item.quantity : -item.quantity;
+                    var logs = [{
+                        action: item.action,
+                        timestamp: item.timestamp,
+                        quantity: item.quantity,
+                        clientSyncID: item.clientSyncID,
+                    }]
+                    arr.push({
+                        itemID: item.itemID,
+                        itemName: item.itemName,
+                        totalQuantity: quantity,
+                        logs: logs
+                    });
+                }
+                else {
+                    //Có
+                    var indexLog = arr[index].logs.findIndex(function (i) { return i.timestamp == item.timestamp });
+                    //Distinct value
+                    if (indexLog == -1) {
+                        arr[index].logs.push({
+                            action: item.action,
+                            timestamp: item.timestamp,
+                            quantity: item.quantity,
+                            clientSyncID: item.clientSyncID
+                        });
+                        //Cập nhật lại total
+                        var quantity = item.action == "BB" ? item.quantity : -item.quantity;
+                        arr[index].totalQuantity += quantity;
+                    }
+                }
+                return arr;
+            }, []);
+            return result;
+        };
+
 
         var updateOrder = function (id, data) {
-            debugger;
+            //debugger;
+            var shiftIdCur = null;
             var shiftIdReq = data.shiftId;
             var collection = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
-            collection.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
+            collection.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {         
                 if (err) logError(err);
-                debugger;
-                //Giai đoạn 1: Cập nhật lại data trên DB Mongo
-                //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
-                for (var i = 0; i < data.tables.length; i++) {
+                if (docs && docs.length > 0) {
+                    shiftIdCur = docs[0].shiftId;
+                    if (shiftIdReq == shiftIdCur) {
+                        //debugger;
+                        //Giai đoạn 1: Cập nhật lại data trên DB Mongo
+                        //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
+                        for (var i = 0; i < data.tables.length; i++) {
 
-                    //Nếu trong bàn đó không có đơn hàng thì chuyển qua bàn khác
-                    if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
+                            //Nếu trong bàn đó không có đơn hàng thì chuyển qua bàn khác
+                            if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
 
-                    //Lặp qua từng hóa đơn trong bàn đó.
-                    for (var j = 0; j < data.tables[i].tableOrder.length; j++) {
-                        var t = _.findWhere(docs[0].tables, { tableUuid: data.tables[i].tableUuid });
-                        var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
+                            //Lặp qua từng hóa đơn trong bàn đó.
+                            for (var j = 0; j < data.tables[i].tableOrder.length; j++) {
+                                var t = _.findWhere(docs[0].tables, { tableUuid: data.tables[i].tableUuid });
+                                var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
 
-                        //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
-                        if (order) {
-                            t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
-                        } else {
-                            t.tableOrder.push(data.tables[i].tableOrder[j]);
+                                //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
+                                debugger;
+                                if (order) {
+                                    //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+                                    //Điều chỉnh data cho phù hợp
+                                    //Luôn giữ log chỉ tính toán và cập nhật lại số lượng.
+                                    //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                        return order.saleOrder.logs.findIndex(function (i) {
+                                            return i.itemID == item.itemID && i.timestamp == item.timestamp && i.clientSyncID == item.clientSyncID;
+                                        }) < 0;
+                                    });
+                                    var arr = order.saleOrder.logs.concat(orderClient);
+                                    order.saleOrder.logs = arr;
+
+                                    //B2: Tính toán lại số lượng dựa trên logs
+                                    var groupLog = groupBy(order.saleOrder.logs);
+
+                                    //B3: Cập nhật lại số lượng item
+                                    groupLog.forEach(function (log) {
+                                        debugger;
+                                        var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                            return d.itemId == log.itemID;
+                                        });
+                                        if (log.totalQuantity > 0 && index < 0) {
+                                            //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                            var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) {return d.itemId == log.itemID });
+                                            order.saleOrder.orderDetails.push(itemDetail);
+                                        }
+                                        else if (log.totalQuantity > 0 && index >= 0) {
+                                            //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                            var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                            itemDetail.quantity = log.totalQuantity;
+                                        }
+                                        else if (log.totalQuantity <= 0 && index >= 0) {
+                                            //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                            var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                            order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                        }
+                                        else if (log.totalQuantity <= 0 && index < 0) {
+                                            //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                        }
+                                    });
+
+                                    //B4: Cập nhật status cho mỗi dòng log là đã cập nhật.
+                                    order.saleOrder.logs.forEach(function (log) {
+                                        if (!log.status) log.status = true;
+                                    });
+                                } else {
+                                    data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
+                                        log.status = true;
+                                    });
+                                    t.tableOrder.push(data.tables[i].tableOrder[j]);
+                                }
+                            }
                         }
+                        //Sau khi đã xử lý xong ds bàn và đơn hàng Client gửi lên thì cập nhật lại vào Collection TableOrder trên Server.
+                        collection.update({ companyId: data.companyId, storeId: data.storeId }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) { if (err) logDebug('Error:' + err); });
+                        //Giai đoạn 2: Trả về cho tất cả các client trừ client gửi lên.
+                        //io.to(id).emit('broadcastOrders', data);
+                        //socket.broadcast.to(id).emit('updateOrder', data);
+                        //Trả về cho tất cả client
+                        io.to(id).emit('updateOrder', data);
                     }
-                }
-                //Sau khi đã xử lý xong ds bàn và đơn hàng Client gửi lên thì cập nhật lại vào Collection TableOrder trên Server.
-                collection.update({ companyId: data.companyId, storeId: data.storeId }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) { if (err) logDebug('Error:' + err); });
-                //Giai đoạn 2: Trả về cho tất cả các client trừ client gửi lên.
-                //io.to(id).emit('broadcastOrders', data);
-                socket.broadcast.to(id).emit('updateOrder', data);
+                    //Không khớp shiftId thì trả về exception
+                    else {
+                        io.to(id).emit('exception', { errorCode: 'invalidShift', data: docs[0] });
+                    } 
+                }            
             });
         }
 
 
         var completeOrder = function (id, data) {
-            debugger;
+            //debugger;
             var shiftIdReq = data.shiftId;
             var shiftIdCur;
-            var responseData = clone(data);
             var tableOrder = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
             var errorLog = db.collection('errorLog');
             var completed = [];
+            var responseData = clone(data);
             // Find some documents 
             tableOrder.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
-                debugger;
+                //debugger;
                 if (err) { logError(err); return; }
                 if (docs && docs.length > 0) {
                     shiftIdCur = docs[0].shiftId;
-                    if (data.tables && data.tables.length > 0) {
-                        //if (!docs[0].tables || docs[0].tables.length == 0) docs[0].tables = [];
-                        for (var i = 0; i < data.tables.length; i++) {
-                            if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
-                            for (var j = 0; j < data.tables[i].tableOrder.length; j++) {
-                                var t = _.findWhere(docs[0].tables, { tableUuid: data.tables[i].tableUuid });
-                                var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
-                                if (order) {
-                                    logDebug('completed order');
-                                    t.tableOrder.splice(t.tableOrder.indexOf(order), 1);
-                                    //Lấy thông tin cho history
-                                    var tbs = _.find(completed, function (tb) { return tb && tb.tableUuid == data.tables[i].tableUuid });
-                                    if (!tbs) {
-                                        tbs = {
-                                            tableUuid: data.tables[i].tableUuid,
-                                            tableId: data.tables[i].tableId,
-                                            tableIdInZone: data.tables[i].tableIdInZone,
-                                            tableName: data.tables[i].tableName,
-                                            tableZone: data.tables[i].tableZone,
-                                            tableStatus: data.tables[i].tableStatus,
-                                            tableOrder: []
-                                        };
-                                        completed.push(tbs);
+                    //Nếu khớp shiftId thì cập nhật danh sách bàn và orders lại trên server.
+                    if (shiftIdCur == shiftIdReq) {
+                        if (data.tables && data.tables.length > 0) {
+                            if (!docs[0].tables || docs[0].tables.length == 0) docs[0].tables = [];
+
+                            //Lặp qua từng bàn mà client gửi lên.
+                            for (var i = 0; i < data.tables.length; i++) {
+                                if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
+
+                                //Lặp qua từng order của bàn đó.
+                                for (var j = 0; j < data.tables[i].tableOrder.length; j++) {
+                                    var t = _.findWhere(docs[0].tables, { tableUuid: data.tables[i].tableUuid });
+                                    var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
+
+                                    //Nếu có order đó đang tồn tại trên ds orders của server. Trường hợp ko tồn tại là dưới client thanh toán khi chưa báo bếp.
+                                    if (order) {
+                                        logDebug('completed order');
+                                        //Xóa order đó ra khỏi ds orders trên server.
+                                        t.tableOrder.splice(t.tableOrder.indexOf(order), 1);
+                                        //Lấy thông tin cho history
+                                        var tbs = _.find(completed, function (tb) { return tb && tb.tableUuid == data.tables[i].tableUuid });
+                                        if (!tbs) {
+                                            tbs = {
+                                                tableUuid: data.tables[i].tableUuid,
+                                                tableId: data.tables[i].tableId,
+                                                tableIdInZone: data.tables[i].tableIdInZone,
+                                                tableName: data.tables[i].tableName,
+                                                tableZone: data.tables[i].tableZone,
+                                                tableStatus: data.tables[i].tableStatus,
+                                                tableOrder: []
+                                            };
+                                            completed.push(tbs);
+                                        }
+                                        tbs.tableOrder.push(order);
                                     }
-                                    tbs.tableOrder.push(order);
                                 }
                             }
-                        }
-                        tableOrder.update({ companyId: data.companyId, storeId: data.storeId }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) {
-                            if (err) logDebug('Error:' + err);
-                        });
-                        data = docs[0];
-                    }
-                    else {
-                        data = docs[0];
-                    }
-                }
-
-                socket.broadcast.to(id).emit('completeOrder', responseData);
-
-                //Cập nhật thông tin history
-                if (completed.length > 0) {
-                    history.find({ companyId: data.companyId, storeId: data.storeId, shiftId: shiftIdCur }).toArray(function (err, docs) {
-                        if (err) logError(err);
-                        if (!docs || docs.length == 0 || !docs[0]) {
-                            docs = [];
-                            docs[0] = data;
-                            docs[0].tables = [];
-                            history.insert(docs[0], function (err, doc) {
+                            //Xử lý xong hết thì cập nhật lại
+                            tableOrder.update({ companyId: data.companyId, storeId: data.storeId }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) {
                                 if (err) logDebug('Error:' + err);
                             });
-                        };
-                        if (!docs[0].tables) docs[0].tables = [];
-                        for (var i = 0; i < completed.length; i++) {
-                            var tb = _.find(docs[0].tables, function (tb) { return tb.tableUuid == completed[i].tableUuid });
-                            if (tb) {
-                                for (var r = 0; r < completed[i].tableOrder.length; r++) {
-                                    tb.tableOrder.push(completed[i].tableOrder[r]);
-                                }
-                            }
-                            else {
-                                docs[0].tables.push(completed[i]);
-                            }
+                            data = docs[0];
                         }
-                        history.update({
-                            companyId: data.companyId, storeId: data.storeId,
-                            shiftId: shiftIdCur
-                        }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) {
-                            if (err) logDebug('Error:' + err);
-                        });
-                    });
-                }
-            });
-        };
-
-        var update = function (id, data) {
-            debugger;
-            var shiftIdReq = data.shiftId;
-            var shiftIdCur;
-            //var responseData = clone(data);
-            var collection = db.collection('tableOrder');
-            var history = db.collection('tableOrderHistory');
-            // Find some documents
-            collection.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
-                if (err) logError(err);
-                history.find({ companyId: data.companyId, storeId: data.storeId, shiftId: data.shiftId }).toArray(function (errHis, docHis) {
-                    if (errHis) logError(errHis);
-                    debugger;
-                    //Giai đoạn 1: Chuẩn bị data
-                    //Nếu trong collection tableOrder không có documents nào thuộc companyId và storeId (Trường hợp Init shift lần đầu tiên).
-                    if (docs == null || docs == undefined || docs == [] || docs.length == 0)
-                    {
-                        //Tạo mới shiftId.
-                        shiftIdCur = uuid.v4();
-                        data.shiftId =  shiftIdCur;
-                        data.startDate = new Date();
-                        //responseData.actionType = 1; //Loại là Init
-                        //Kết ca -> broadcastOrder -> tables = undefined -> clear shift and table -> reload -> vào trường hợp này.
-                        //responseData.tables = []; //Trả về dữ liệu rỗng vì không cần phải trả gì xuống Client. (Trước đó đã reload ở dòng 812 PosController)
-                        collection.insert(data, function(err,doc){
-                            if (err) logDebug('Error:' + err);
-                            else {logDebug('Result:');dirDebug(doc);}
-                        });
-                        history.insert(data, function(err,doc){
-                            if (err) logDebug('Error:' + err);
-                            else {logDebug('Result:');dirDebug(doc);}
-                        });
-                    }
-                    // Nếu trong collection tableOrder đã có (Trường hợp đã được 1 máy Init shift trước đó).
-                    else
-                    {
-                        logDebug('Exist:');
-                        dirDebug(docs);
-						logDebug('docHis:');
-						dirDebug(docHis);
-                        //Gán shiftId hiện tại là shiftId trong collection tableOrder.
-						shiftIdCur = docs[0].shiftId;
-                        //Nếu data Client gửi lên có dữ liệu và shiftId của Client trùng với ShiftId hiện tại. Trường hợp sau khi đã Init.
-                        if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
-                        {
-                            logDebug('compare');
-                             if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
-                             if (!docHis || !docHis[0] || !docHis[0].tables || docHis[0].tables.length == 0) docHis = [{ tables: [] }];
-                             //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
-                             for(var i = 0; i < data.tables.length; i++)
-                             {
-                                logDebug('tableOrder[' + i + ']:');
-                                dirDebug(data.tables[i].tableOrder);
-                                //Nếu trong bàn đó không có đơn hàng thì chuyển qua bàn khác
-                                if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
-                                logDebug('tableOrder[' + i + '].length:', data.tables[i].tableOrder.length);
-                                //Thêm bàn đó vào data trả về cho Client
-                                var table = clone(data.tables[i]);
-                                table.tableOrder = [];
-                                //responseData.tables.push(table);
-
-                                //Lặp qua từng hóa đơn trong bàn đó.
-                                for (var j = 0; j < data.tables[i].tableOrder.length; j++)
-                                {
-                                    var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
-                                    var tHis = _.findWhere(docHis[0].tables, {tableUuid : data.tables[i].tableUuid});
-                                    logDebug('t:');
-                                    dirDebug(t);
-                                    //Nếu bàn mà Client gửi lên có trong ds bàn và đơn hàng trên Server. Trường hợp khác Init.
-                                    if (t)
-                                    {
-                                        var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
-                                        logDebug('order:');
-                                        dirDebug(order);
-                                        //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
-                                        if (order)
-                                        {
-                                            t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
-                                            //Thêm hóa đơn đó và data trả về cho Client
-                                            //var order = clone(data.tables[i].tableOrder[j]);
-                                            //table.tableOrder.push(order);
-                                            logDebug('order is updated');
-                                        }
-                                        //Nếu order chưa tồn tại thì kiểm tra trong collection tableOrderHistory
-                                        //- Có thì đơn hàng Client gửi lên không hợp lệ (Trường hợp đăng nhập cùng 1 tài khoản trên 2 thiết bị, thoát 1 thiết bị nhưng vẫn còn lưu ở DB Local)
-                                        //- Không thì đưa đơn hàng vào ds đơn hàng trên Server.
-                                        else
-                                        {
-                                            var orderHis = null;
-											logDebug('saleOrderUuId:');
-											logDebug(data.tables[i].tableOrder[j].saleOrder.saleOrderUuid);
-											logDebug('tHis:');
-											dirDebug(tHis.tableOrder);
-                                            if (tHis) orderHis = _.find(tHis.tableOrder, function(tbHis){return tbHis.saleOrder && tbHis.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
-                                            logDebug('orderHis:');
-                                            dirDebug(orderHis);
-                                            if (!orderHis)
-                                            {
-                                                //Thêm vào collection.
-                                                t.tableOrder.push(data.tables[i].tableOrder[j]);
-                                                //Thêm vào dữ liệu trả về.
-                                                //var order = clone(data.tables[i].tableOrder[j]);
-                                                //table.tableOrder.push(order);
-                                                logDebug('order is inserted');
-                                            }
-                                            else
-                                            {
-                                                //var order = clone(data.tables[i].tableOrder[j]);
-                                                logDebug('order is completed or moved or deleted');
-                                            }
-                                        }
-                                    }
-                                    //Nếu bàn mà Client gửi lên chưa tồn tại trong danh sách bàn và đơn hàng trên Server thì thêm bàn đó vào ds. Trường hợp Init gửi tất cả bàn lên Server.
-                                    else
-                                    {
-                                        docs[0].tables.push(data.tables[i]);
-                                        logDebug('tableOrder is inserted');
-                                    }
-                                }
-                             }
-
-                             //Sau khi đã xử lý xong ds bàn và đơn hàng Client gửi lên thì cập nhật lại vào Collection TableOrder trên Server.
-                             collection.update({companyId: data.companyId, storeId : data.storeId}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
-                                 if (err) logDebug('Error:' + err);
-                             });
-                             //Gán lại data sẽ trả về cho Client bằng data trên Server sau xử lý.
-                             data = docs[0];
-                        }
-                        //Nếu shift mà Client gửi lên không trùng với shift hiện tại. Trường hợp Init hoặc lấy shiftId từ DB Local
-                        else
-                        {
-                            //Gán lại data sẽ trả về cho Client bằng data hiện tại trên Server.
+                        else {
                             data = docs[0];
                         }
                     }
-                    //Giai đoạn 2: Trả data phù hợp về cho Client
-                    logDebug('shiftIdReq :' + shiftIdReq + ' shiftIdCur : ' + shiftIdCur + ' result = ' + (shiftIdReq == shiftIdCur));
-                    //Chưa có shift nào
-                    if (shiftIdReq == '' || shiftIdReq == undefined || shiftIdReq == null)
-                    {
-                        data.shiftId = shiftIdCur;
-                        // logDebug('broadcastOrders' + JSON.stringify(data));
-                        io.to(id).emit('broadcastOrders', data);
-                        logDebug('sent broadcastOrders (server data)');
+                }
+
+                //Nếu shift ko khớp thì gửi về exception cho client. 
+                //Trường hợp client treo máy nhưng ko tắt browser (vd: Sleep) dẫn đến không reload được và sau đó submit order lên server.
+                if (shiftIdCur != shiftIdReq) {
+                    socket.emit('exception', { errorCode: 'invalidShift', data: docs[0] });
+                }
+                else {
+                    //Gửi về cho tất cả các clients trong room khác ngoài client đã gửi lên.
+                    socket.broadcast.to(id).emit('completeOrder', responseData);
+                    //Cập nhật thông tin history
+                    if (completed.length > 0) {
+                        history.find({ companyId: data.companyId, storeId: data.storeId, shiftId: shiftIdCur }).toArray(function (err, docs) {
+                            if (err) logError(err);
+                            if (!docs || docs.length == 0 || !docs[0]) {
+                                docs = [];
+                                docs[0] = data;
+                                docs[0].tables = [];
+                                history.insert(docs[0], function (err, doc) {
+                                    if (err) logDebug('Error:' + err);
+                                });
+                            };
+                            if (!docs[0].tables) docs[0].tables = [];
+                            for (var i = 0; i < completed.length; i++) {
+                                var tb = _.find(docs[0].tables, function (tb) { return tb.tableUuid == completed[i].tableUuid });
+                                if (tb) {
+                                    for (var r = 0; r < completed[i].tableOrder.length; r++) {
+                                        tb.tableOrder.push(completed[i].tableOrder[r]);
+                                    }
+                                }
+                                else {
+                                    docs[0].tables.push(completed[i]);
+                                }
+                            }
+                            history.update({
+                                companyId: data.companyId, storeId: data.storeId,
+                                shiftId: shiftIdCur
+                            }, { $set: { tables: docs[0].tables } }, { w: 1 }, function (err, result) {
+                                if (err) logDebug('Error:' + err);
+                            });
+                        });
                     }
-                    else
-                    {
-                        //Thông tin shift không match. Trường hợp Client gửi lên shift cũ trong DB Local sau khi shift đó đã kết thúc.
-                        if (shiftIdReq != shiftIdCur)
-                        {
-                          logDebug('exception, request shiftId ' + shiftIdReq + ' does not match with current ' + shiftIdCur + ' tableOrder: ' + data);
-                          //io.to(id).emit('exception', data);
-                          //socket.emit('exception', data);
-                          socket.emit('exception', {errorCode: 'invalidShift', data: data});
-                          logDebug('sent exception');
-                        }
-                        //Cập nhật thông tin shift
-                        else
-                        {
-                           // logDebug('broadcastOrders' + JSON.stringify(data));
-                           io.to(id).emit('broadcastOrders', data);
-                           logDebug('sent broadcastOrders');
-                        }
-                    }
-                });
+                }          
             });
         };
 
-        var move = function (id, data){
+        var moveOrder = function (id, data){
             var shiftIdReq = data.shiftId;
             var shiftIdCur;
             var tableOrder = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
             var errorLog = db.collection('errorLog');
             var completed = [];
-            // Find some documents
+            var responseData = clone(data);
+            // Find some documents 
             tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
-             if (err)
+             if (err) 
 			 {
 				 logError(err);
 				 return;
 			 }
              if (docs && docs.length > 0)
              {
-                 shiftIdCur = docs[0].shiftId;
-                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
+                 shiftIdCur = docs[0].shiftId; 
+                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur) 
                  {
                     // Tim order xoa order o ban cu
-                    if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
+                     if (!docs[0].tables || docs[0].tables.length == 0) docs[0].tables = [];
                     var t = _.findWhere(docs[0].tables, {tableUuid : data.fromTableUuid});
-
-                    if (t)
+                    //Kiểm tra xem bàn nguồn (fromTableuuid) có tồn tại trên server hay ko?
+                    if (t) 
                     {
                         var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.fromSaleOrderUuid});
                         dirDebug(order);
+                        //Nếu order nguồn (fromSaleOrderUuid) có tồn tại trên ds orders của server thì xóa order đó ra khỏi danh sách
                         if (order)
                         {
                             logDebug('completed order');
                             t.tableOrder.splice(t.tableOrder.indexOf(order),1);
                             //Lấy thông tin cho history
                             var tbs = _.find(completed, function(tb){return tb && tb.tableUuid == data.tables[0].tableUuid});
-                            if (!tbs)
+                            if (!tbs) 
                             {
                                 tbs =  {tableUuid: data.tables[0].tableUuid,
                                         tableId: data.tables[0].tableId,
@@ -742,26 +729,29 @@ MongoClient.connect(url, function (err, database) {
 
                      // Cap nhat order cho ban moi
                      logDebug('compare');
-                     if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
+                     if (!docs[0].tables || docs[0].tables.length == 0) docs[0].tables = [];
                      for(var i = 0; i < data.tables.length; i++)
                      {
                         logDebug('tableOrder[' + i + ']:');
                         dirDebug(data.tables[i].tableOrder);
                         if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
-                        logDebug('tableOrder[' + i + '].length:',data.tables[i].tableOrder.length);
-                        for (var j = 0; j < data.tables[i].tableOrder.length; j++)
+                        logDebug('tableOrder[' + i + '].length:', data.tables[i].tableOrder.length);
+                        for (var j = 0; j < data.tables[i].tableOrder.length; j++) 
                         {
+                            //Tìm bàn trên trong danh sách bàn trên server trùng với bàn mà client gửi lên.
                             var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
                             logDebug('t:');
                             dirDebug(t);
-                            if (t)
+                            if (t) 
                             {
+                                //Tìm order trên trong ds order trên server trùng với ds orders mà client gửi lên của bàn đó
                                 var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
                                 logDebug('order:');
                                 dirDebug(order);
+                                //Cập nhật hoặc thêm vào ds order của bàn đó
                                 if (order)
                                 {
-                                    t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+                                    t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j]; 
                                     logDebug('order is updated');
                                 }
                                 else
@@ -777,6 +767,7 @@ MongoClient.connect(url, function (err, database) {
                             }
                         }
                      }
+                     //Cập nhật lại dữ liệu sau khi xử lý xong.
                      tableOrder.update({companyId: data.companyId, storeId : data.storeId}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
                          if (err) logDebug('Error:' + err);
                      });
@@ -800,7 +791,8 @@ MongoClient.connect(url, function (err, database) {
             else
             {
                logDebug('broadcastOrders' + JSON.stringify(data));
-               io.to(id).emit('broadcastOrders', data);
+               //io.to(id).emit('broadcastOrders', data);
+               socket.broadcast.to(id).emit('moveOrder', responseData);
             }
             //Cập nhật thông tin history
             logDebug('completed length:' + completed.length);
@@ -841,189 +833,34 @@ MongoClient.connect(url, function (err, database) {
                             });
                     });
                 }
-                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){
-                                    if (err) logError(err);
-                                    if (!docs || docs.length == 0 || !docs[0]) {
-                                        docs = [];
-                                        docs[0] = data;
-                                        docs[0].tables = [];
-                                        history.insert(docs[0], function(err,doc){
-                                            if (err) logDebug('Error:' + err);});
-                                    };
-                                    if (!docs[0].tables) docs[0].tables = [];
-                                    logDebug('hisDocs');
-                                    dirDebug(docs[0]);
-                                    for(var i = 0; i < completed.length; i++)
-                                    {
-                                        var tb = _.find(docs[0].tables, function(tb){return tb.tableUuid == completed[i].tableUuid});
-                                        if (tb)
-                                        {
-                                            logDebug('history updated');
-                                            tb.tableOrder.push(completed[i].tableOrder);
-                                        }
-                                        else
-                                        {
-                                            logDebug('history inserted');
-                                            docs[0].tables.push(completed[i]);
-                                        }
-                                    }
-                                    logDebug('hisDocs updated');
-                                    dirDebug(docs[0]);
-                                    history.update({companyId: data.companyId, storeId : data.storeId,
-                                                    shiftId: shiftIdCur}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
-                                         if (err) logDebug('Error:' + err);
-                                     });
-                                });
-            }
             });
         };
 
-        var complete = function (id, data){
+        var completeShift = function (id, data) {
             var shiftIdReq = data.shiftId;
             var shiftIdCur;
             var tableOrder = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
-            var errorLog = db.collection('errorLog');
-            var completed = [];
-            // Find some documents
-            tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
-             if (err)
-			 {
-				 logError(err);
-				 return;
-			 }
+            // Find some documents 
+            tableOrder.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
              if (docs && docs.length > 0)
              {
-                 shiftIdCur = docs[0].shiftId;
-                 if (data.tables && data.tables.length > 0 && shiftIdReq == shiftIdCur)
-                 {
-                     if (!docs[0].tables || docs[0].tables.length == 0 ) docs[0].tables = [];
-                     for(var i = 0; i < data.tables.length; i++)
-                     {
-                        dirDebug(data.tables[i].tableOrder);//history
-                        if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
-                        for (var j = 0; j < data.tables[i].tableOrder.length; j++)
-                        {
-                            var t = _.findWhere(docs[0].tables, {tableUuid : data.tables[i].tableUuid});
-                            if (t)
-                            {
-                                var order = _.find(t.tableOrder, function(tb){return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid});
-                                dirDebug(order);
-                                if (order)
-                                {
-                                    logDebug('completed order');
-                                    t.tableOrder.splice(t.tableOrder.indexOf(order),1);
-                                    //Lấy thông tin cho history
-                                    var tbs = _.find(completed, function(tb){return tb && tb.tableUuid == data.tables[i].tableUuid});
-                                    if (!tbs)
-                                    {
-                                        tbs =  {tableUuid: data.tables[i].tableUuid,
-                                                tableId: data.tables[i].tableId,
-                                                tableIdInZone: data.tables[i].tableIdInZone,
-                                                tableName: data.tables[i].tableName,
-                                                tableZone: data.tables[i].tableZone,
-                                                tableStatus: data.tables[i].tableStatus,
-                                                tableOrder: []};
-                                        completed.push(tbs);
-                                    }
-                                    tbs.tableOrder.push(order);
-                                }
-                            }
-                        }
-                     }
-                     tableOrder.update({companyId: data.companyId, storeId : data.storeId}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
-                         if (err) logDebug('Error:' + err);
-                     });
-                     data = docs[0];
-                 }
-                 else
-                 {
-                     data = docs[0];
-                 }
-             }
-
-            logDebug('shiftIdReq :' + shiftIdReq + ' shiftIdCur : ' + shiftIdCur + ' result = ' + (shiftIdReq == shiftIdCur));
-            //Thông tin shift không match
-            if (!shiftIdReq || !shiftIdCur || shiftIdReq != shiftIdCur)
-            {
-              logDebug('exception, request shiftId ' + shiftIdReq + ' does not match with current ' + shiftIdCur + ' tableOrder: ' + data);
-              //io.to(id).emit('exception', data);
-              socket.emit('exception', {errorCode: 'invalidShift', data: data});
-            }
-            //Cập nhật thông tin shift
-            else
-            {
-               logDebug('broadcastOrders' + JSON.stringify(data));
-               io.to(id).emit('broadcastOrders', data);
-            }
-            //Cập nhật thông tin history
-            logDebug('completed length:' + completed.length);
-            dirDebug(completed);
-            if (completed.length > 0)
-            {
-                history.find({companyId: data.companyId, storeId : data.storeId, shiftId: shiftIdCur}).toArray(function(err, docs){
-                                    if (err) logError(err);
-                                    if (!docs || docs.length == 0 || !docs[0]) {
-                                        docs = [];
-                                        docs[0] = data;
-                                        docs[0].tables = [];
-                                        history.insert(docs[0], function(err,doc){
-                                            if (err) logDebug('Error:' + err);});
-                                    };
-                                    if (!docs[0].tables) docs[0].tables = [];
-                                    logDebug('hisDocs');
-                                    dirDebug(docs[0]);
-                                    for(var i = 0; i < completed.length; i++)
-                                    {
-                                        var tb = _.find(docs[0].tables, function(tb){return tb.tableUuid == completed[i].tableUuid});
-                                        if (tb)
-                                        {
-                                            logDebug('history updated');
-											for (var r = 0; r < completed[i].tableOrder.length; r++)
-											{
-												tb.tableOrder.push(completed[i].tableOrder[r]);
-											}
-                                        }
-                                        else
-                                        {
-                                            logDebug('history inserted');
-                                            docs[0].tables.push(completed[i]);
-                                        }
-                                    }
-                                    logDebug('hisDocs updated');
-                                    dirDebug(docs[0]);
-                                    history.update({companyId: data.companyId, storeId : data.storeId,
-                                                    shiftId: shiftIdCur}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
-                                         if (err) logDebug('Error:' + err);
-                                     });
-                                });
-            }
-            });
-        };
-
-        var completeShift = function (id, data){
-            var shiftIdReq = data.shiftId;
-            var shiftIdCur;
-            var tableOrder = db.collection('tableOrder');
-            var history = db.collection('tableOrderHistory');
-            // Find some documents
-            tableOrder.find({companyId: data.companyId, storeId : data.storeId}).toArray(function(err, docs) {
-             if (docs && docs.length > 0)
-             {
-                shiftIdCur = docs[0].shiftId;
+                shiftIdCur = docs[0].shiftId; 
                 if (shiftIdReq == shiftIdCur)
                 {
+                    //Xóa shift khỏi danh sách shift hiện tại trên server.
                     tableOrder.remove({companyId: data.companyId, storeId : data.storeId}, function(err, result) {
                      if (err) logDebug('Error:' + err);
                     });
                     var now = new Date();
-                    history.update({companyId: data.companyId, storeId : data.storeId, shiftId : shiftIdCur}, {$set:{finishDate:now }}, {w:1}, function(err, result) {
+                    //Cập nhật shift vào history để kiểm tra lại khi cần.
+                    history.update({ companyId: data.companyId, storeId: data.storeId, shiftId: shiftIdCur }, { $set: { finishDate: now } }, { w: 1 }, function (err, result) {
                      if (err) logDebug('Error:' + err);
                     });
                 }
                 else
                 {
-                    logDebug('exception');
+                    logDebug('exception');    
                 }
              }
              else
@@ -1035,14 +872,15 @@ MongoClient.connect(url, function (err, database) {
             if (!shiftIdReq || !shiftIdCur || shiftIdReq != shiftIdCur)
             {
               logDebug('exception, request shiftId ' + shiftIdReq + ' does not match with current ' + shiftIdCur + ' tableOrder: ' + data);
-              //io.to(id).emit('exception', data);
+              //io.to(id).emit('exception', data); 
               socket.emit('exception', {errorCode: 'invalidShift', data: data});
             }
             //Cập nhật thông tin shift
             else
             {
-               logDebug('broadcastOrders' + JSON.stringify(data));
-               io.to(id).emit('broadcastOrders', data);
+                logDebug('completeShift' + JSON.stringify(data));
+               //io.to(id).emit('broadcastOrders', data); 
+               io.to(id).emit('completeShift', data);
             }
             });
         };
@@ -1050,9 +888,9 @@ MongoClient.connect(url, function (err, database) {
         var printHelper = function (id, data){
             socket.broadcast.to(id).emit('printHelper', data);
         };
-
+        
         var doAuth = function(data, callback){
-            if (!data || !data.clientId)
+            if (!data || !data.clientId) 
             {
                 socket.emit('exception', {errorCode: 'unauthorizedClientId', data: data});
                 return;
@@ -1060,8 +898,8 @@ MongoClient.connect(url, function (err, database) {
             var userSession = cache.get(data.clientId);
             if (!userSession)
             {
-                performRequest(AUTH_URL,'/api/provider/GetUserSession', 'GET', {clientId: data.clientId, format:'json'},
-                  function (res) {
+                performRequest(AUTH_URL,'/api/provider/GetUserSession', 'GET', {clientId: data.clientId, format:'json'}, 
+                    function (res) {
                     if (!res) return;
                     if (data.companyId && res.userSession && res.userSession.companyId == data.companyId)
                     {
@@ -1075,7 +913,8 @@ MongoClient.connect(url, function (err, database) {
                   },
                   function (error) {
                       console.log(error);
-                    logDebug(error);
+                      logDebug(error);
+                      socket.emit('exception', { errorCode: 'badRequest', data: data });
                   }
                 );
             }
@@ -1084,7 +923,7 @@ MongoClient.connect(url, function (err, database) {
                 if (data.companyId && userSession.companyId == data.companyId) callback(data);
             }
         };
-
+            
         var performRequest = function (host, endpoint, method, data, success, error) {
           var dataString = JSON.stringify(data);
           var headers = {};
@@ -1099,7 +938,8 @@ MongoClient.connect(url, function (err, database) {
             };
           }
           var options = {
-            host: host,
+            //host: host,
+            port: 6985,
             path: endpoint,
             method: method,
             headers: headers
@@ -1107,10 +947,9 @@ MongoClient.connect(url, function (err, database) {
 
           var req = https.request(options, function(res) {
               res.setEncoding('utf-8');
-
                 var responseString = '';
 
-                res.on('data', function(data) {
+                res.on('data', function (data) {
                   responseString += data;
                 });
 
@@ -1137,13 +976,13 @@ MongoClient.connect(url, function (err, database) {
     var clone = function (obj) {
         return JSON.parse(JSON.stringify(obj));
     }
-
+    
     var logError = function(data, err){
         var error = {
-                         companyId: data.companyId,
-                         storeId: data.storeId,
-                         clientId: data.clientId,
-                         ipAddress: data.ipAddress,
+                         companyId: data.companyId, 
+                         storeId: data.storeId, 
+                         clientId: data.clientId, 
+                         ipAddress: data.ipAddress, 
                          errorTime: new Date(),
                          errorMessage: err.message,
                          sourceData: JSON.stringify(data)
@@ -1153,30 +992,30 @@ MongoClient.connect(url, function (err, database) {
 				logger.error(err);
 			});
         };
-
+        
     var logDebug = function(data)
     {
-        if (DEBUG) logger.log('debug',data);
+        if (DEBUG) logger.log('debug',data); 
     };
 
     var dirDebug = function(data)
     {
         if (DEBUG) logger.log('debug',data);
     };
-
-    db.createCollection('tableOrder', function(err, collection) {
+    
+    db.createCollection('tableOrder', function(err, collection) { 
         if (err) logError(err);
     });
-    db.createCollection('tableOrderHistory', function(err, history) {
+    db.createCollection('tableOrderHistory', function(err, history) { 
         if (err) logError(err);
     });
-    db.createCollection('errorLog', function(err, errorLog) {
+    db.createCollection('errorLog', function(err, errorLog) { 
         if (err) logError(err);
     });
-
+    
     //Clear cache
     cache.clear();
-
+    
     logger.log('debug',"Connected correctly to server");
     logger.log('debug',"Listening on port " + port);
 	logger.log('debug','Suno Cafe started.')
