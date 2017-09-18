@@ -102,6 +102,8 @@ MongoClient.connect(url, function (err, database) {
     //initialize socket
     io = require('socket.io').listen(connect().use(serveStatic(__dirname)).listen(port));
 
+    var serverLogs = []; //Mảng để lưu log về đổi bàn, chuyển bàn, gộp bàn.
+
     io.sockets.on('connection', function (socket) {
         if (socket.handshake.query.room) {
             logDebug(socket.handshake.query.room);
@@ -468,7 +470,6 @@ MongoClient.connect(url, function (err, database) {
 
 
         var updateOrder = function (id, data) {
-            debugger;
             var shiftIdCur = null;
             var shiftIdReq = data.shiftId;
             var collection = db.collection('tableOrder');
@@ -478,7 +479,6 @@ MongoClient.connect(url, function (err, database) {
                 if (docs && docs.length > 0) {
                     shiftIdCur = docs[0].shiftId;
                     if (shiftIdReq == shiftIdCur) {
-                        debugger;
                         //Giai đoạn 1: Cập nhật lại data trên DB Mongo
                         //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
                         for (var i = 0; i < data.tables.length; i++) {
@@ -492,7 +492,6 @@ MongoClient.connect(url, function (err, database) {
                                 var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
 
                                 //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
-                                debugger;
                                 if (order) {
                                     //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
                                     //Điều chỉnh data cho phù hợp
@@ -511,7 +510,6 @@ MongoClient.connect(url, function (err, database) {
 
                                     //B3: Cập nhật lại số lượng item
                                     groupLog.forEach(function (log) {
-                                        debugger;
                                         var index = order.saleOrder.orderDetails.findIndex(function (d) {
                                             return d.itemId == log.itemID;
                                         });
@@ -766,6 +764,34 @@ MongoClient.connect(url, function (err, database) {
                             }
                         }
                      }
+
+                     //Ghi log cho server về đổi bàn.
+                     var svLogIndex = serverLogs.findIndex(function (i) { return i.shift == data.shiftId && companyID == data.companyId && storeID == data.storeId });
+                     if (svLogIndex >= 0) {
+                         serverLogs[svLogIndex].logs.push({
+                             action: "CB",
+                             fromTable: data.fromTableUuid,
+                             toTable: data.tables[0].tableUuid,
+                             fromOrder: data.fromSaleOrderUuid,
+                             toOrder: data.fromSaleOrderUuid
+                         });
+                     }
+                     else {
+                         serverLogs.push({
+                             shift: data.shiftId
+                             companyID: data.companyId,
+                             storeID: data.storeId,
+                             logs: [{
+                                 action: "CB",
+                                 fromTable: data.fromTableUuid,
+                                 toTable: data.tables[0].tableUuid,
+                                 fromOrder: data.fromSaleOrderUuid,
+                                 toOrder: data.fromSaleOrderUuid
+                             }]
+                         });
+                     }
+
+
                      //Cập nhật lại dữ liệu sau khi xử lý xong.
                      tableOrder.update({companyId: data.companyId, storeId : data.storeId}, {$set:{tables:docs[0].tables}}, {w:1}, function(err, result) {
                          if (err) logDebug('Error:' + err);
@@ -849,12 +875,17 @@ MongoClient.connect(url, function (err, database) {
                 {
                     //Xóa shift khỏi danh sách shift hiện tại trên server.
                     tableOrder.remove({companyId: data.companyId, storeId : data.storeId}, function(err, result) {
-                     if (err) logDebug('Error:' + err);
+                        if (err) logDebug('Error:' + err);
+                        var rs = result;
+                        tableOrder.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
+                            var doc = docs;
+                        });
                     });
                     var now = new Date();
                     //Cập nhật shift vào history để kiểm tra lại khi cần.
                     history.update({ companyId: data.companyId, storeId: data.storeId, shiftId: shiftIdCur }, { $set: { finishDate: now } }, { w: 1 }, function (err, result) {
-                     if (err) logDebug('Error:' + err);
+                        if (err) logDebug('Error:' + err);
+                        var rs = result;
                     });
                 }
                 else

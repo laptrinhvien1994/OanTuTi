@@ -694,6 +694,11 @@ function filterUnsyncedOrder(tables) {
         for (var y = 0; y < tableOrder.length; y++) {
             var logs = tableOrder[y].saleOrder.logs;
             //Lặp qua từng dòng dogs trong mỗi order
+            //Nếu ko có log thì xóa khỏi ds gửi lên server. Một số trường hợp order rỗng do anh Đạt đã khởi tạo ở 1 chỗ nào đó.
+            if (logs.length == 0) {
+                data[x].tableOrder.splice(y, 1);
+                continue;
+            }
             for (var z = 0; z < logs.length; z++) {
                 if (!logs[z].status) { // tương đương status == false -> Chưa đồng bộ lên Server thêm vào Order
                     break;

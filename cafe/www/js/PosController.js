@@ -1203,22 +1203,22 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 return d.itemId == log.itemID;
                                             });
                                             if (log.totalQuantity > 0 && index < 0) {
-                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
                                                 var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                 $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.push(itemDetail);
                                             }
                                             else if (log.totalQuantity > 0 && index >= 0) {
-                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
                                                 var itemDetail = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                 itemDetail.quantity = log.totalQuantity;
                                             }
                                             else if (log.totalQuantity <= 0 && index >= 0) {
-                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
                                                 var itemDetailIndex = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
                                                 $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.splice(itemDetailIndex, 1);
                                             }
                                             else if (log.totalQuantity <= 0 && index < 0) {
-                                                //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                //Nếu số lượng trong log <= 0 và item chưa có trong ds order của client thì ko thực hiện gì cả.
                                             }
                                         });
                                     }
@@ -1829,10 +1829,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.changeTable = function (t) {
 
         // lưu data bàn trước khi đổi
-        var newtable = {};
-        angular.copy(t, newtable);
-        var oldtable = {};
-        angular.copy($scope.tableIsSelected, oldtable);
+        //var newtable = {};
+        //angular.copy(t, newtable);
+        //var oldtable = {};
+        //angular.copy($scope.tableIsSelected, oldtable);
+        var newtable = angular.copy(t);
+        var oldtable = angular.copy($scope.tableIsSelected);
         var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
 
         // Kiểm tra nếu bàn mới chưa có order nào thì khởi tạo dữ liệu
@@ -1962,8 +1964,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.Pair = function (o, index) {
-        var oldtable = {};
-        angular.copy($scope.tableIsSelected, oldtable);
+        //var oldtable = {};
+        //angular.copy($scope.tableIsSelected, oldtable);
+        var oldtable = angular.copy($scope.tableIsSelected);
         var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
 
         for (var i = 0; i < $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length; i++) {
@@ -4123,7 +4126,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         else {
                             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                             .then(function (data) {
-                                ////debugger;
+                                debugger;
                                 var shiftId = null;
                                 if (data.docs.length > 0) {
                                     shiftId = data.docs[0].shiftId;
@@ -5052,7 +5055,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     var updateTableToDB = function () {
         ////debugger;
-        var id = $scope.tableIsSelected.tableId;
+        //var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;
         var tableUuid = $scope.tableIsSelected.tableUuid;
         DBTables.$queryDoc({
