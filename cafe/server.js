@@ -325,7 +325,6 @@ MongoClient.connect(url, function (err, database) {
 
                                         //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
                                         //Việc cập nhật là merge dữ liệu giữa Client và Server không phải overwrite.
-                                        debugger;
                                         if (order) {
                                             //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
 
@@ -336,7 +335,7 @@ MongoClient.connect(url, function (err, database) {
                                                     return i.itemID == item.itemID && i.timestamp == item.timestamp && i.clientSyncID == item.clientSyncID;
                                                 }) < 0;
                                             });
-                                            order.saleOrder.logs.concat(orderClient);
+                                            order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
 
                                             //B2: Tính toán lại số lượng dựa trên logs
                                             var groupLog = groupBy(order.saleOrder.logs);
@@ -348,17 +347,17 @@ MongoClient.connect(url, function (err, database) {
                                                 });
                                                 if (log.totalQuantity > 0 && index < 0) {
                                                     //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
-                                                    var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { d.itemId == log.itemID });
+                                                    var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                     order.saleOrder.orderDetails.push(itemDetail);
                                                 }
                                                 else if (log.totalQuantity > 0 && index >= 0) {
                                                     //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
-                                                    var itemDetail = order.saleOrder.orderDetails.find(function (d) { d.itemId == log.itemID });
+                                                    var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                     itemDetail.quantity = log.totalQuantity;
                                                 }
                                                 else if (log.totalQuantity < 0 && index >= 0) {
                                                     //Nếu số lượng trong log < 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
-                                                    var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { d.itemId == log.itemID });
+                                                    var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
                                                     order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
                                                 }
                                                 else if (log.totalQuantity < 0 && index < 0) {
@@ -469,7 +468,7 @@ MongoClient.connect(url, function (err, database) {
 
 
         var updateOrder = function (id, data) {
-            //debugger;
+            debugger;
             var shiftIdCur = null;
             var shiftIdReq = data.shiftId;
             var collection = db.collection('tableOrder');
@@ -479,7 +478,7 @@ MongoClient.connect(url, function (err, database) {
                 if (docs && docs.length > 0) {
                     shiftIdCur = docs[0].shiftId;
                     if (shiftIdReq == shiftIdCur) {
-                        //debugger;
+                        debugger;
                         //Giai đoạn 1: Cập nhật lại data trên DB Mongo
                         //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
                         for (var i = 0; i < data.tables.length; i++) {
@@ -889,7 +888,7 @@ MongoClient.connect(url, function (err, database) {
             socket.broadcast.to(id).emit('printHelper', data);
         };
         
-        var doAuth = function(data, callback){
+        var doAuth = function (data, callback) {
             if (!data || !data.clientId) 
             {
                 socket.emit('exception', {errorCode: 'unauthorizedClientId', data: data});
@@ -911,7 +910,7 @@ MongoClient.connect(url, function (err, database) {
                         logDebug('unauthorized clientId' + data.clientId);
                     }
                   },
-                  function (error) {
+                    function (error) {
                       console.log(error);
                       logDebug(error);
                       socket.emit('exception', { errorCode: 'badRequest', data: data });
@@ -944,8 +943,7 @@ MongoClient.connect(url, function (err, database) {
             method: method,
             headers: headers
           };
-
-          var req = https.request(options, function(res) {
+          var req = https.request(options, function (res) {
               res.setEncoding('utf-8');
                 var responseString = '';
 
@@ -953,7 +951,7 @@ MongoClient.connect(url, function (err, database) {
                   responseString += data;
                 });
 
-                res.on('end', function() {
+                res.on('end', function () {
                     try
                     {
                       logDebug(responseString);
