@@ -917,9 +917,11 @@ function asynRequest($state, $http, method, url, headers, responseType, data, ca
                     if (url == Api.ping) {
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();
                         scope.isOnline = false;
+                        if (errorCallback !== null && typeof errorCallback === 'function') {
+                            errorCallback(errorResponse);
+                        }
                         return;
                     }
-                    debugger;
                     if (reqConfig.method.toUpperCase() == "GET") {
                         //Kiểm tra nếu bị lỗi expired refresh Token hoặc invalid refresh Token thì logout
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();

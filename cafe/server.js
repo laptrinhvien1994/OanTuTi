@@ -778,7 +778,7 @@ MongoClient.connect(url, function (err, database) {
                      }
                      else {
                          serverLogs.push({
-                             shift: data.shiftId
+                             shift: data.shiftId,
                              companyID: data.companyId,
                              storeID: data.storeId,
                              logs: [{
