@@ -79,17 +79,20 @@ var saleOrder = {
         "comment": "",
         "shipper": ""
     },
-    logs: []
-    //"revision": 0 //Để check đồng bộ giữa các đơn hàng khi Init.
+    logs: [],
+    revision: 1 //Để check đồng bộ giữa các đơn hàng khi Init.
 }
 
-var Log = function (itemID, itemName, action, quantity, timestamp, clientSyncID, status) {
+var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, status) {
     this.itemID = itemID; //ID item
     this.itemName = itemName; //Tên item
     this.action = action; //Tên Action trong 2 loại BB(Báo bếp) hoặc H(Hủy)
     this.quantity = quantity; //Số lượng item tham gia vào action.
     this.timestamp = timestamp; //Thời gian thực hiện action.
-    this.clientSyncID = clientSyncID; //ID định danh cho mỗi thiết bị.
+    this.deviceID = deviceID; //ID định danh cho mỗi thiết bị.
+    this.author = author;
+    this.tableID = tableID;
+    this.orderID = orderID;
     this.status = status; //Trạng thái action đã thực hiện trong 2 loại false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
     //this.startTime = null; //Thời gian bắt đầu nếu có đồng bộ về thời gian.
 }
@@ -694,11 +697,6 @@ function filterUnsyncedOrder(tables) {
         for (var y = 0; y < tableOrder.length; y++) {
             var logs = tableOrder[y].saleOrder.logs;
             //Lặp qua từng dòng dogs trong mỗi order
-            //Nếu ko có log thì xóa khỏi ds gửi lên server. Một số trường hợp order rỗng do anh Đạt đã khởi tạo ở 1 chỗ nào đó.
-            if (logs.length == 0) {
-                data[x].tableOrder.splice(y, 1);
-                continue;
-            }
             for (var z = 0; z < logs.length; z++) {
                 if (!logs[z].status) { // tương đương status == false -> Chưa đồng bộ lên Server thêm vào Order
                     break;
@@ -917,11 +915,9 @@ function asynRequest($state, $http, method, url, headers, responseType, data, ca
                     if (url == Api.ping) {
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();
                         scope.isOnline = false;
-                        if (errorCallback !== null && typeof errorCallback === 'function') {
-                            errorCallback(errorResponse);
-                        }
                         return;
                     }
+                    debugger;
                     if (reqConfig.method.toUpperCase() == "GET") {
                         //Kiểm tra nếu bị lỗi expired refresh Token hoặc invalid refresh Token thì logout
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();
