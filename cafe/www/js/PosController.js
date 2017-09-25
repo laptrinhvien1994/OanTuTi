@@ -110,7 +110,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 //Nếu đã có kết nối socket và có bật đồng bộ.
                 if (socket && $scope.isSync) {
                     //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
-                    var unsyncOrder = filterUnsyncedOrderWithLogs($scope.tables);
+                    var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
                     //data = angular.copy(unsyncOrder);
                     //unsyncOrder = filterInitOrder(data);
                     var initData = {
@@ -123,7 +123,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "tables": angular.copy(unsyncOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            action: "reconnect"
+                            action: "reconnect",
+                            deviceID: deviceID,
+                            timestamp: genTimestamp(),
+                            author: $scope.userSession.displayName
                         }
                     };
 
@@ -1526,7 +1529,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             });
 
-            var unsyncOrder = filterUnsyncedOrderWithLogs($scope.tables);
+            var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
             data = angular.copy(unsyncOrder);
             unsyncOrder = filterInitOrder(data);
             var initData = {
@@ -1537,7 +1540,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "startDate": "",
                 "finishDate": "",
                 "tables": angular.copy(unsyncOrder),
-                "zone": $scope.tableMap
+                "zone": $scope.tableMap,
+                "info": {
+                    action: "init",
+                    author: $scope.userSession.displayName,
+                    deviceID: deviceID,
+                    timestamp: genTimestamp()
+                }
+
             };
 
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -2125,10 +2135,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.Split = function () {
-        debugger;
+        if (!$scope.splitOrder) return;
         $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] = removeItemZero($scope.modalSplitOrder.fOrder);
         $scope.modalSplitOrder.fOrder = null;
-
         $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length] = removeItemZero($scope.splitOrder);
         //Thêm logs cho order cũ và mới.
         var logs = [];
@@ -2155,7 +2164,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "finishDate": "",
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
-                "action": 'splitOrder'
+                "action": 'splitOrder',
+                "info": {
+                    author: $scope.userSession.displayName,
+                    deviceID: deviceID,
+                    action: "splitOrder",
+                    timestamp: timestamp
+                }
             }
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
@@ -2525,7 +2540,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "startDate": "",
                         "finishDate": "",
                         "tables": angular.copy(currentTableOrder),
-                        "zone": $scope.tableMap
+                        "zone": $scope.tableMap,
+                        "info": {
+                            author: $scope.userSession.displayName,
+                            deviceID: deviceID,
+                            timestamp: timestamp,
+                            action: 'BB'
+                        }
                     }
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
@@ -2746,7 +2767,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "startDate": "",
                         "finishDate": "",
                         "tables": angular.copy(currentTableOrder),
-                        "zone": $scope.tableMap
+                        "zone": $scope.tableMap,
+                        "info": {
+                            action: "done",
+                            deviceID: deviceID,
+                            timestamp: genTimestamp(),
+                            author: $scope.userSession.displayName
+                        }
                     }
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
@@ -2769,12 +2796,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     var curtentTable = {};
                     angular.copy($scope.tableIsSelected, curtentTable);
 
+                    var timestamp = genTimestamp();
                     var currentTableOrder = [];
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
-                    new Log(item.itemId, item.itemName, "H", -num, genTimestamp(), deviceID, false));
+                    new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
                     var updateData = {
                         "companyId": $scope.userSession.companyId,
                         "storeId": $scope.currentStore.storeID,
@@ -2783,7 +2811,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "startDate": "",
                         "finishDate": "",
                         "tables": angular.copy(currentTableOrder),
-                        "zone": $scope.tableMap
+                        "zone": $scope.tableMap,
+                        "info": {
+                            author: $scope.userSession.displayName,
+                            deviceID: deviceID,
+                            timestamp: timestamp,
+                            action: "H"
+                        }
                     }
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
@@ -3313,7 +3347,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             "startDate": "",
                             "finishDate": "",
                             "tables": angular.copy(currentTableOrder),
-                            "zone": $scope.tableMap
+                            "zone": $scope.tableMap,
+                            "info": {
+                                action: "done",
+                                deviceID: deviceID,
+                                timestamp: genTimestamp(),
+                                author: $scope.userSession.displayName
+                            }
                         }
                         DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                         .then(function (data) {
@@ -3351,7 +3391,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     "shiftId": shiftId, //LSFactory.get('shiftId'),
                                     "printOrder": printOrder,
                                     "printSetting": setting,
-                                    "orderType": "cashier"
+                                    "orderType": "cashier",
+                                    "info": {
+                                        action: "print",
+                                        deviceID: deviceID,
+                                        timestamp: genTimestamp(),
+                                        author: $scope.userSession.displayName
+                                    }
                                 }
 
                                 printHelperData = angular.toJson(printHelperData);
@@ -4173,6 +4219,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     "storeId": $scope.currentStore.storeID,
                                     "clientId": $scope.clientId,
                                     "shiftId": shiftId, //LSFactory.get('shiftId')
+                                    "info": {
+                                        action: "completeShift",
+                                        deviceID: deviceID,
+                                        timestamp: genTimestamp(),
+                                        author: $scope.userSession.displayName
+                                    }
                                 }
 
                                 completeShift = angular.toJson(completeShift);
@@ -4280,6 +4332,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             "storeId": $scope.currentStore.storeID,
                             "clientId": $scope.clientId,
                             "shiftId": shiftId, //LSFactory.get('shiftId')
+                            "info": {
+                                action: "completeShift",
+                                deviceID: deviceID,
+                                timestamp: genTimestamp(),
+                                author: $scope.userSession.displayName
+                            }
                         }
 
                         completeShift = angular.toJson(completeShift);
@@ -4368,7 +4426,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "startDate": "",
                 "finishDate": "",
                 "tables": angular.copy(currentTableOrder),
-                "zone": $scope.tableMap
+                "zone": $scope.tableMap,
+                "info": {
+                    action: "stopTimer",
+                    deviceID: deviceID,
+                    timestamp: genTimestamp(),
+                    author: $scope.userSession.displayName
+                }
             }
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
@@ -5086,7 +5150,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     var updateTableToDB = function () {
         ////debugger;
-        var id = $scope.tableIsSelected.tableId;
+        //var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;
         var tableUuid = $scope.tableIsSelected.tableUuid;
         DBTables.$queryDoc({

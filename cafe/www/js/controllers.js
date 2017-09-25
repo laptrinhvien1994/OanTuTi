@@ -739,6 +739,28 @@ function filterUnsyncedOrderWithLogs(tables) {
     return data;
 }
 
+//Hàm filter đơn hàng chỉ lấy các logs đã đồng bộ.
+function filterOrderWithUnsyncLogs(tables) {
+    var data = angular.copy(tables)
+    //Lặp qua từng bàn
+    for (var x = 0; x < tables.length; x++) {
+        var tableOrder = tables[x].tableOrder;
+        //Lặp qua từng order
+        for (var y = 0; y < tableOrder.length; y++) {
+            var logs = tableOrder[y].saleOrder.logs;
+            //Lặp qua từng dòng dogs trong mỗi order
+            var logsTemp = [];
+            for (var z = 0; z < logs.length; z++) {
+                if (!logs[z].status) { //Nếu log chưa được đồng bộ thì thêm vào danh sách
+                    logsTemp.push(logs[z]);
+                }
+            }
+            data[x].tableOrder[y].saleOrder.logs = logsTemp;
+        }
+    }
+    return data;
+}
+
 function filterOwnerOrder(tables, userId) {
     var data = angular.copy(tables);
     for (var i = 0; i < tables.length; i++) {

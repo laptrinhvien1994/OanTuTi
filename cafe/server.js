@@ -282,8 +282,14 @@ MongoClient.connect(url, function (err, database) {
             var collection = db.collection('tableOrder');
             var history = db.collection('tableOrderHistory');
             var serverLog = db.collection('serverLog');
-            var broadcastType = 0; //0: cho tất cả các client, 1: cho client đã gửi lên, 2: cho các client khác trừ client đã gửi lên.
-            var msg = [];
+            //var broadcastType = 0; //0: cho tất cả các client, 1: chỉ cho client đã gửi lên, 2: cho các client khác trừ client đã gửi lên.
+            var msg = {
+                deviceID: data.info.deviceID,
+                author: data.info.author,
+                alteredOrder: [],
+                lostOrder: []
+            }; //Đơn hàng gửi lên và cái nào đã bị thay đổi.
+            //DƯới client cứ check theo ai gửi cái nào đã bị thay đổi, clientID và phải của người đó ko? để thông báo.
             collection.find({ companyId: data.companyId, storeId: data.storeId }).toArray(function (err, docs) {
                 if (err) logError(err);
                 history.find({ companyId: data.companyId, storeId: data.storeId, shiftId: data.shiftId }).toArray(function (errHis, docHis) {
@@ -326,14 +332,16 @@ MongoClient.connect(url, function (err, database) {
                                             //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
                                             //Việc cập nhật là merge dữ liệu giữa Client và Server không phải overwrite.
                                             if (order) {
+
                                                 if (order.saleOrder.revision == data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
                                                     //Order client đã được đồng bộ và phía client gửi lên không có thay đổi gì.
                                                     //Do nothing.
                                                 }
+
                                                 else if (order.saleOrder.revision == data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length > 0) {
                                                     //Order client đã được đồng bộ và phía client gửi lên có sự thay đổi.
 
-                                                    //Cập nhật dữ liệu cho server.
+                                                    //Cập nhật dữ liệu cho server và cập nhật luôn log.
                                                     order.saleOrder.orderDetails = data.tables[i].tableOrder[j].saleOrder.orderDetails;
                                                     data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
                                                         order.saleOrder.logs.push(log);
@@ -343,14 +351,15 @@ MongoClient.connect(url, function (err, database) {
                                                     //Update revision
                                                     order.saleOrder.revision++;
 
-                                                    //Broadcast cho toàn bộ client về dữ liệu mới cập nhật.
-                                                    broadcastType = 0;
+                                                    //Thêm vào thông báo cho Client về sự thay đổi.
+                                                    var msgIndex = msg.alteredOrder.findIndex(function (item) { return item == t.tableName });
+                                                    if (msgIndex == -1) msg.alteredOrder.push(t.tableName);
                                                 }
+
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
                                                     //Order client đã cũ nhưng phía client gửi lên không có sự thay đổi gì.
-                                                    //Update lại cho chính client đó.
-                                                    broadcastType = 1;
                                                 }
+
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length > 0) {
                                                     //Order client đã cũ nhưng phía client gửi lên có sự thay đổi -> Xảy ra conflict.
                                                     //Merge dữ liệu của client và server
@@ -398,11 +407,10 @@ MongoClient.connect(url, function (err, database) {
                                                     //Update revision.
                                                     order.saleOrder.revision++;
 
-                                                    //Broadcast lại cho toàn bộ các client.
-                                                    broadcastType = 0;
-
                                                     //Thông báo cho client đã bị conflict.
-                                                    msg.push(order.tableName);
+                                                    //Thêm vào thông báo cho Client về sự thay đổi.
+                                                    var msgIndex = msg.alteredOrder.findIndex(function (item) { return item == t.tableName });
+                                                    if (msgIndex == -1) msg.alteredOrder.push(t.tableName);
                                                 }
                                                 //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
 
@@ -422,7 +430,7 @@ MongoClient.connect(url, function (err, database) {
                                                         var t = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
                                                         if (t) {
                                                             //Lấy order cần kiểm tra xong bàn đó xem còn hay không? (Có thể đã bị đổi hoặc ghép 1 hoặc n lần nữa.)
-                                                            var curOrder = t.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.orderID; });
+                                                            var curOrder = t.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.toOrderID; });
                                                             //Nếu còn nghĩa là order đó ko có đổi hoặc ghép gì thêm.
                                                             if (curOrder) {
                                                                 //Kiểm tra log và push đơn hàng vào cho phù hợp.
@@ -452,10 +460,13 @@ MongoClient.connect(url, function (err, database) {
                                                         //Tạo đơn hàng mới với dữ liệu của order push lên để lưu tạm.
                                                         var storedOrder = clone(data.tables[i].tableOrder[j]);
                                                         storedOrder.saleOrder.saleOrderUuid = uuid.v1();
+                                                        //Lưu lại đơn tên của người tạo và đổi tên thành lưu tạm.
+                                                        storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.createdByName = "LƯU TẠM";
                                                         t.tableOrder.push(storedOrder);
-                                                        //Thông báo cho client.
-                                                        //Thông báo tại đây.
+                                                        //Thêm vào thông báo cho Client về sự thay đổi.
+                                                        var msgIndex = msg.lostOrder.findIndex(function (item) { return item == t.tableName });
+                                                        if (msgIndex == -1) msg.lostOrder.push(t.tableName);
                                                     }
                                                     else {
                                                         //Thêm vào collection tableOrder.
@@ -582,7 +593,7 @@ MongoClient.connect(url, function (err, database) {
             }
         }
 
-        //Hàm xử lý khi client báo bếp, hủy món đã báo bếp,...
+        //Hàm xử lý khi client báo bếp, hủy món đã báo bếp, tách hóa đơn, ngưng tính thời gian,...
         var updateOrder = function (id, data) {
             var shiftIdCur = null;
             var shiftIdReq = data.shiftId;
@@ -593,19 +604,21 @@ MongoClient.connect(url, function (err, database) {
                 if (docs && docs.length > 0) {
                     shiftIdCur = docs[0].shiftId;
                     if (shiftIdReq == shiftIdCur) {
-                        //Giai đoạn 1: Cập nhật lại data trên DB Mongo
+                        //Giai đoạn 1: Tính toán và cập nhật lại data trên DB Mongo
                         //Lặp qua từng bàn trong ds bàn mà Client gửi lên.
                         for (var i = 0; i < data.tables.length; i++) {
 
                             //Nếu trong bàn đó không có đơn hàng thì chuyển qua bàn khác
+                            //Đối với các action như là báo bếp, hủy món đã báo bếp, ngưng tính giờ thì chỉ gửi lên 1 đơn hàng, còn action như tách hóa đơn thì gửi lên 2 đơn hàng.
                             if (!data.tables[i].tableOrder || data.tables[i].tableOrder.length == 0) continue;
 
+                            var orderList = [];
                             //Lặp qua từng hóa đơn trong bàn đó.
                             for (var j = 0; j < data.tables[i].tableOrder.length; j++) {
                                 var t = _.findWhere(docs[0].tables, { tableUuid: data.tables[i].tableUuid });
                                 var order = _.find(t.tableOrder, function (tb) { return tb.saleOrder && tb.saleOrder.saleOrderUuid == data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
 
-                                //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
+                                //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server dựa vào logs.
                                 if (order) {
                                     //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
                                     //Điều chỉnh data cho phù hợp
@@ -617,7 +630,7 @@ MongoClient.connect(url, function (err, database) {
                                         }) < 0;
                                     });
                                     var arr = order.saleOrder.logs.concat(orderClient);
-                                    order.saleOrder.logs = arr;
+                                    order.saleOrder.logs = arr; //Cập nhật log cho server.
 
                                     //B2: Tính toán lại số lượng dựa trên logs
                                     var groupLog = groupBy(order.saleOrder.logs);
@@ -647,20 +660,37 @@ MongoClient.connect(url, function (err, database) {
                                         }
                                     });
 
-                                    //B4: Cập nhật status cho mỗi dòng log là đã cập nhật.
+                                    //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                    //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
                                     if (data.action !== 'splitOrder') {
                                         order.saleOrder.logs.forEach(function (log) {
                                             if (!log.status) log.status = true;
                                         });
                                     }
+
+                                    //Cập nhật lại revision
+                                    order.saleOrder.revision++;
+
+                                    orderList.push(order);
                                 } else {
-                                    if (data.action !== 'splitOrder') {
-                                        data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
-                                            log.status = true;
-                                        });
-                                    }
+                                    ////Xử lý dành cho các trường hợp tách đơn hàng hoặc báo bếp offline. (update: báo bếp offline đã được initShift xử lý ở init hoặc reconnect).
+                                    ////Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi.
+                                    //if (data.action !== 'splitOrder') {
+                                    //    data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
+                                    //        log.status = true;
+                                    //    });
+                                    //}
                                     t.tableOrder.push(data.tables[i].tableOrder[j]);
+                                    //Revision lúc này của order được tách đã được gán mặc định là 1 ở dưới client.
+                                    orderList.push(data.tables[i].tableOrder[j]);
                                 }
+                                
+                            }
+
+                            //Gán lại data để trả về cho Client, gán xong thì reset lại mảng rỗng.
+                            if (orderList.length > 0) {
+                                data.tables[i].tableOrder = clone(orderList);
+                                orderList = [];
                             }
                         }
                         //Sau khi đã xử lý xong ds bàn và đơn hàng Client gửi lên thì cập nhật lại vào Collection TableOrder trên Server.
@@ -793,7 +823,7 @@ MongoClient.connect(url, function (err, database) {
             });
         };
 
-        //Hàm xử lý thực hiện đổi bàn, gộp hóa đơn.
+        //Hàm xử lý thực hiện đổi bàn, ghép hóa đơn.
         var moveOrder = function (id, data) {
             var shiftIdReq = data.shiftId;
             var shiftIdCur;
@@ -867,10 +897,18 @@ MongoClient.connect(url, function (err, database) {
                                         dirDebug(order);
                                         //Cập nhật hoặc thêm vào ds order của bàn đó
                                         if (order) {
+                                            //Trường hợp ghép hóa đơn.
+                                            //Chỉ xảy ra khi client có kết nối internet, dưới client đã xử lý log.
+
                                             t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+                                            //Cập nhật lại revision
+                                            t.tableOrder[t.tableOrder.indexOf(order)].saleOrder.revision++;
                                             logDebug('order is updated');
                                         }
                                         else {
+                                            //Trường hợp đổi bàn
+                                            //Chỉ xảy ra khi client có kết nối internet, dưới client đã xử lý log và revision đc đặt mặc định là 1.
+
                                             t.tableOrder.push(data.tables[i].tableOrder[j]);
                                             logDebug('order is inserted');
                                         }
@@ -920,6 +958,7 @@ MongoClient.connect(url, function (err, database) {
                     else {
                         logDebug('broadcastOrders' + JSON.stringify(data));
                         //io.to(id).emit('broadcastOrders', data);
+                        //Chỉ gửi trả về cho các client khác vì client gửi lên đã được xử lý toàn bộ dưới client.
                         socket.broadcast.to(id).emit('moveOrder', responseData);
                     }
                     //Cập nhật thông tin history
