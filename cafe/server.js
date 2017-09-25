@@ -352,8 +352,7 @@ MongoClient.connect(url, function (err, database) {
                                                     order.saleOrder.revision++;
 
                                                     //Thêm vào thông báo cho Client về sự thay đổi.
-                                                    var msgIndex = msg.alteredOrder.findIndex(function (item) { return item == t.tableName });
-                                                    if (msgIndex == -1) msg.alteredOrder.push(t.tableName);
+                                                    msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid });
                                                 }
 
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
@@ -409,8 +408,7 @@ MongoClient.connect(url, function (err, database) {
 
                                                     //Thông báo cho client đã bị conflict.
                                                     //Thêm vào thông báo cho Client về sự thay đổi.
-                                                    var msgIndex = msg.alteredOrder.findIndex(function (item) { return item == t.tableName });
-                                                    if (msgIndex == -1) msg.alteredOrder.push(t.tableName);
+                                                    msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid });
                                                 }
                                                 //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
 
@@ -464,9 +462,9 @@ MongoClient.connect(url, function (err, database) {
                                                         storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.createdByName = "LƯU TẠM";
                                                         t.tableOrder.push(storedOrder);
+
                                                         //Thêm vào thông báo cho Client về sự thay đổi.
-                                                        var msgIndex = msg.lostOrder.findIndex(function (item) { return item == t.tableName });
-                                                        if (msgIndex == -1) msg.lostOrder.push(t.tableName);
+                                                        msg.lostOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid });
                                                     }
                                                     else {
                                                         //Thêm vào collection tableOrder.
@@ -492,6 +490,8 @@ MongoClient.connect(url, function (err, database) {
                                 });
                                 //Gán lại data sẽ trả về cho Client bằng data trên Server sau xử lý.
                                 data = docs[0];
+                                //Thêm thông báo cho client.
+                                data.msg = msg;
                             }
                             //Nếu shift mà Client gửi lên không trùng với shift hiện tại. Trường hợp Init hoặc lấy shiftId từ DB Local
                             else {

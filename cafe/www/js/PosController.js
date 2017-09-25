@@ -982,7 +982,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             //LSFactory.set('shiftId', msg.shiftId);
                         }
                         return null;
-                        //Đoạn này phải chạy tuần tự vì có trường hợp lỗi giữa add shiftId và removeId gây reload nhiều lần.
+                        //Đoạn này phải chạy tuần tự vì có trường hợp lỗi giữa add shiftId và remove shiftId gây reload nhiều lần.
                     })
                     .then(function (data) {
                         //debugger;
@@ -991,11 +991,49 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         // var filterHasNoticeOrder($scope.copyTables);
 
                         //Cập nhật lại sơ đồ bàn mới từ Server.
+                        var tempTables = angular.copy($scope.tables);
                         $scope.tables = msg.tables;
 
                         if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
                         // console.log(msg);
                         if ($scope.tables) {
+                            
+                            //Hiển thị thông báo cho client
+                            var alteredOrder = [];
+                            var lostOrder = [];
+                            //Lặp để thiết lập nội dung thông báo
+                            if (msg.msg) {
+                                if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
+                                    tempTables.forEach(function (t) {
+                                        t.tableOrder.forEach(function (order) {
+                                            var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                            if (msg.msg.deviceID != deviceID && orderLog.createdByName == msg.msg.author) {
+                                                alteredOrder.push(msg.msg.alteredOrder[index].tableName);
+                                            }
+                                            else {
+                                                orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                                if (msg.msg.deviceID == deviceID && orderLog.createdByName == msg.msg.author) {
+                                                    lostOrder.push(msg.msg.lostOrder[index].tableName);
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
+                            }
+
+                            var msgForAlteredOrder = '';
+                            var msgForLostOrder = '';
+                            if (alteredOrder.length > 0) {
+                                msgForAlteredOrder = 'Đơn hàng tại các bàn ';
+                                msgForAlteredOrder += alteredOrder.join(', ');
+                                msgForAlteredOrder += ' đã bị thay đổi ở 1 thiết bị khác, vui lòng kiểm tra và cập nhật lại số lượng sót';
+                            }
+                            if (lostOrder.length > 0) {
+                                msgForLostOrder = 'Đơn hàng tại các bàn';
+                                msgForLostOrder += lostOrder.join(', ');
+                                msgForAlteredOrder += ' đã bị đổi sang bàn khác hoặc ghép hóa đơn ở 1 thiết bị khác.';
+                            }
+                            var msgContent = msgForAlteredOrder + "<br/>" + msgForLostOrder + "<br/>Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai sót.";
 
                             //Cập nhật lại tableStatus
                             for (var i = 0; i < $scope.tables.length; i++) {
@@ -1091,6 +1129,168 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
                 // console.log($scope.tables);
             });
+
+
+            socket.on('reconnected', function (msg) {
+                console.log('reconnected', msg);
+                if (msg.storeId == $scope.currentStore.storeID) {
+                    //debugger;
+                    // console.log('-- Đã nhận tín hiệu từ socket --');
+                    // console.log(msg.tables);
+                    //Kiểm tra xem DB Local đã lưu shiftId hay chưa?
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    .then(function (data) {
+                        $scope.shiftId = null;
+                        if (data.docs.length > 0) {
+                            $scope.shiftId = data.docs[0].shiftId;
+                        }
+                        //Nếu shift Client hiện tại ko trùng với shift Server gửi về thì cập nhật lại hoặc thêm mới.
+                        if ($scope.shiftId != msg.shiftId) {
+                            $scope.shiftId = msg.shiftId;
+                            if (data.docs.length > 0) {
+                                data.docs[0].shiftId = msg.shiftId;
+                                return DBSettings.$addDoc(angular.copy(data.docs[0]));
+                            }
+                            else {
+                                return DBSettings.$addDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, shiftId: msg.shiftId });
+                            }
+                            //.catch(function (error) { console.log(error); });
+                            //LSFactory.set('shiftId', msg.shiftId);
+                        }
+                        return null;
+                        //Đoạn này phải chạy tuần tự vì có trường hợp lỗi giữa add shiftId và remove shiftId gây reload nhiều lần.
+                    })
+                    .then(function (data) {
+                        //debugger;
+                        $scope.unNoticeTable = filterHasNoticeOrder($scope.tables);
+                        // angular.copy($scope.tables,$scope.copyTables);
+                        // var filterHasNoticeOrder($scope.copyTables);
+
+                        //Cập nhật lại sơ đồ bàn mới từ Server.
+                        var tempTables = angular.copy($scope.tables);
+                        $scope.tables = msg.tables;
+
+                        if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
+                        // console.log(msg);
+                        if ($scope.tables) {
+
+                            //Hiển thị thông báo cho client
+                            var alteredOrder = [];
+                            var lostOrder = [];
+                            //Lặp để thiết lập nội dung thông báo
+                            if (msg.msg) {
+                                if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
+                                    tempTables.forEach(function (t) {
+                                        t.tableOrder.forEach(function (order) {
+                                            var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                            if (msg.msg.deviceID != deviceID && orderLog.createdByName == msg.msg.author) {
+                                                alteredOrder.push(msg.msg.alteredOrder[index]);
+                                            }
+                                            else {
+                                                orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                                if (msg.msg.deviceID != deviceID && orderLog.createdByName == msg.msg.author) {
+                                                    lostOrder.push(msg.msg.lostOrder[index]);
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
+                            }
+                            //Cập nhật lại tableStatus
+                            for (var i = 0; i < $scope.tables.length; i++) {
+                                var tableStatus = tableIsActive($scope.tables[i]);
+                                if (tableStatus == true) {
+                                    $scope.tables[i].tableStatus = 1;
+                                }
+                            }
+
+                            DBTables.$queryDoc({
+                                selector: {
+                                    'store': { $eq: $scope.currentStore.storeID }
+                                }
+                            })
+                            .then(function (data) {
+                                if (data.docs.length > 0) {
+                                    for (var x = 0; x < data.docs.length; x++) {
+                                        _id = data.docs[x]._id;
+                                        _rev = data.docs[x]._rev;
+                                        data.docs[x] = JSON.parse(JSON.stringify($scope.tables[x]));
+                                        data.docs[x]._id = _id;
+                                        data.docs[x]._rev = _rev;
+                                        data.docs[x].store = $scope.currentStore.storeID;
+                                    }
+                                    return DBTables.$manipulateBatchDoc(data.docs);
+                                }
+                                return null;
+                            })
+                            .then(function (data) {
+                                //debugger;
+                                if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                    var tableIndex = findIndex($scope.tables, 'tableUuid', $scope.tableIsSelected.tableUuid);
+                                    $scope.tableIsSelected = $scope.tables[tableIndex];
+                                }
+                                $scope.$apply();
+                                return null;
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                                //Nếu lỗi match shift nhưng số lượng bàn khác nhau
+                                return DBTables.$queryDoc({
+                                    selector: {
+                                        'store': { $eq: $scope.currentStore.storeID }
+                                    }
+                                })
+                            })
+                            .then(function (data) {
+                                if (data) {
+                                    data.docs.forEach(function (d) { d._deleted = true; });
+                                    return DBTables.$manipulateBatchDoc(data.docs);
+                                }
+                                return null;
+                            })
+                            .then(function (data) {
+                                if (data) {
+                                    window.location.reload(true);
+                                }
+                            });
+                        }
+
+                        if (!$scope.tables) {
+                            Promise.all([
+                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+                                DBTables.$queryDoc({
+                                    selector: {
+                                        'store': { $eq: $scope.currentStore.storeID }
+                                        //'tableId': { $gte: null }
+                                    },
+                                    //sort: [{ tableId: 'asc' }]
+                                })
+                            ])
+                            .then(function (data) {
+                                console.log(data);
+                                data[1].docs.forEach(function (d) { d._deleted = true; });
+                                return DBTables.$manipulateBatchDoc(data[1].docs);
+                            })
+                            .then(function (data) {
+                                window.location.reload(true);
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            })
+                            //window.localStorage.removeItem('shiftId');
+                            //window.localStorage.removeItem($scope.currentStore.storeID);
+                            //window.location.reload(true);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+                    //$scope.shiftId = LSFactory.get('shiftId');
+
+                }
+                // console.log($scope.tables);
+            });
+
 
             var groupBy = function (arrLog) {
                 var result = arrLog.reduce(function (arr, item) {
