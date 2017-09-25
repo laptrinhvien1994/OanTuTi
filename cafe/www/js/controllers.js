@@ -90,9 +90,9 @@ var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, sta
     this.quantity = quantity; //Số lượng item tham gia vào action.
     this.timestamp = timestamp; //Thời gian thực hiện action.
     this.deviceID = deviceID; //ID định danh cho mỗi thiết bị.
-    this.author = author;
-    this.tableID = tableID;
-    this.orderID = orderID;
+    //this.author = author;
+    //this.tableID = tableID;
+    //this.orderID = orderID;
     this.status = status; //Trạng thái action đã thực hiện trong 2 loại false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
     //this.startTime = null; //Thời gian bắt đầu nếu có đồng bộ về thời gian.
 }
@@ -688,6 +688,7 @@ function diff(localOrder, onlineOrder) {
     return false;
 }
 
+//Hàm filter đơn hàng có logs chưa đồng bộ và lấy tất cả các logs của đơn hàng đó.
 function filterUnsyncedOrder(tables) {
     var data = angular.copy(tables)
     //Lặp qua từng bàn
@@ -705,6 +706,33 @@ function filterUnsyncedOrder(tables) {
                     //xóa ra khỏi danh sách gửi lên cho server.
                     data[x].tableOrder.splice(y, 1);
                 }
+            }
+        }
+    }
+    return data;
+}
+
+//Hàm filter đơn hàng có logs chưa đồng bộ và chỉ lấy các logs chưa đồng bộ.
+function filterUnsyncedOrderWithLogs(tables) {
+    var data = angular.copy(tables)
+    //Lặp qua từng bàn
+    for (var x = 0; x < tables.length; x++) {
+        var tableOrder = tables[x].tableOrder;
+        //Lặp qua từng order
+        for (var y = 0; y < tableOrder.length; y++) {
+            var logs = tableOrder[y].saleOrder.logs;
+            //Lặp qua từng dòng dogs trong mỗi order
+            var logsTemp = [];
+            for (var z = 0; z < logs.length; z++) {
+                if (!logs[z].status) { //Nếu log chưa được đồng bộ thì thêm vào danh sách
+                    logsTemp.push(logs[z]);
+                }
+            }
+            if (logsTemp.length == 0) {//Nếu duyệt tới cuối danh sách logs mà ds tạm rỗng -> đã đồng bộ hết thì bỏ đơn hàng đó ra khỏi ds đồng bộ.
+                data[x].tableOrder.splice(y, 1);
+            }
+            else if (logsTemp.length > 0) { //Nếu duyệt tới cuối danh sách logs mà ds tạm có logs thì cập nhật lại log. 
+                data[x].tableOrder[y].saleOrder.logs = logsTemp;
             }
         }
     }
@@ -915,9 +943,12 @@ function asynRequest($state, $http, method, url, headers, responseType, data, ca
                     if (url == Api.ping) {
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();
                         scope.isOnline = false;
+                        if (errorCallback !== null && typeof errorCallback === 'function') {
+                            errorCallback(errorResponse);
+                        }
                         return;
                     }
-                    debugger;
+
                     if (reqConfig.method.toUpperCase() == "GET") {
                         //Kiểm tra nếu bị lỗi expired refresh Token hoặc invalid refresh Token thì logout
                         var scope = angular.element(document.getElementById('SunoPosCafe')).scope();

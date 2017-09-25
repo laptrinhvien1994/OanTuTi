@@ -48,7 +48,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.ItemSearchIsSelected = null;
         }, function (status) { console.log(status) }, true, 'SearchProductItem');
     }
-    
+
     var DBSettings = $PouchDB.DBSettings;
     var DBTables = $PouchDB.DBTables;
 
@@ -61,30 +61,90 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     // console.log('isWebView :'+ $scope.isWebView);
 
     $ionicSideMenuDelegate.canDragContent(false);
-    var socket;
+    var socket = null;
+
+    var checkingInternetConnection = function () {
+        return new Promise(function (resolve, reject) {
+            var url = Api.ping;
+            var data = { extConfig: { db: DBSettings, token: $scope.token } };
+            asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+                $scope.isOnline = true;
+                resolve(true);
+            }, function (status) {
+                $scope.isOnline = false;
+                reject(false);
+            }, true, 'Ping');
+        });
+    }
+
+    var notiPopupInstance = null;
+    var showNotification = function (title, content, callback) {
+        if (notiPopupInstance == null) {
+            notiPopupInstance = $ionicPopup.alert({
+                title: title,
+                template: content
+            });
+            notiPopupInstance.then(function (response) {
+                if (callback !== null && typeof callback === 'function') callback();
+                notiPopupInstance = null;
+            });
+        }
+        return notiPopupInstance;
+    }
 
     $scope.isOnline = true;
     //Checking internet connection.
     $interval(function () {
-        var url = Api.ping;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            $scope.isOnline = true;
-        }, function (status) {
-            //console.log(status);
-            $scope.isOnline = false;
-        }, true, 'Ping');
+        checkingInternetConnection();
     }, 1000000);
 
     $scope.$watch('isOnline', function (n, o) {
-        if (n != null && o != null) {
+        if (n != null && o != null && n != o) {
             if (n) {
                 toaster.pop({
                     type: 'success',
                     title: 'Thông báo',
                     body: 'Kết nối internet ổn định',
                     timeout: 5000
-                })
+                });
+                //Nếu đã có kết nối socket và có bật đồng bộ.
+                if (socket && $scope.isSync) {
+                    //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
+                    var unsyncOrder = filterUnsyncedOrderWithLogs($scope.tables);
+                    //data = angular.copy(unsyncOrder);
+                    //unsyncOrder = filterInitOrder(data);
+                    var initData = {
+                        "companyId": $scope.userSession.companyId,
+                        "storeId": $scope.currentStore.storeID,
+                        "clientId": $scope.clientId,
+                        "shiftId": null, //LSFactory.get('shiftId'),
+                        "startDate": "",
+                        "finishDate": "",
+                        "tables": angular.copy(unsyncOrder),
+                        "zone": $scope.tableMap,
+                        "info": {
+                            action: "reconnect"
+                        }
+                    };
+
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    .then(function (data) {
+                        ////debugger;
+                        var shiftId = null;
+                        if (data.docs.length > 0) {
+                            shiftId = data.docs[0].shiftId;
+                        }
+                        //debugger;
+                        initData.shiftId = shiftId;
+                        initData = angular.toJson(initData);
+                        initData = JSON.parse(initData);
+                        console.log('reconnectData', initData);
+                        socket.emit('reconnectServer', initData);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+                }
             }
             else {
                 toaster.pop({
@@ -577,28 +637,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.openPopover = function ($event) {
         $scope.popover.show($event);
     };
-    
-    ////Khởi tạo kích thước với giá trị nhỏ nhất.
-    //$scope.widthSize = widthSizeEnum.small;
-    //$scope.tableQuantityType = tableQuantityTypeEnum;
-    //$scope.adjustSize = null;
-
-    //var specifyScreenResolution = function(){
-    //    var wow = $(window).width(); //wow : width of window.
-    //    //màn hình cỡ lớn
-    //    if (wow && wow > 1280) {
-    //        $scope.widthSize = widthSizeEnum.large;
-    //    }
-    //    else if (wow && wow >= 760 && wow <= 1280) {
-    //        //màn hình cỡ vừa
-    //        $scope.widthSize = widthSizeEnum.medium;
-    //    }
-    //    else if (wow && wow < 760) {
-    //        //màn hình cỡ nhỏ
-    //        $scope.widthSize = widthSizeEnum.small;
-    //    }
-    //}
-    //specifyScreenResolution();
 
 
     $scope.quantityTablePerRow = null;
@@ -780,55 +818,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
                 //console.log('fired');
                 updateTableToDB();
-                ////console.log('watch Collection');
-                ////console.log('collection', newValue);
-                ////console.log('collection', oldValue);
-                //console.log('tableIsSelected', $scope.tableIsSelected);
-                //var array = prepareTables();
-                //Promise.all([
-                //    DBTables.$queryDoc({
-                //        selector: {
-                //            'store': { $eq: $scope.currentStore.storeID }
-                //        },
-                //        //fields: ['_id', '_rev']
-                //    }),
-                //    DBSettings.$getDocByID({ _id: 'zones' })
-                //])
-                //.then(function (data) {
-                //    //console.log(data[0]);
-                //    //console.log(data[1]);
-                //    //if (data[0].docs.length > 0) {
-                //    //    for (var x = 0; x < data[0].docs.length; x++) {
-                //    //        var item = array.filter(function (i) { return i._id == data[0].docs[x]._id; });
-                //    //    }
-                //    //}
-                //    //else {
-                //    //}
-                //        if (data[1].docs.length > 0) {
-                //            return DBSettings.$addDoc({ _id: 'zones', zones: angular.copy($scope.tableMap), _rev: data[1].docs[0]._rev });
-                //        }
-                //        else {
-                //            return DBSettings.$addDoc({ _id: 'zones', zones: angular.copy($scope.tableMap) });
-                //        }
-                //})
-                //.catch(function (error) {
-                //    //console.log('collectionError', error);
-                //    //try to override zones again.
-                //    return DBSettings.$getDocByID({ _id: 'zones' });
-                //})
-                //.then(function (data) {
-                //    if (data.docs) {
-                //        if (data.docs.length > 0) {
-                //            return DBSettings.$addDoc({ _id: 'zones', zones: angular.copy($scope.tableMap), _rev: data.docs[0]._rev });
-                //        }
-                //        else {
-                //            return DBSettings.$addDoc({ _id: 'zones', zones: angular.copy($scope.tableMap) });
-                //        }
-                //    }
-                //})
-                //.catch(function (error) {
-                //    console.log('collectionError2', error);
-                //});
                 ////LSFactory.set($scope.currentStore.storeID, {
                 ////    tables: $scope.tables,
                 ////    zone: $scope.tableMap
@@ -1051,14 +1040,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 })
                             })
                             .then(function (data) {
-                                if(data){
+                                if (data) {
                                     data.docs.forEach(function (d) { d._deleted = true; });
                                     return DBTables.$manipulateBatchDoc(data.docs);
                                 }
                                 return null;
                             })
                             .then(function (data) {
-                                if(data){
+                                if (data) {
                                     window.location.reload(true);
                                 }
                             });
@@ -1169,7 +1158,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     if (orderIndex == null && $scope.tables[x].tableOrder[0].saleOrder.orderDetails.length > 0) {
                                         $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[0]));
                                     }
-                                    else if(orderIndex == null && $scope.tables[x].tableOrder[0].saleOrder.orderDetails.length == 0){
+                                    else if (orderIndex == null && $scope.tables[x].tableOrder[0].saleOrder.orderDetails.length == 0) {
                                         $scope.tables[x].tableOrder[0].saleOrder = angular.copy(msg.tables[0].tableOrder[0].saleOrder);
                                     }
                                     else {
@@ -1183,7 +1172,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         //    }) < 0;
                                         //});
 
-                                        debugger;
                                         var orderClient = $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.filter(function (item) {
                                             return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
                                                 return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
@@ -1370,7 +1358,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 $scope.$apply();
                                 break;
                             }
-                            //Trường hợp xóa trắng đơn hàng chưa báo bếp nên ko tìm thấy Order.
+                                //Trường hợp xóa trắng đơn hàng chưa báo bếp nên ko tìm thấy Order.
                             else {
                                 //Chưa làm gì hết
                             }
@@ -1538,7 +1526,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             });
 
-            var unsyncOrder = filterUnsyncedOrder($scope.tables, $scope.userSession.userId);
+            var unsyncOrder = filterUnsyncedOrderWithLogs($scope.tables);
             data = angular.copy(unsyncOrder);
             unsyncOrder = filterInitOrder(data);
             var initData = {
@@ -1703,7 +1691,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //Tham số isNeedToChange dùng để tránh trường hợp mỗi lần các phím arrows thì biến isInTable bị thay đổi k kiểm soát đc.
     $scope.switchLayout = function (isNeedToChange) {
         //$scope.leftviewStatus = !$scope.leftviewStatus;
-        if (isNeedToChange){
+        if (isNeedToChange) {
             $scope.isInTable = !$scope.isInTable;
         }
         buildHotKeyIndex();
@@ -1812,13 +1800,24 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
-        $scope.popoverTableAction.hide();
-        $ionicModal.fromTemplateUrl('switch-tables.html', {
-            scope: $scope,
-            animation: 'slide-in-up'
-        }).then(function (modal) {
-            $scope.modalSwitchTable = modal;
-            $scope.modalSwitchTable.show();
+        checkingInternetConnection()
+        .then(function (data) {
+            $scope.popoverTableAction.hide();
+            $ionicModal.fromTemplateUrl('switch-tables.html', {
+                scope: $scope,
+                animation: 'slide-in-up'
+            }).then(function (modal) {
+                $scope.modalSwitchTable = modal;
+                $scope.modalSwitchTable.show();
+            });
+        })
+        .catch(function (e) {
+            toaster.pop({
+                type: 'error',
+                title: 'Thông báo',
+                body: 'Đã mất kết nối internet. Các thao tác liên quan đến đổi bàn, ghép hóa đơn có thể khiến dữ liệu đồng bộ bị sai lệch. Vui lòng kết nối internet hoặc sử dụng thiết bị khác có kết nối internet ổn định để thực hiện thao tác này.',
+                timeout: 10000
+            });
         });
     }
 
@@ -1868,7 +1867,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
         $scope.modalSwitchTable.hide();
         toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + oldtable.tableName + '] sang [' + newtable.tableName + ']');
-
+        var timestamp = genTimestamp();
         if ($scope.isSync) {
             var curtentTable = {};
             angular.copy($scope.tableIsSelected, curtentTable);
@@ -1887,7 +1886,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "fromTableUuid": oldtable.tableUuid,
                 "fromSaleOrderUuid": oldOrderId,
                 "tables": angular.copy(currentTableOrder),
-                "zone": $scope.tableMap
+                "zone": $scope.tableMap,
+                "info": {
+                    author: $scope.userSession.displayName,
+                    timestamp: timestamp,
+                    deviceID: deviceID,
+                    action: "CB"
+                }
             };
 
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -1932,17 +1937,28 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
 
-        if (cantPrint == true && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
-            $ionicModal.fromTemplateUrl('pairing-order.html', {
-                scope: $scope,
-                animation: 'slide-in-up'
-            }).then(function (modal) {
-                $scope.modalPairOrder = modal;
-                $scope.popoverTableAction.hide();
-                $scope.modalPairOrder.show();
-                $scope.selecteOrder = true;
+        checkingInternetConnection()
+        .then(function (data) {
+                if (cantPrint == true && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
+                    $ionicModal.fromTemplateUrl('pairing-order.html', {
+                        scope: $scope,
+                        animation: 'slide-in-up'
+                    }).then(function (modal) {
+                        $scope.modalPairOrder = modal;
+                        $scope.popoverTableAction.hide();
+                        $scope.modalPairOrder.show();
+                        $scope.selecteOrder = true;
+                    });
+                }
+            })
+        .catch(function (e) {
+            toaster.pop({
+                type: 'error',
+                title: 'Thông báo',
+                body: 'Đã mất kết nối internet. Các thao tác liên quan đến đổi bàn, ghép hóa đơn có thể khiến dữ liệu đồng bộ bị sai lệch. Vui lòng kết nối internet hoặc sử dụng thiết bị khác có kết nối internet ổn định để thực hiện thao tác này.',
+                timeout: 10000
             });
-        }
+        });
     }
 
     $scope.closeModalPairOrder = function () {
@@ -1965,15 +1981,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var oldtable = {};
         angular.copy($scope.tableIsSelected, oldtable);
         var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
-
+        debugger;
+        //Thêm logs cho table mới được ghép.
+        var logs = []
+        var timestamp = genTimestamp();
         for (var i = 0; i < $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length; i++) {
             var item = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[i];
-
+            logs.push(new Log(item.itemId, item.itemName, "BB", item.quantity, timestamp, deviceID, false));
             var itemIndex = findIndex(o.saleOrder.orderDetails, 'itemId', item.itemId);
             if (itemIndex != null) {
                 o.saleOrder.orderDetails[itemIndex].quantity += parseFloat(item.quantity);
             } else {
-                item.quantity = 1;
+                //item.quantity = 1;
                 o.saleOrder.orderDetails.push(item);
             }
         }
@@ -2007,7 +2026,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "fromTableUuid": oldtable.tableUuid,
                 "fromSaleOrderUuid": oldOrderId,
                 "tables": angular.copy(currentTableOrder),
-                "zone": $scope.tableMap
+                "zone": $scope.tableMap,
+                "info": {
+                    author: $scope.userSession.displayName,
+                    timestamp: timestamp,
+                    deviceID: deviceID,
+                    action: "G"
+                }
             }
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
@@ -2100,11 +2125,20 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.Split = function () {
-        //debugger;
+        debugger;
         $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] = removeItemZero($scope.modalSplitOrder.fOrder);
         $scope.modalSplitOrder.fOrder = null;
 
         $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length] = removeItemZero($scope.splitOrder);
+        //Thêm logs cho order cũ và mới.
+        var logs = [];
+        var timestamp = genTimestamp();
+        $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length - 1].saleOrder.orderDetails.forEach(function (item) {
+            logs.push(new Log(item.itemId, item.itemName, "BB", item.quantity, timestamp, deviceID, true));
+            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
+                new Log(item.itemId, item.itemName, "H", item.quantity, timestamp, deviceID, true));
+        });
+        $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length - 1].saleOrder.logs = logs;
         $scope.splitOrder = null;
         toaster.pop('success', "", 'Đã tách hoá đơn [' + $scope.tableIsSelected.tableName + ']');
 
@@ -2402,7 +2436,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 var printOrder = {};
                 angular.copy(currentOrder, printOrder);
 
-                
+
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
                     printOrder.saleOrder.orderDetails[i].quantity = printOrder.saleOrder.orderDetails[i].newOrderCount;
                 }
@@ -4676,7 +4710,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     $scope.onSearchField = true;
                     $scope.ItemIsSelected = {};
                     $("#productSearchInput").focus();
-                }    
+                }
             }
         });
 
@@ -4754,7 +4788,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             allowIn: ['INPUT', 'BUTTON'],
             description: 'Chi tiết hóa đơn',
             callback: function () {
-                if(!$scope.isInTable){
+                if (!$scope.isInTable) {
                     $scope.openOrderDetails();
                 }
             }
@@ -4768,7 +4802,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         });
     }
 
-    var enterHandler = function () {   
+    var enterHandler = function () {
         if ($scope.isUseKeyboard) {
             debugger;
             //Nếu đang ở màn hình sơ đồ bàn và không có chọn hàng hóa ở ô search.
@@ -4783,7 +4817,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     buildHotKeyIndex();
                 }
             }
-            //Nếu đang ở màn hình chọn món và không có chọn hàng hóa ở ô search.
+                //Nếu đang ở màn hình chọn món và không có chọn hàng hóa ở ô search.
             else if (!$scope.isInTable && !$scope.onSearchField) {
                 //$scope.leftviewStatus && 
                 //console.log('ItemIsSelected', $scope.ItemIsSelected);
@@ -4867,7 +4901,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
             //$scope.leftviewStatus = false;
 
-            try{
+            try {
                 var p1 = document.getElementById('p1-' + $scope.tableIsSelected.tableUuid);
                 var quotePosition = $ionicPosition.position(angular.element(p1));
 
