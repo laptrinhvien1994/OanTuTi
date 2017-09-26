@@ -363,12 +363,13 @@ MongoClient.connect(url, function (err, database) {
                                                     //Order client đã cũ nhưng phía client gửi lên có sự thay đổi -> Xảy ra conflict.
                                                     //Merge dữ liệu của client và server
                                                     //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
-                                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
-                                                        return order.saleOrder.logs.findIndex(function (i) {
-                                                            return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                                        }) < 0;
-                                                    });
-                                                    order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
+                                                            //var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                            //    return order.saleOrder.logs.findIndex(function (i) {
+                                                            //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                            //    }) < 0;
+                                                            //});
+                                                            //order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
+                                                    order.saleOrder.logs = order.saleOrder.logs.concat(data.tables[i].tableOrder[j].saleOrder.logs);
 
                                                     //B2: Tính toán lại số lượng dựa trên logs
                                                     var groupLog = groupBy(order.saleOrder.logs);
@@ -673,13 +674,14 @@ MongoClient.connect(url, function (err, database) {
 
                                     orderList.push(order);
                                 } else {
-                                    ////Xử lý dành cho các trường hợp tách đơn hàng hoặc báo bếp offline. (update: báo bếp offline đã được initShift xử lý ở init hoặc reconnect).
-                                    ////Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi.
-                                    //if (data.action !== 'splitOrder') {
-                                    //    data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
-                                    //        log.status = true;
-                                    //    });
-                                    //}
+                                    //Xử lý dành cho các trường hợp tách đơn hàng hoặc báo bếp lần đầu của order đó.. (update: báo bếp offline đã được initShift xử lý ở init hoặc reconnect).
+                                    //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi.
+                                    if (data.action !== 'splitOrder') {
+                                        data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
+                                            log.status = true;
+                                        });
+                                    }
+                                    //Không cần tính toán lại số lượng nữa vì khi mới báo bếp lần đầu của order đó số lượng đã được tính toán ở dưới Client rồi.
                                     t.tableOrder.push(data.tables[i].tableOrder[j]);
                                     //Revision lúc này của order được tách đã được gán mặc định là 1 ở dưới client.
                                     orderList.push(data.tables[i].tableOrder[j]);

@@ -809,8 +809,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
         });
 
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails"
-        $scope.$watchCollection("tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails", function (newValue, oldValue) {
+        $scope.watchCallback = function (newValue, oldValue) {
             //console.log(newValue);
             if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
                 calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
@@ -826,7 +825,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 ////    zone: $scope.tableMap
                 ////});
             }
-        });
+        }
+        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails"
+        $scope.$watchCollection("tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails", $scope.watchCallback);
 
         $scope.$watch("offline", function (n) {
             if (n)
@@ -998,42 +999,42 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         // console.log(msg);
                         if ($scope.tables) {
                             
-                            //Hiển thị thông báo cho client
-                            var alteredOrder = [];
-                            var lostOrder = [];
-                            //Lặp để thiết lập nội dung thông báo
-                            if (msg.msg) {
-                                if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
-                                    tempTables.forEach(function (t) {
-                                        t.tableOrder.forEach(function (order) {
-                                            var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                                            if (msg.msg.deviceID != deviceID && orderLog.createdByName == msg.msg.author) {
-                                                alteredOrder.push(msg.msg.alteredOrder[index].tableName);
-                                            }
-                                            else {
-                                                orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                                                if (msg.msg.deviceID == deviceID && orderLog.createdByName == msg.msg.author) {
-                                                    lostOrder.push(msg.msg.lostOrder[index].tableName);
-                                                }
-                                            }
-                                        });
-                                    });
-                                }
-                            }
+                            ////Hiển thị thông báo cho client
+                            //var alteredOrder = [];
+                            //var lostOrder = [];
+                            ////Lặp để thiết lập nội dung thông báo
+                            //if (msg.msg) {
+                            //    if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
+                            //        tempTables.forEach(function (t) {
+                            //            t.tableOrder.forEach(function (order) {
+                            //                var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                            //                if (msg.msg.deviceID != deviceID && order.saleOrder.createdByName == msg.msg.author) {
+                            //                    alteredOrder.push(orderLog.tableName);
+                            //                }
+                            //                else {
+                            //                    orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                            //                    if (msg.msg.deviceID == deviceID && order.saleOrder.createdByName == msg.msg.author) {
+                            //                        lostOrder.push(orderLog.tableName);
+                            //                    }
+                            //                }
+                            //            });
+                            //        });
+                            //    }
+                            //}
 
-                            var msgForAlteredOrder = '';
-                            var msgForLostOrder = '';
-                            if (alteredOrder.length > 0) {
-                                msgForAlteredOrder = 'Đơn hàng tại các bàn ';
-                                msgForAlteredOrder += alteredOrder.join(', ');
-                                msgForAlteredOrder += ' đã bị thay đổi ở 1 thiết bị khác, vui lòng kiểm tra và cập nhật lại số lượng sót';
-                            }
-                            if (lostOrder.length > 0) {
-                                msgForLostOrder = 'Đơn hàng tại các bàn';
-                                msgForLostOrder += lostOrder.join(', ');
-                                msgForAlteredOrder += ' đã bị đổi sang bàn khác hoặc ghép hóa đơn ở 1 thiết bị khác.';
-                            }
-                            var msgContent = msgForAlteredOrder + "<br/>" + msgForLostOrder + "<br/>Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai sót.";
+                            //var msgForAlteredOrder = '';
+                            //var msgForLostOrder = '';
+                            //if (alteredOrder.length > 0) {
+                            //    msgForAlteredOrder = 'Đơn hàng tại các bàn ';
+                            //    msgForAlteredOrder += alteredOrder.join(', ');
+                            //    msgForAlteredOrder += ' đã bị thay đổi ở 1 thiết bị khác, vui lòng kiểm tra và cập nhật lại số lượng sót';
+                            //}
+                            //if (lostOrder.length > 0) {
+                            //    msgForLostOrder = 'Đơn hàng tại các bàn';
+                            //    msgForLostOrder += lostOrder.join(', ');
+                            //    msgForAlteredOrder += ' đã bị đổi sang bàn khác hoặc ghép hóa đơn ở 1 thiết bị khác.';
+                            //}
+                            //var msgContent = msgForAlteredOrder + "<br/>" + msgForLostOrder + "<br/>Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai sót.";
 
                             //Cập nhật lại tableStatus
                             for (var i = 0; i < $scope.tables.length; i++) {
@@ -1374,7 +1375,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
                                         //    }) < 0;
                                         //});
-
+                                        debugger;
+                                        var z = $scope.tables[x].tableOrder[orderIndex].saleOrder;
                                         var orderClient = $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.filter(function (item) {
                                             return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
                                                 return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
@@ -1394,17 +1396,22 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 return d.itemId == log.itemID;
                                             });
                                             if (log.totalQuantity > 0 && index < 0) {
-                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
                                                 var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                 $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.push(itemDetail);
                                             }
                                             else if (log.totalQuantity > 0 && index >= 0) {
-                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
                                                 var itemDetail = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                 itemDetail.quantity = log.totalQuantity;
+                                                //Cập nhật lại trạng thái của order chưa báo bếp.
+                                                //if (itemDetail.newOrderCount > 0) 
+                                                itemDetail.quantity += itemDetail.newOrderCount;
+                                                itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
+                                                $scope.watchCallback(null, null);
                                             }
                                             else if (log.totalQuantity <= 0 && index >= 0) {
-                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
                                                 var itemDetailIndex = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
                                                 $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.splice(itemDetailIndex, 1);
                                             }
@@ -1794,7 +1801,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         console.log(e);
         if (e.error == 'invalid_token' && e.error_description == 'expired') {
             //Lấy lại access Token mới
-            //debugger;
+            //debugger; //Reload 2 lần lúc chạy.
             refreshToken()
             .then(function (data) {
                 //debugger;
@@ -2905,6 +2912,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
 
     $scope.changeQuantity = function (num, item, $event) {
+        var checkItem = angular.copy(item);
         // Kiểm tra quyền thao tác trên hóa đơn
         // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
         var saleOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder;
@@ -2946,7 +2954,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 $scope.tableIsSelected.tableStatus = 0;
                 // $scope.tableIsSelected.startTime = null;
             }
-
+            
             if (num < 0 && $scope.isSync) {
                 // var currentTableOrder = [];
                 // currentTableOrder.push($scope.tableIsSelected);
@@ -2992,7 +3000,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     });
                     // console.log('completeOrder');
                     // console.log(completeOrder.tables);
-                } else if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice) {
+
+                } else if (checkItem.newOrderCount == 0) {
+                    debugger;
+                    //!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice
                     var curtentTable = {};
                     angular.copy($scope.tableIsSelected, curtentTable);
 

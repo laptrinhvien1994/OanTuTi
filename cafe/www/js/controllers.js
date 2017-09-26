@@ -739,14 +739,20 @@ function filterUnsyncedOrderWithLogs(tables) {
     return data;
 }
 
-//Hàm filter đơn hàng chỉ lấy các logs đã đồng bộ.
+//Hàm filter đơn hàng chỉ lấy các logs đã đồng bộ và đơn hàng ko rỗng.
 function filterOrderWithUnsyncLogs(tables) {
     var data = angular.copy(tables)
     //Lặp qua từng bàn
     for (var x = 0; x < tables.length; x++) {
         var tableOrder = tables[x].tableOrder;
         //Lặp qua từng order
+        var count = 0;
         for (var y = 0; y < tableOrder.length; y++) {
+            if (!tableOrder[y].saleOrder.saleOrderUuid) {
+                data[x].tableOrder.splice(y - count, 1);
+                count++; // Thêm count để tránh lỗi splice của array sai index.
+                continue;
+            }
             var logs = tableOrder[y].saleOrder.logs;
             //Lặp qua từng dòng dogs trong mỗi order
             var logsTemp = [];
