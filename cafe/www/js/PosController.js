@@ -96,7 +96,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //Checking internet connection.
     $interval(function () {
         checkingInternetConnection();
-    }, 1000000);
+    }, 8000);
 
     $scope.$watch('isOnline', function (n, o) {
         if (n != null && o != null && n != o) {
@@ -1375,7 +1375,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
                                         //    }) < 0;
                                         //});
-                                        debugger;
+
                                         var z = $scope.tables[x].tableOrder[orderIndex].saleOrder;
                                         var orderClient = $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.filter(function (item) {
                                             return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
