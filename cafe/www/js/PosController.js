@@ -73,7 +73,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }, function (status) {
                 $scope.isOnline = false;
                 reject(false);
-            }, true, 'Ping');
+            }, true, 'Ping', false);
         });
     }
 
@@ -96,8 +96,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //Checking internet connection.
     $interval(function () {
         checkingInternetConnection();
-    }, 8000);
-
+        //$scope.isOnline = window.navigator.onLine;
+        //console.log($scope.isOnline);
+    }, 3000);
+    
     $scope.$watch('isOnline', function (n, o) {
         if (n != null && o != null && n != o) {
             if (n) {
@@ -998,7 +1000,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
                         // console.log(msg);
                         if ($scope.tables) {
-                            
+                            //debugger;
                             ////Hiển thị thông báo cho client
                             //var alteredOrder = [];
                             //var lostOrder = [];
@@ -1027,7 +1029,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             //if (alteredOrder.length > 0) {
                             //    msgForAlteredOrder = 'Đơn hàng tại các bàn ';
                             //    msgForAlteredOrder += alteredOrder.join(', ');
-                            //    msgForAlteredOrder += ' đã bị thay đổi ở 1 thiết bị khác, vui lòng kiểm tra và cập nhật lại số lượng sót';
+                            //    msgForAlteredOrder += ' đã bị thay đổi ở 1 thiết bị khác, vui lòng kiểm tra và cập nhật lại số lượng';
                             //}
                             //if (lostOrder.length > 0) {
                             //    msgForLostOrder = 'Đơn hàng tại các bàn';
@@ -1333,15 +1335,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return result;
             };
 
-
-
-
-
-
-
-
-
-
             socket.on('updateOrder', function (msg) {
                 //debugger;
                 console.log('updateOrder', msg);
@@ -1376,49 +1369,51 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         //    }) < 0;
                                         //});
 
-                                        var z = $scope.tables[x].tableOrder[orderIndex].saleOrder;
-                                        var orderClient = $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.filter(function (item) {
+                                        var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
+                                        var orderClient = z.logs.filter(function (item) {
                                             return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
                                                 return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
                                             }) < 0;
                                         });
 
-                                        //$scope.tables[x].tableOrder[orderIndex].saleOrder.logs = $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.concat(orderServer);
+                                        //z.logs = z.logs.concat(orderServer);
                                         orderServer = msg.tables[0].tableOrder[0].saleOrder.logs;
-                                        $scope.tables[x].tableOrder[orderIndex].saleOrder.logs = orderClient.concat(orderServer);
+                                        z.logs = orderClient.concat(orderServer);
 
                                         //B2: Tính toán lại số lượng dựa trên logs
-                                        var groupLog = groupBy($scope.tables[x].tableOrder[orderIndex].saleOrder.logs);
+                                        var groupLog = groupBy(z.logs);
 
                                         //B3: Cập nhật lại số lượng item
                                         groupLog.forEach(function (log) {
-                                            var index = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.findIndex(function (d) {
+                                            var index = z.orderDetails.findIndex(function (d) {
                                                 return d.itemId == log.itemID;
                                             });
                                             if (log.totalQuantity > 0 && index < 0) {
                                                 //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
                                                 var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.push(itemDetail);
+                                                z.orderDetails.push(itemDetail);
                                             }
                                             else if (log.totalQuantity > 0 && index >= 0) {
                                                 //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
-                                                var itemDetail = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                var itemDetail = z.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                 itemDetail.quantity = log.totalQuantity;
                                                 //Cập nhật lại trạng thái của order chưa báo bếp.
                                                 //if (itemDetail.newOrderCount > 0) 
                                                 itemDetail.quantity += itemDetail.newOrderCount;
                                                 itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
-                                                $scope.watchCallback(null, null);
+                                                //$scope.watchCallback(null, null);
                                             }
                                             else if (log.totalQuantity <= 0 && index >= 0) {
                                                 //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
-                                                var itemDetailIndex = $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
-                                                $scope.tables[x].tableOrder[orderIndex].saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                var itemDetailIndex = z.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                                z.orderDetails.splice(itemDetailIndex, 1);
                                             }
                                             else if (log.totalQuantity <= 0 && index < 0) {
                                                 //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
                                             }
                                         });
+                                        $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
+                                        $scope.watchCallback(null, null);
                                     }
 
                                     //Lưu vào DB Local
@@ -1431,7 +1426,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     })
                                     .then(function (data) {
                                         //console.log(data);
-                                        var table = JSON.parse(JSON.stringify(msg.tables[0]));
+                                        var table = angular.copy(msg.tables[0]);
                                         table._id = data.docs[0]._id;
                                         table._rev = data.docs[0]._rev;
                                         table.store = $scope.currentStore.storeID;
@@ -1692,6 +1687,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     if (msg.errorCode && msg.errorCode == 'invalidShift') {
                         DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                         .then(function (data) {
+                            window.alert('invalidShift');
                             window.location.reload(true);
                         })
                         .catch(function (error) {
@@ -2354,6 +2350,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
                 new Log(item.itemId, item.itemName, "H", item.quantity, timestamp, deviceID, true));
         });
+        //Thêm tên và thời gian cho Order mới tách.
+        $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length - 1].saleOrder.createdByName = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName;
+        $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length - 1].saleOrder.startTime = new Date();
         $scope.tableIsSelected.tableOrder[$scope.tableIsSelected.tableOrder.length - 1].saleOrder.logs = logs;
         $scope.splitOrder = null;
         toaster.pop('success', "", 'Đã tách hoá đơn [' + $scope.tableIsSelected.tableName + ']');
@@ -3002,7 +3001,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     // console.log(completeOrder.tables);
 
                 } else if (checkItem.newOrderCount == 0) {
-                    debugger;
                     //!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice
                     var curtentTable = {};
                     angular.copy($scope.tableIsSelected, curtentTable);
@@ -5072,7 +5070,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         hotkeys.add({
             combo: 'tab',
             callback: function () {
-                console.log('123123');
+                
             }
         });
     }
@@ -5360,6 +5358,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     var updateTableToDB = function () {
+        console.log('fired');
         ////debugger;
         //var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;

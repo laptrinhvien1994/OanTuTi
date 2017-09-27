@@ -359,19 +359,28 @@ MongoClient.connect(url, function (err, database) {
 
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
                                                     //Order client đã cũ nhưng phía client gửi lên không có sự thay đổi gì.
+                                                    //Thêm vào thông báo cho Client về sự thay đổi.
+                                                    msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid });
                                                 }
 
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length > 0) {
                                                     //Order client đã cũ nhưng phía client gửi lên có sự thay đổi -> Xảy ra conflict.
                                                     //Merge dữ liệu của client và server
                                                     //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
-                                                            //var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
-                                                            //    return order.saleOrder.logs.findIndex(function (i) {
-                                                            //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                                            //    }) < 0;
-                                                            //});
-                                                            //order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
-                                                    order.saleOrder.logs = order.saleOrder.logs.concat(data.tables[i].tableOrder[j].saleOrder.logs);
+                                                    var errorFont = [];
+                                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                        return order.saleOrder.logs.findIndex(function (i) {
+                                                            var rs = i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                            if (rs) { //Có thể xảy ra lỗi font trong socket tại đây.
+                                                                errorFont.push(i.itemID);
+                                                            }
+                                                            return rs;
+                                                        }) < 0;
+                                                    });
+                                                    order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
+                                                    //Dùng cách trên vì có trường hợp update lúc mất kết nối internet, nhưng khi kết nối lại thì server vẫn nhận đc tín hiệu của socket gửi lên nhưng ko emit lại để cập nhật xuống client.
+                                                    //Sau khi có kết nối lại thì client auto reconnect lại gửi tiếp tục những log đó lên server.
+                                                    //order.saleOrder.logs = order.saleOrder.logs.concat(data.tables[i].tableOrder[j].saleOrder.logs);
 
                                                     //B2: Tính toán lại số lượng dựa trên logs
                                                     var groupLog = groupBy(order.saleOrder.logs);
@@ -390,6 +399,14 @@ MongoClient.connect(url, function (err, database) {
                                                             //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
                                                             var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
                                                             itemDetail.quantity = log.totalQuantity;
+                                                            //Sửa lỗi font trong socket.
+                                                            if (errorFont.length > 0 ){
+                                                                var e = errorFont.find(function (eLog) { return eLog == itemDetail.itemId; });
+                                                                if (e) {
+                                                                    var itemName = data.tables[i].tableOrder[j].saleOrder.logs.find(function (l) { return l.itemID == e }).itemName;
+                                                                    itemDetail.itemName = itemName;
+                                                                } 
+                                                            }
                                                         }
                                                         else if (log.totalQuantity < 0 && index >= 0) {
                                                             //Nếu số lượng trong log < 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
@@ -772,11 +789,11 @@ MongoClient.connect(url, function (err, database) {
                                             tbs.tableOrder.push(order);
 
                                             //Cập nhật trong serverLog.
-                                            if (docsLog.length > 0) {
-                                                var logs = docsLog[0].filter(function (log) { return log.fromOrderID == order.saleOrder.saleOrderUuid || log.toOrderID == order.saleOrder.saleOrderUuid });
+                                            if (docsLog[0].logs.length > 0) {
+                                                var logs = docsLog[0].logs.filter(function (log) { return log.fromOrderID == order.saleOrder.saleOrderUuid || log.toOrderID == order.saleOrder.saleOrderUuid });
                                                 logs.forEach(function (log) {
                                                     var index = docsLog[0].indexOf(log);
-                                                    docsLog[0].splice(index, 1);
+                                                    docsLog[0].logs.splice(index, 1);
                                                 });
                                             }
                                         }

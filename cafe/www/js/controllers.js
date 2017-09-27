@@ -835,7 +835,9 @@ Math.round = function (number, decimals /* optional, default 0 */) {
     return _round(number * multiplier) / multiplier;
 }
 
-function asynRequest($state, $http, method, url, headers, responseType, data, callback, errorCallback, unique, requestId) {
+//Tham số isSynchronous dùng để config ẩn hay hiện loading.
+function asynRequest($state, $http, method, url, headers, responseType, data, callback, errorCallback, unique, requestId, isSynchronous) {
+    if(isSynchronous === undefined || isSynchronous === null) isSynchronous = true; //Mặc định là hiển thị loading.
     // if(checkLoader){checkLoader.setStatus(1)};
     // console.log(checkArr.indexOf(requestId));
     if (checkArr.indexOf(requestId) == -1) {
@@ -862,6 +864,7 @@ function asynRequest($state, $http, method, url, headers, responseType, data, ca
                 responseType: responseType,
                 url: url,
                 data: data,
+                isSync: isSynchronous
             };
         } else {
             var reqConfig = {
@@ -1128,6 +1131,7 @@ angular.module('SunoPosCafe.controllers', ['SunoPosCafe.loginController', 'SunoP
     $httpProvider.interceptors.push(function ($rootScope, $q) {
         return {
             request: function (config) {
+                if (config.isSync === false) return config;
                 $rootScope.$broadcast('loading:show');
                 return config
             },
