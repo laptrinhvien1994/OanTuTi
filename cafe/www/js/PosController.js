@@ -1413,32 +1413,35 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             }
                                         });
                                         $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
-                                        $scope.watchCallback(null, null);
+                                        $timeout(function () {
+                                            $scope.watchCallback(null, null);
+                                        }, 150);    
                                     }
 
-                                    //Lưu vào DB Local
-                                    DBTables.$queryDoc({
-                                        selector: {
-                                            'store': { $eq: $scope.currentStore.storeID },
-                                            'tableUuid': { $eq: msg.tables[0].tableUuid }
-                                        },
-                                        fields: ['_id', '_rev']
-                                    })
-                                    .then(function (data) {
-                                        //console.log(data);
-                                        var table = angular.copy(msg.tables[0]);
-                                        table._id = data.docs[0]._id;
-                                        table._rev = data.docs[0]._rev;
-                                        table.store = $scope.currentStore.storeID;
-                                        return DBTables.$addDoc(table);
-                                    })
-                                    .then(function (data) {
-                                        //console.log(data);
-                                    })
-                                    .catch(function (error) {
-                                        console.log(error);
-                                    });
-
+                                    $timeout(function () {
+                                        //Lưu vào DB Local
+                                        DBTables.$queryDoc({
+                                            selector: {
+                                                'store': { $eq: $scope.currentStore.storeID },
+                                                'tableUuid': { $eq: msg.tables[0].tableUuid }
+                                            },
+                                            fields: ['_id', '_rev']
+                                        })
+                                        .then(function (data) {
+                                            //console.log(data);
+                                            var table = angular.copy(msg.tables[0]);
+                                            table._id = data.docs[0]._id;
+                                            table._rev = data.docs[0]._rev;
+                                            table.store = $scope.currentStore.storeID;
+                                            return DBTables.$addDoc(table);
+                                        })
+                                        .then(function (data) {
+                                            //console.log(data);
+                                        })
+                                        .catch(function (error) {
+                                            console.log(error);
+                                        });
+                                    }, 300);
                                 }
                                 else {
                                     $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[0]));
@@ -1508,7 +1511,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             });
 
             socket.on('completeOrder', function (msg) {
-                //debugger;
                 console.log('completeOrder', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
                     for (var x = 0; x < $scope.tables.length; x++) {
@@ -2962,10 +2964,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     var curtentTable = {};
                     angular.copy($scope.tableIsSelected, curtentTable);
 
+                    var timestamp = genTimestamp();
                     var currentTableOrder = [];
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
+                    currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                    new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
                     var completeOrder = {
                         "companyId": $scope.userSession.companyId,
                         "storeId": $scope.currentStore.storeID,
@@ -2976,9 +2981,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "tables": angular.copy(currentTableOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            action: "done",
+                            action: "clearItem",
                             deviceID: deviceID,
-                            timestamp: genTimestamp(),
+                            timestamp: timestamp,
                             author: $scope.userSession.displayName
                         }
                     }
@@ -2991,7 +2996,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         completeOrder.shiftId = shiftId;
                         completeOrder = angular.toJson(completeOrder);
                         completeOrder = JSON.parse(completeOrder);
-                        console.log('completeOrder', completeOrder);
+                        console.log('completeData', completeOrder);
                         socket.emit('completeOrder', completeOrder);
                     })
                     .catch(function (error) {
@@ -5358,7 +5363,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     var updateTableToDB = function () {
-        console.log('fired');
+        //console.log('fired');
         ////debugger;
         //var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;
