@@ -80,6 +80,7 @@ var saleOrder = {
         "shipper": ""
     },
     logs: [],
+    sharedWith: [],
     revision: 1 //Để check đồng bộ giữa các đơn hàng khi Init.
 }
 

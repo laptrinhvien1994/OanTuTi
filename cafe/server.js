@@ -334,6 +334,13 @@ MongoClient.connect(url, function (err, database) {
                                             //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server.
                                             //Việc cập nhật là merge dữ liệu giữa Client và Server không phải overwrite.
                                             if (order) {
+                                                //Merge sharedWith
+                                                var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
+                                                    return order.saleOrder.sharedWith.findIndex(function (i) {
+                                                        return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                                    }) < 0;
+                                                });
+                                                order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
 
                                                 if (order.saleOrder.revision == data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
                                                     //Order client đã được đồng bộ và phía client gửi lên không có thay đổi gì.
@@ -445,10 +452,10 @@ MongoClient.connect(url, function (err, database) {
                                                     //Nếu trong server logs có action chuyển bàn hoặc ghép HD.
                                                     if (log) {
                                                         //Lấy bàn đó trong ds bàn của server ra để kiểm tra
-                                                        var t = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
-                                                        if (t) {
+                                                        var tb = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
+                                                        if (tb) {
                                                             //Lấy order cần kiểm tra xong bàn đó xem còn hay không? (Có thể đã bị đổi hoặc ghép 1 hoặc n lần nữa.)
-                                                            var curOrder = t.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.toOrderID; });
+                                                            var curOrder = tb.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.toOrderID; });
                                                             //Nếu còn nghĩa là order đó ko có đổi hoặc ghép gì thêm.
                                                             if (curOrder) {
                                                                 //Kiểm tra log và push đơn hàng vào cho phù hợp.
@@ -481,10 +488,11 @@ MongoClient.connect(url, function (err, database) {
                                                         //Lưu lại đơn tên của người tạo và đổi tên thành lưu tạm.
                                                         storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.createdByName = "LƯU TẠM";
+                                                        storedOrder.saleOrder.startTime = new Date();
                                                         t.tableOrder.push(storedOrder);
 
                                                         //Thêm vào thông báo cho Client về sự thay đổi.
-                                                        msg.lostOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid });
+                                                        msg.lostOrder.push({ tableName: data.tables[i].tableName, orderID: data.tables[i].tableOrder[j].saleOrder.saleOrderUuid });
                                                     }
                                                     else {
                                                         //Thêm vào collection tableOrder.
@@ -640,6 +648,14 @@ MongoClient.connect(url, function (err, database) {
 
                                 //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server dựa vào logs.
                                 if (order) {
+                                    //Merge sharedWith
+                                    var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
+                                        return order.saleOrder.sharedWith.findIndex(function (i) {
+                                            return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                        }) < 0;
+                                    });
+                                    order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
+
                                     //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
                                     //Điều chỉnh data cho phù hợp
                                     //Luôn giữ log chỉ tính toán và cập nhật lại số lượng.
@@ -770,6 +786,14 @@ MongoClient.connect(url, function (err, database) {
                                         //Nếu có order đó đang tồn tại trên ds orders của server. Trường hợp ko tồn tại là dưới client thanh toán khi chưa báo bếp hoặc xóa trắng đơn hàng.
                                         if (order) {
                                             logDebug('completed order');
+
+                                            //Merge sharedWith
+                                            var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
+                                                return order.saleOrder.sharedWith.findIndex(function (i) {
+                                                    return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                                }) < 0;
+                                            });
+                                            order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
 
                                             if (data.info.action == 'clearItem') {
                                                 //Cập nhật lại log và số lượng đối với trường hợp xóa trống đơn hàng.
@@ -1047,7 +1071,7 @@ MongoClient.connect(url, function (err, database) {
                         logDebug('broadcastOrders' + JSON.stringify(data));
                         //io.to(id).emit('broadcastOrders', data);
                         //Chỉ gửi trả về cho các client khác vì client gửi lên đã được xử lý toàn bộ dưới client.
-                        socket.broadcast.to(id).emit('moveOrder', responseData);
+                        io.to(id).emit('moveOrder', responseData);
                     }
                     //Cập nhật thông tin history
                     logDebug('completed length:' + completed.length);
