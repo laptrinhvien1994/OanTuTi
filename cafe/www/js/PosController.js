@@ -1012,7 +1012,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
                                     tempTables.forEach(function (t) {
                                         t.tableOrder.forEach(function (order) {
-                                            debugger;
                                             var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
                                             if (orderLog && msg.msg.deviceID != deviceID && order.saleOrder.createdByName == msg.msg.author) {
                                                 alteredOrder.push(orderLog.tableName);
@@ -2015,6 +2014,22 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
+        var isExistingUnnoticedItem = false;
+        for (var x = 0; x < $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length; x++) {
+            var item = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[x];
+            if (item.newOrderCount > 0) {
+                isExistingUnnoticedItem = true;
+                break;
+            }
+        }
+        if (isExistingUnnoticedItem) {
+            return toaster.pop({
+                type: 'warning',
+                title: '',
+                body: 'Có món chưa báo bếp, vui lòng báo bếp hoặc xóa món ra khỏi đơn hàng trước khi chuyển bàn',
+                timeout: 5000
+            });
+        }
         checkingInternetConnection()
         .then(function (data) {
             $scope.popoverTableAction.hide();
@@ -2041,7 +2056,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.changeTable = function (t) {
-
         // lưu data bàn trước khi đổi
         var newtable = {};
         angular.copy(t, newtable);
