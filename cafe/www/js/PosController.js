@@ -22,6 +22,74 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.onSearchField = false; //Mới vô thì ko focus vào ô tìm kiếm hàng hóa.
     $scope.appendedCSSClass = '';
 
+    var socket = null;
+    var manager = null;
+    var isSocketConnected = false;
+    var isSocketInitialized = true;
+
+
+
+
+
+
+
+    //Nếu đã có kết nối socket và có bật đồng bộ.
+    if (manager && socket && $scope.isSync) {
+        //socket = manager.socket('/');
+        socket.connect();
+
+        $timeout(function () {
+            //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
+            var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
+            //data = angular.copy(unsyncOrder);
+            //unsyncOrder = filterInitOrder(data);
+            var initData = {
+                "companyId": $scope.userSession.companyId,
+                "storeId": $scope.currentStore.storeID,
+                "clientId": $scope.clientId,
+                "shiftId": null, //LSFactory.get('shiftId'),
+                "startDate": "",
+                "finishDate": "",
+                "tables": angular.copy(unsyncOrder),
+                "zone": $scope.tableMap,
+                "info": {
+                    action: "reconnect",
+                    deviceID: deviceID,
+                    timestamp: genTimestamp(),
+                    author: $scope.userSession.displayName
+                }
+            };
+
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            .then(function (data) {
+                ////debugger;
+                var shiftId = null;
+                if (data.docs.length > 0) {
+                    shiftId = data.docs[0].shiftId;
+                }
+                //debugger;
+                initData.shiftId = shiftId;
+                initData = angular.toJson(initData);
+                initData = JSON.parse(initData);
+                console.log('reconnectData', initData);
+                socket.emit('reconnectServer', initData);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        }, 300);
+    }
+
+
+
+
+
+
+
+
+
+
+
     //Tạo key để định danh client trong đồng bộ.
     var deviceID = localStorage.getItem('deviceID');
     if (deviceID == null) {
@@ -61,8 +129,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     // console.log('isWebView :'+ $scope.isWebView);
 
     $ionicSideMenuDelegate.canDragContent(false);
-    var socket = null;
-
     var checkingInternetConnection = function () {
         return new Promise(function (resolve, reject) {
             var url = Api.ping;
@@ -95,12 +161,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.isOnline = true;
-    //Checking internet connection.
-    $interval(function () {
-        checkingInternetConnection();
-        //$scope.isOnline = window.navigator.onLine;
-        //console.log($scope.isOnline);
-    }, 8000);
     
     $scope.$watch('isOnline', function (n, o) {
         if (n != null && o != null && n != o) {
@@ -111,47 +171,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     body: 'Kết nối internet ổn định',
                     timeout: 5000
                 });
-                //Nếu đã có kết nối socket và có bật đồng bộ.
-                if (socket && $scope.isSync) {
-                    //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
-                    var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
-                    //data = angular.copy(unsyncOrder);
-                    //unsyncOrder = filterInitOrder(data);
-                    var initData = {
-                        "companyId": $scope.userSession.companyId,
-                        "storeId": $scope.currentStore.storeID,
-                        "clientId": $scope.clientId,
-                        "shiftId": null, //LSFactory.get('shiftId'),
-                        "startDate": "",
-                        "finishDate": "",
-                        "tables": angular.copy(unsyncOrder),
-                        "zone": $scope.tableMap,
-                        "info": {
-                            action: "reconnect",
-                            deviceID: deviceID,
-                            timestamp: genTimestamp(),
-                            author: $scope.userSession.displayName
-                        }
-                    };
-
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-                    .then(function (data) {
-                        ////debugger;
-                        var shiftId = null;
-                        if (data.docs.length > 0) {
-                            shiftId = data.docs[0].shiftId;
-                        }
-                        //debugger;
-                        initData.shiftId = shiftId;
-                        initData = angular.toJson(initData);
-                        initData = JSON.parse(initData);
-                        console.log('reconnectData', initData);
-                        socket.emit('reconnectServer', initData);
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    })
-                }
             }
             else {
                 toaster.pop({
@@ -725,7 +744,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             angular.copy($scope.userSession, $scope.userInfo);
             delete $scope.userInfo.permissions;
         } else {
-            debugger;
             $state.go('login', {}, {
                 reload: true
             });
@@ -951,14 +969,35 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.appendedCSSClass = '';
         }
 
+        //Checking internet connection.
+        $interval(function () {
+            checkingInternetConnection();
+            //$scope.isOnline = window.navigator.onLine;
+            //console.log($scope.isOnline);
+        }, 8000);
+        
         $scope.tableIsSelected = $scope.tables[0];
         $scope.orderIndexIsSelected = 0;
         //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
         //$scope.getSyncSetting().then(function () {
         buildHotKeyIndex();
+        //Thiết lập kết nối Socket nếu có bật đồng bộ.
         if ($scope.isSync) {
-
-            socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
+            manager = new io.Manager(socketUrl, {
+                reconnection: true,
+                timeout: 20000,
+                reconnectionAttempts: 'infinity',
+                reconnectionDelay: 1000,
+                autoConnect: false,
+                query: {
+                    room: $scope.userSession.companyId + '_' + $scope.currentStore.storeID,
+                    transport: ['websocket']
+                }
+            });
+            socket = manager.socket('/');
+            socket.connect();
+            //console.log(manager);
+            //socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
             socket.on('initShift', function (msg) {
                 console.log('initShift', msg);
@@ -1145,145 +1184,95 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 // console.log($scope.tables);
             });
 
-
-            socket.on('reconnected', function (msg) {
-                console.log('reconnected', msg);
-                if (msg.storeId == $scope.currentStore.storeID) {
-                    //debugger;
-                    // console.log('-- Đã nhận tín hiệu từ socket --');
-                    // console.log(msg.tables);
-                    //Kiểm tra xem DB Local đã lưu shiftId hay chưa?
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-                    .then(function (data) {
-                        $scope.shiftId = null;
-                        if (data.docs.length > 0) {
-                            $scope.shiftId = data.docs[0].shiftId;
-                        }
-                        //Nếu shift Client hiện tại ko trùng với shift Server gửi về thì cập nhật lại hoặc thêm mới.
-                        if ($scope.shiftId != msg.shiftId) {
-                            $scope.shiftId = msg.shiftId;
-                            if (data.docs.length > 0) {
-                                data.docs[0].shiftId = msg.shiftId;
-                                return DBSettings.$addDoc(angular.copy(data.docs[0]));
-                            }
-                            else {
-                                return DBSettings.$addDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, shiftId: msg.shiftId });
-                            }
-                            //.catch(function (error) { console.log(error); });
-                            //LSFactory.set('shiftId', msg.shiftId);
-                        }
-                        return null;
-                        //Đoạn này phải chạy tuần tự vì có trường hợp lỗi giữa add shiftId và remove shiftId gây reload nhiều lần.
-                    })
-                    .then(function (data) {
-                        //debugger;
-                        $scope.unNoticeTable = filterHasNoticeOrder($scope.tables);
-                        // angular.copy($scope.tables,$scope.copyTables);
-                        // var filterHasNoticeOrder($scope.copyTables);
-
-                        //Cập nhật lại sơ đồ bàn mới từ Server.
-                        var tempTables = angular.copy($scope.tables);
-                        $scope.tables = msg.tables;
-
-                        if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
-                        // console.log(msg);
-                        if ($scope.tables) {
-
-                            //Cập nhật lại tableStatus
-                            for (var i = 0; i < $scope.tables.length; i++) {
-                                var tableStatus = tableIsActive($scope.tables[i]);
-                                if (tableStatus == true) {
-                                    $scope.tables[i].tableStatus = 1;
-                                }
-                            }
-
-                            DBTables.$queryDoc({
-                                selector: {
-                                    'store': { $eq: $scope.currentStore.storeID }
-                                }
-                            })
-                            .then(function (data) {
-                                if (data.docs.length > 0) {
-                                    for (var x = 0; x < data.docs.length; x++) {
-                                        _id = data.docs[x]._id;
-                                        _rev = data.docs[x]._rev;
-                                        data.docs[x] = JSON.parse(JSON.stringify($scope.tables[x]));
-                                        data.docs[x]._id = _id;
-                                        data.docs[x]._rev = _rev;
-                                        data.docs[x].store = $scope.currentStore.storeID;
+            socket.on('connect', function () {
+                isSocketConnected = true;
+                console.log('Socket is connected');
+                if (!isSocketInitialized) {
+                    $timeout(function () {
+                        if (isSocketConnected) {
+                            //Nếu đã có kết nối socket và có bật đồng bộ.
+                            if (manager && socket && $scope.isSync) {
+                                //socket = manager.socket('/');
+                                socket.connect();
+                                //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
+                                var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
+                                //data = angular.copy(unsyncOrder);
+                                //unsyncOrder = filterInitOrder(data);
+                                var initData = {
+                                    "companyId": $scope.userSession.companyId,
+                                    "storeId": $scope.currentStore.storeID,
+                                    "clientId": $scope.clientId,
+                                    "shiftId": null, //LSFactory.get('shiftId'),
+                                    "startDate": "",
+                                    "finishDate": "",
+                                    "tables": angular.copy(unsyncOrder),
+                                    "zone": $scope.tableMap,
+                                    "info": {
+                                        action: "reconnect",
+                                        deviceID: deviceID,
+                                        timestamp: genTimestamp(),
+                                        author: $scope.userSession.displayName
                                     }
-                                    return DBTables.$manipulateBatchDoc(data.docs);
-                                }
-                                return null;
-                            })
-                            .then(function (data) {
-                                //debugger;
-                                if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
-                                    var tableIndex = findIndex($scope.tables, 'tableUuid', $scope.tableIsSelected.tableUuid);
-                                    $scope.tableIsSelected = $scope.tables[tableIndex];
-                                }
-                                $scope.$apply();
-                                return null;
-                            })
-                            .catch(function (error) {
-                                console.log(error);
-                                //Nếu lỗi match shift nhưng số lượng bàn khác nhau
-                                return DBTables.$queryDoc({
-                                    selector: {
-                                        'store': { $eq: $scope.currentStore.storeID }
+                                };
+
+                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                .then(function (data) {
+                                    ////debugger;
+                                    var shiftId = null;
+                                    if (data.docs.length > 0) {
+                                        shiftId = data.docs[0].shiftId;
                                     }
+                                    //debugger;
+                                    initData.shiftId = shiftId;
+                                    initData = angular.toJson(initData);
+                                    initData = JSON.parse(initData);
+                                    console.log('reconnectData', initData);
+                                    socket.emit('reconnectServer', initData);
                                 })
-                            })
-                            .then(function (data) {
-                                if (data) {
-                                    data.docs.forEach(function (d) { d._deleted = true; });
-                                    return DBTables.$manipulateBatchDoc(data.docs);
-                                }
-                                return null;
-                            })
-                            .then(function (data) {
-                                if (data) {
-                                    window.location.reload(true);
-                                }
-                            });
+                                .catch(function (error) {
+                                    console.log(error);
+                                });
+                            }
                         }
-
-                        if (!$scope.tables) {
-                            Promise.all([
-                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
-                                DBTables.$queryDoc({
-                                    selector: {
-                                        'store': { $eq: $scope.currentStore.storeID }
-                                        //'tableId': { $gte: null }
-                                    },
-                                    //sort: [{ tableId: 'asc' }]
-                                })
-                            ])
-                            .then(function (data) {
-                                console.log(data);
-                                data[1].docs.forEach(function (d) { d._deleted = true; });
-                                return DBTables.$manipulateBatchDoc(data[1].docs);
-                            })
-                            .then(function (data) {
-                                window.location.reload(true);
-                            })
-                            .catch(function (error) {
-                                console.log(error);
-                            })
-                            //window.localStorage.removeItem('shiftId');
-                            //window.localStorage.removeItem($scope.currentStore.storeID);
-                            //window.location.reload(true);
-                        }
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
-                    //$scope.shiftId = LSFactory.get('shiftId');
-
+                    }, 1000);
                 }
-                // console.log($scope.tables);
+                else {
+                    isSocketInitialized = false;
+                }
             });
 
+            socket.on('disconnect', function (rs) {
+                console.log('Socket is disconnected', rs);
+                isSocketConnected = false;
+            });
+
+            socket.on('reconnecting', function (num) {
+                console.log('Socket is reconnecting', num);
+            });
+
+            socket.on('error', function (e) {
+                console.log('Error occured', e);
+            })
+
+            socket.on('reconnect', function (num) {
+                console.log('Socket is reconnected', num);
+            });
+
+            socket.on('ping', function () {
+                //console.log('Socket is pinging');
+            });
+
+            socket.on('connect_timeout', function (timeout) {
+                console.log('Socket connection is timeout', timeout);
+            });
+
+            socket.on('connect_error', function (e) {
+                console.log('Socket connection is error', e);
+            });
+
+            socket.on('reconnect_error', function (e) {
+                console.log('Socket reconnecting error', e);
+            });
 
             var groupBy = function (arrLog) {
                 var result = arrLog.reduce(function (arr, item) {
@@ -5391,6 +5380,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         ////debugger;
         //var id = $scope.tableIsSelected.tableId;
         var store = $scope.currentStore.storeID;
+        if (!$scope.tableIsSelected) return;
         var tableUuid = $scope.tableIsSelected.tableUuid;
         DBTables.$queryDoc({
             selector: {
