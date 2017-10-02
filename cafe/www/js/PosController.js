@@ -27,69 +27,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     var isSocketConnected = false;
     var isSocketInitialized = true;
 
-
-
-
-
-
-
-    //Nếu đã có kết nối socket và có bật đồng bộ.
-    if (manager && socket && $scope.isSync) {
-        //socket = manager.socket('/');
-        socket.connect();
-
-        $timeout(function () {
-            //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
-            var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
-            //data = angular.copy(unsyncOrder);
-            //unsyncOrder = filterInitOrder(data);
-            var initData = {
-                "companyId": $scope.userSession.companyId,
-                "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
-                "shiftId": null, //LSFactory.get('shiftId'),
-                "startDate": "",
-                "finishDate": "",
-                "tables": angular.copy(unsyncOrder),
-                "zone": $scope.tableMap,
-                "info": {
-                    action: "reconnect",
-                    deviceID: deviceID,
-                    timestamp: genTimestamp(),
-                    author: $scope.userSession.displayName
-                }
-            };
-
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-            .then(function (data) {
-                ////debugger;
-                var shiftId = null;
-                if (data.docs.length > 0) {
-                    shiftId = data.docs[0].shiftId;
-                }
-                //debugger;
-                initData.shiftId = shiftId;
-                initData = angular.toJson(initData);
-                initData = JSON.parse(initData);
-                console.log('reconnectData', initData);
-                socket.emit('reconnectServer', initData);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-        }, 300);
-    }
-
-
-
-
-
-
-
-
-
-
-
     //Tạo key để định danh client trong đồng bộ.
     var deviceID = localStorage.getItem('deviceID');
     if (deviceID == null) {
@@ -1047,47 +984,77 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             var alteredOrder = [];
                             var lostOrder = [];
                             //Lặp để thiết lập nội dung thông báo
-                            if (msg.msg) {
-                                if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
-                                    tempTables.forEach(function (t) {
-                                        t.tableOrder.forEach(function (order) {
-                                            var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                                            if (orderLog && msg.msg.deviceID != deviceID && order.saleOrder.createdByName == msg.msg.author) {
-                                                alteredOrder.push(orderLog.tableName);
-                                            }
-                                            else {
-                                                orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                                                if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.createdByName == msg.msg.author) {
-                                                    lostOrder.push(orderLog.tableName);
-                                                }
-                                            }
-                                        });
-                                    });
-                                }
-                            }
+                            //if (msg.msg) {
+                            //    if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
+                            //        tempTables.forEach(function (t) {
+                            //            t.tableOrder.forEach(function (order) {
+                            //                var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                            //                if (orderLog) {
+                            //                    switch (orderLog.type) {
+                            //                        //Client liên quan là client cùng tài khoản với client thực hiện action
+                            //                        //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
+                            //                        case 1: {//Gửi cho tất cả client liên quan
+                            //                            if (order.saleOrder.createdByName == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0){
+                            //                                alteredOrder.push(orderLog.tableName);
+                            //                            }
+                            //                            break;
+                            //                        }
+                            //                        case 2: {//Chỉ gửi cho client đã thực hiện action
+                            //                            if (order.saleOrder.createdByName == msg.msg.author && msg.msg.deviceID == deviceID) {
+                            //                                alteredOrder.push(orderLog.tableName);
+                            //                            }
+                            //                            break;
+                            //                        }
+                            //                        case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
+                            //                            if ((order.saleOrder.createdByName == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0)
+                            //                                && msg.msg.deviceID != deviceID) {
+                            //                                alteredOrder.push(orderLog.tableName);
+                            //                            }
+                            //                            break;
+                            //                        }
+                            //                        default:
+                            //                            break;
+                            //                    }
+                            //                }
+                            //                else {
+                            //                    orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                            //                    //Thông báo về cho chỉ client đã thực hiện Init.
+                            //                    if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.createdByName == msg.msg.author) {
+                            //                        lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow.tableName, action: orderlog.action });
+                            //                    }
+                            //                }
+                            //            });
+                            //        });
+                            //    }
+                            //}
 
-                            var msgForAlteredOrder = '';
-                            var msgForLostOrder = '';
-                            if (alteredOrder.length > 0 || lostOrder.length > 0) {
-                                if (alteredOrder.length > 0) {
-                                    msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng tại các bàn <b>';
-                                    msgForAlteredOrder += alteredOrder.join('</b>, <b>');
-                                    msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác</p>';
-                                }
-                                if (lostOrder.length > 0) {
-                                    msgForLostOrder = '<p style="text-align: center;">Đơn hàng tại các bàn <b>';
-                                    msgForLostOrder += lostOrder.join('</b>, <b>');
-                                    msgForLostOrder += '</b> đã được đổi bàn hoặc ghép hóa đơn ở 1 thiết bị khác.</p>';
-                                    msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể xóa nếu không cần thiết.</p>';
-                                }
-                                var msgContent = msgForAlteredOrder + msgForLostOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
-                                if (notiPopupInstance) {
-                                    showNotification.close();
-                                }
-                                $timeout(function () {
-                                    showNotification('Thông báo', msgContent);
-                                }, 100);
-                            }
+                            //var msgForAlteredOrder = '';
+                            //var msgForLostOrder = '';
+                            //if (alteredOrder.length > 0 || lostOrder.length > 0) {
+                            //    if (alteredOrder.length > 0) {
+                            //        msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng của bạn tại các bàn <b>';
+                            //        msgForAlteredOrder += alteredOrder.join('</b>, <b>');
+                            //        msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác</p>';
+                            //    }
+                            //    if (lostOrder.length > 0) {
+                            //        msgForLostOrder = '<p style="text-align: center;">Đơn hàng của bạn tại <b>';
+                            //        var orderNotiArr = [];
+                            //        lostOrder.forEach(function (order) {
+                            //            var txt = 'bàn <b>' + order.fromTable + '</b> đã ' + (order.action == 'G' ? 'được ghép vào' : order.action == 'CB' ? 'được chuyển sang' : 'được thao tác sang') + (order.toTable != null ? ' bàn <b>' + order.toTable + '</b>' : ' một bàn khác.');
+                            //            orderNotiArr.push(txt);
+                            //        });
+                            //        msgForLostOrder += lostOrder.join('</b>, <b>');
+                            //        //msgForLostOrder += '</b> đã được đổi bàn hoặc ghép hóa đơn ở 1 thiết bị khác.</p>';
+                            //        msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể xóa nếu không cần thiết.</p>';
+                            //    }
+                            //    var msgContent = msgForAlteredOrder + msgForLostOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
+                            //    if (notiPopupInstance) {
+                            //        showNotification.close();
+                            //    }
+                            //    $timeout(function () {
+                            //        showNotification('Thông báo', msgContent);
+                            //    }, 100);
+                            //}
 
                             //Cập nhật lại tableStatus
                             for (var i = 0; i < $scope.tables.length; i++) {
@@ -1211,7 +1178,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         action: "reconnect",
                                         deviceID: deviceID,
                                         timestamp: genTimestamp(),
-                                        author: $scope.userSession.displayName
+                                        author: $scope.userSession.userId
                                     }
                                 };
 
@@ -1734,7 +1701,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "zone": $scope.tableMap,
                 "info": {
                     action: "init",
-                    author: $scope.userSession.displayName,
+                    author: $scope.userSession.userId,
                     deviceID: deviceID,
                     timestamp: genTimestamp()
                 }
@@ -2107,7 +2074,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
                 "info": {
-                    author: $scope.userSession.displayName,
+                    author: $scope.userSession.userId,
                     timestamp: timestamp,
                     deviceID: deviceID,
                     action: "CB"
@@ -2247,7 +2214,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
                 "info": {
-                    author: $scope.userSession.displayName,
+                    author: $scope.userSession.userId,
                     timestamp: timestamp,
                     deviceID: deviceID,
                     action: "G"
@@ -2378,7 +2345,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "zone": $scope.tableMap,
                 "action": 'splitOrder',
                 "info": {
-                    author: $scope.userSession.displayName,
+                    author: $scope.userSession.userId,
                     deviceID: deviceID,
                     action: "splitOrder",
                     timestamp: timestamp
@@ -2756,7 +2723,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "tables": angular.copy(currentTableOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            author: $scope.userSession.displayName,
+                            author: $scope.userSession.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
                             action: 'BB'
@@ -2994,7 +2961,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             action: "clearItem",
                             deviceID: deviceID,
                             timestamp: timestamp,
-                            author: $scope.userSession.displayName
+                            author: $scope.userSession.userId
                         }
                     };
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -3037,7 +3004,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         "tables": angular.copy(currentTableOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            author: $scope.userSession.displayName,
+                            author: $scope.userSession.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
                             action: "H"
@@ -3579,7 +3546,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 action: "done",
                                 deviceID: deviceID,
                                 timestamp: genTimestamp(),
-                                author: $scope.userSession.displayName
+                                author: $scope.userSession.userId
                             }
                         }
                         DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -3623,7 +3590,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         action: "print",
                                         deviceID: deviceID,
                                         timestamp: genTimestamp(),
-                                        author: $scope.userSession.displayName
+                                        author: $scope.userSession.userId
                                     }
                                 }
 
@@ -4450,7 +4417,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         action: "completeShift",
                                         deviceID: deviceID,
                                         timestamp: genTimestamp(),
-                                        author: $scope.userSession.displayName
+                                        author: $scope.userSession.userId
                                     }
                                 }
 
@@ -4563,7 +4530,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 action: "completeShift",
                                 deviceID: deviceID,
                                 timestamp: genTimestamp(),
-                                author: $scope.userSession.displayName
+                                author: $scope.userSession.userId
                             }
                         }
 
@@ -4658,7 +4625,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     action: "stopTimer",
                     deviceID: deviceID,
                     timestamp: genTimestamp(),
-                    author: $scope.userSession.displayName
+                    author: $scope.userSession.userId
                 }
             }
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
