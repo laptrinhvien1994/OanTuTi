@@ -6,6 +6,8 @@ var AuthUrl = 'http://localhost:6985/api/';
 //var AuthUrl = 'https://auth.suno.vn/api/'
 var PrintUrl = 'https://cafe.suno.vn/print.html';
 var socketUrl = 'http://localhost:8181';
+ApiUrl = 'https://api.suno.vn/api/';
+AuthUrl = 'https://auth.suno.vn/api/';
 var Api = {
     login: AuthUrl + 'auth/hugate?format=json&',
     getSession: AuthUrl + 'provider/GetUserSession?format=json&',
@@ -742,6 +744,7 @@ function filterUnsyncedOrderWithLogs(tables) {
 
 //Hàm filter đơn hàng chỉ lấy các logs đã đồng bộ và đơn hàng ko rỗng.
 function filterOrderWithUnsyncLogs(tables) {
+    debugger;
     var data = angular.copy(tables)
     //Lặp qua từng bàn
     for (var x = 0; x < tables.length; x++) {

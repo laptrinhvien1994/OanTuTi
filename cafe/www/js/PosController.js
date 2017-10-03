@@ -66,6 +66,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     // console.log('isWebView :'+ $scope.isWebView);
 
     $ionicSideMenuDelegate.canDragContent(false);
+
+    //Hàm kiểm tra kết nối internet.
     var checkingInternetConnection = function () {
         return new Promise(function (resolve, reject) {
             var url = Api.ping;
@@ -81,6 +83,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     var notiPopupInstance = null;
+    //Hàm hiển thị thông báo cho Client theo dạng single instance.
     var showNotification = function (title, content, callback) {
         if (notiPopupInstance == null) {
             notiPopupInstance = $ionicPopup.alert({
@@ -97,8 +100,21 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         return notiPopupInstance;
     }
 
+    //Hàm hiển thị thông báo cho Client theo dạng stack.
+    var showStackNotification = function (title, content, callback) {
+        var stackNoti = $ionicPopup.alert({
+            title: title,
+            template, content
+            });
+        stackNoti.then(function (response) {
+            if (callback !== null && typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+
     $scope.isOnline = true;
-    
+
     $scope.$watch('isOnline', function (n, o) {
         if (n != null && o != null && n != o) {
             if (n) {
@@ -912,7 +928,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //$scope.isOnline = window.navigator.onLine;
             //console.log($scope.isOnline);
         }, 8000);
-        
+
         $scope.tableIsSelected = $scope.tables[0];
         $scope.orderIndexIsSelected = 0;
         //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
@@ -984,77 +1000,84 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             var alteredOrder = [];
                             var lostOrder = [];
                             //Lặp để thiết lập nội dung thông báo
-                            //if (msg.msg) {
-                            //    if (msg.msg.alteredOrder.length > 0 || msg.msg.lostOrder.length > 0) {
-                            //        tempTables.forEach(function (t) {
-                            //            t.tableOrder.forEach(function (order) {
-                            //                var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                            //                if (orderLog) {
-                            //                    switch (orderLog.type) {
-                            //                        //Client liên quan là client cùng tài khoản với client thực hiện action
-                            //                        //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
-                            //                        case 1: {//Gửi cho tất cả client liên quan
-                            //                            if (order.saleOrder.createdByName == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0){
-                            //                                alteredOrder.push(orderLog.tableName);
-                            //                            }
-                            //                            break;
-                            //                        }
-                            //                        case 2: {//Chỉ gửi cho client đã thực hiện action
-                            //                            if (order.saleOrder.createdByName == msg.msg.author && msg.msg.deviceID == deviceID) {
-                            //                                alteredOrder.push(orderLog.tableName);
-                            //                            }
-                            //                            break;
-                            //                        }
-                            //                        case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
-                            //                            if ((order.saleOrder.createdByName == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0)
-                            //                                && msg.msg.deviceID != deviceID) {
-                            //                                alteredOrder.push(orderLog.tableName);
-                            //                            }
-                            //                            break;
-                            //                        }
-                            //                        default:
-                            //                            break;
-                            //                    }
-                            //                }
-                            //                else {
-                            //                    orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                            //                    //Thông báo về cho chỉ client đã thực hiện Init.
-                            //                    if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.createdByName == msg.msg.author) {
-                            //                        lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow.tableName, action: orderlog.action });
-                            //                    }
-                            //                }
-                            //            });
-                            //        });
-                            //    }
-                            //}
+                            //debugger;
+                            if (msg.msg) {
+                                //Thông báo order đã thay đổi phải lặp trên ds phòng bàn mới để lấy sharedWith.
+                                if (msg.msg.alteredOrder.length > 0) {
+                                    $scope.tables.forEach(function (t) {
+                                        t.tableOrder.forEach(function (order) {
+                                            var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                            if (orderLog) {
+                                                switch (orderLog.type) {
+                                                    //Client liên quan là client cùng tài khoản với client thực hiện action
+                                                    //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
+                                                    case 1: {//Gửi cho tất cả client liên quan
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
+                                                            alteredOrder.push(orderLog.tableName);
+                                                        }
+                                                        break;
+                                                    }
+                                                    case 2: {//Chỉ gửi cho client đã thực hiện action
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0 && msg.msg.deviceID == deviceID) {
+                                                            alteredOrder.push(orderLog.tableName);
+                                                        }
+                                                        break;
+                                                    }
+                                                    case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0 && msg.msg.deviceID != deviceID) {
+                                                            alteredOrder.push(orderLog.tableName);
+                                                        }
+                                                        break;
+                                                    }
+                                                    default:
+                                                        break;
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
 
-                            //var msgForAlteredOrder = '';
-                            //var msgForLostOrder = '';
-                            //if (alteredOrder.length > 0 || lostOrder.length > 0) {
-                            //    if (alteredOrder.length > 0) {
-                            //        msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng của bạn tại các bàn <b>';
-                            //        msgForAlteredOrder += alteredOrder.join('</b>, <b>');
-                            //        msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác</p>';
-                            //    }
-                            //    if (lostOrder.length > 0) {
-                            //        msgForLostOrder = '<p style="text-align: center;">Đơn hàng của bạn tại <b>';
-                            //        var orderNotiArr = [];
-                            //        lostOrder.forEach(function (order) {
-                            //            var txt = 'bàn <b>' + order.fromTable + '</b> đã ' + (order.action == 'G' ? 'được ghép vào' : order.action == 'CB' ? 'được chuyển sang' : 'được thao tác sang') + (order.toTable != null ? ' bàn <b>' + order.toTable + '</b>' : ' một bàn khác.');
-                            //            orderNotiArr.push(txt);
-                            //        });
-                            //        msgForLostOrder += lostOrder.join('</b>, <b>');
-                            //        //msgForLostOrder += '</b> đã được đổi bàn hoặc ghép hóa đơn ở 1 thiết bị khác.</p>';
-                            //        msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể xóa nếu không cần thiết.</p>';
-                            //    }
-                            //    var msgContent = msgForAlteredOrder + msgForLostOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
-                            //    if (notiPopupInstance) {
-                            //        showNotification.close();
-                            //    }
-                            //    $timeout(function () {
-                            //        showNotification('Thông báo', msgContent);
-                            //    }, 100);
-                            //}
+                                //Thông báo order đã lạc lặp trên ds phòng bàn cũ.
+                                if (msg.msg.lostOrder.length > 0) {
+                                    tempTables.forEach(function (t) {
+                                        t.tableOrder.forEach(function (order) {
+                                            var orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                            //Thông báo về cho chỉ client đã thực hiện Init.
+                                            if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >=0 ) {
+                                                lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow.tableName, action: orderLog.action });
+                                            }
+                                        });
+                                    });
+                                }
+                            }
+
+                            var msgForAlteredOrder = '';
+                            var msgForLostOrder = '';
+                            if (alteredOrder.length > 0 || lostOrder.length > 0) {
+                                if (alteredOrder.length > 0) {
+                                    msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng của bạn tại các bàn <b>';
+                                    msgForAlteredOrder += alteredOrder.join('</b>, <b>');
+                                    msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác.</p>';
+                                }
+                                if (lostOrder.length > 0) {
+                                    msgForLostOrder = '<p style="text-align: center;">Đơn hàng của bạn tại <b>';
+                                    var orderNotiArr = [];
+                                    lostOrder.forEach(function (order) {
+                                        var txt = 'bàn <b>' + order.fromTable + '</b> đã ' + (order.action == 'G' ? 'được ghép vào' : order.action == 'CB' ? 'được chuyển sang' : 'được thao tác sang') + (order.toTable != null ? ' bàn <b>' + order.toTable + '</b>' : ' một bàn khác.');
+                                        orderNotiArr.push(txt);
+                                    });
+                                    msgForLostOrder += orderNotiArr.join('</b>, <b>');
+                                    //msgForLostOrder += '</b> đã được đổi bàn hoặc ghép hóa đơn ở 1 thiết bị khác.</p>';
+                                    msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể xóa nếu không cần thiết.</p>';
+                                }
+                                var msgContent = msgForAlteredOrder + msgForLostOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
+                                if (notiPopupInstance) {
+                                    showNotification.close();
+                                }
+                                $timeout(function () {
+                                    showNotification('Thông báo', msgContent);
+                                }, 100);
+                            }
 
                             //Cập nhật lại tableStatus
                             for (var i = 0; i < $scope.tables.length; i++) {
@@ -1361,7 +1384,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
                                         $timeout(function () {
                                             $scope.watchCallback(null, null);
-                                        }, 150);    
+                                        }, 150);
                                     }
 
                                     $timeout(function () {
@@ -1453,6 +1476,56 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
+
+                    //Hiển thị thông báo cho Client.
+                    var alteredOrder = [];
+                    if (msg.msg && false) {//Tắt thông báo.
+                        $scope.tables.forEach(function (t) {
+                            t.tableOrder.forEach(function (order) {
+                                var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
+                                if (orderLog) {
+                                    switch (orderLog.type) {
+                                        //Client liên quan là client cùng tài khoản với client thực hiện action
+                                        //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
+                                        case 1: {//Gửi cho tất cả client liên quan
+                                            if (order.saleOrder.createdBy == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
+                                                alteredOrder.push(orderLog.tableName);
+                                            }
+                                            break;
+                                        }
+                                        case 2: {//Chỉ gửi cho client đã thực hiện action
+                                            if (order.saleOrder.createdBy == msg.msg.author && msg.msg.deviceID == deviceID) {
+                                                alteredOrder.push(orderLog.tableName);
+                                            }
+                                            break;
+                                        }
+                                        case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
+                                            if ((order.saleOrder.createdBy == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0)
+                                                && msg.msg.deviceID != deviceID) {
+                                                alteredOrder.push(orderLog.tableName);
+                                            }
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                    var msgForAlteredOrder = '';
+                    if (alteredOrder.length > 0) {
+                        msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng của bạn tại các bàn <b>';
+                        msgForAlteredOrder += alteredOrder.join('</b>, <b>');
+                        msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác</p>';
+                        var msgContent = msgForAlteredOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
+                        if (notiPopupInstance) {
+                            showNotification.close();
+                        }
+                        $timeout(function () {
+                            showNotification('Thông báo', msgContent);
+                        }, 100);
+                    }
                 }
             });
 
@@ -1508,6 +1581,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     console.log(error);
                                 });
 
+                                //Thông báo cho client về hóa đơn được thanh toán ở thiết bị khác.
+                                if (msg.msg) {
+                                    if (($scope.userSession.userId == msg.msg.author) //|| $scope.tables[x].tableOrder[orderIndex].saleOrder.sharedWith.find(function (p) { return p.userID == $scope.userSession.userId; }) > 0)
+                                        && deviceID != msg.msg.deviceID) {
+                                        var msgContent = '<p style="text-align: center;">Đơn hàng của bạn tại bàn <b>' + $scope.tables[x].tableName + '</b> đã được thanh toán ở một thiết bị khác.</p>';
+                                        showStackNotification('Thông báo', msgContent, null);
+                                    }
+                                }
                                 $scope.$apply();
                                 break;
                             }
@@ -1705,7 +1786,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     deviceID: deviceID,
                     timestamp: genTimestamp()
                 }
-
             };
 
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -1914,7 +1994,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //}]
             //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[0].saleOrder)
             $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
-            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({deviceID: deviceID, userID: $scope.userSession.userId});
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
         };
 
         $scope.orderIndexIsSelected = 0;
@@ -2090,7 +2170,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData', updateData);
+                console.log('moveData', updateData);
                 socket.emit('moveOrder', updateData);
             })
             .catch(function (error) {
@@ -2125,18 +2205,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
         checkingInternetConnection()
         .then(function (data) {
-                if (cantPrint == true && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
-                    $ionicModal.fromTemplateUrl('pairing-order.html', {
-                        scope: $scope,
-                        animation: 'slide-in-up'
-                    }).then(function (modal) {
-                        $scope.modalPairOrder = modal;
-                        $scope.popoverTableAction.hide();
-                        $scope.modalPairOrder.show();
-                        $scope.selecteOrder = true;
-                    });
-                }
-            })
+            if (cantPrint == true && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
+                $ionicModal.fromTemplateUrl('pairing-order.html', {
+                    scope: $scope,
+                    animation: 'slide-in-up'
+                }).then(function (modal) {
+                    $scope.modalPairOrder = modal;
+                    $scope.popoverTableAction.hide();
+                    $scope.modalPairOrder.show();
+                    $scope.selecteOrder = true;
+                });
+            }
+        })
         .catch(function (e) {
             toaster.pop({
                 type: 'error',
@@ -2230,7 +2310,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData', updateData);
+                console.log('moveData', updateData);
                 socket.emit('moveOrder', updateData);
             })
             .catch(function (error) {
@@ -2360,7 +2440,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData', updateData);
+                console.log('updateData-splitOrder', updateData);
                 socket.emit('updateOrder', updateData);
             })
             .catch(function (error) {
@@ -2932,7 +3012,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 $scope.tableIsSelected.tableStatus = 0;
                 // $scope.tableIsSelected.startTime = null;
             }
-            
+
             if (num < 0 && $scope.isSync) {
                 // var currentTableOrder = [];
                 // currentTableOrder.push($scope.tableIsSelected);
@@ -4605,11 +4685,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //});
         }
         if ($scope.isSync) {
-            var curtentTable = {};
-            angular.copy($scope.tableIsSelected, curtentTable);
+            var currentTable = {};
+            angular.copy($scope.tableIsSelected, currentTable);
 
             var currentTableOrder = [];
-            currentTableOrder.push(curtentTable);
+            currentTableOrder.push(currentTable);
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             var updateData = {
@@ -4637,7 +4717,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData', updateData);
+                console.log('updateData-stopTimer', updateData);
                 socket.emit('updateOrder', updateData);
             })
             .catch(function (error) {
@@ -5055,7 +5135,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         hotkeys.add({
             combo: 'tab',
             callback: function () {
-                
+
             }
         });
     }
