@@ -939,16 +939,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             manager = new io.Manager(socketUrl, {
                 reconnection: true,
                 timeout: 20000,
-                reconnectionAttempts: 'infinity',
-                reconnectionDelay: 1000,
-                autoConnect: false,
+                reconnectionattempts: 'infinity',
+                reconnectiondelay: 1000,
+                autoconnect: true,
                 query: {
                     room: $scope.userSession.companyId + '_' + $scope.currentStore.storeID,
                     transport: ['websocket']
                 }
             });
             socket = manager.socket('/');
-            socket.connect();
+            //socket.connect();
             //console.log(manager);
             //socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
@@ -1060,7 +1060,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác.</p>';
                                 }
                                 if (lostOrder.length > 0) {
-                                    msgForLostOrder = '<p style="text-align: center;">Đơn hàng của bạn tại <b>';
+                                    msgForLostOrder = '<p style="text-align: center;">Đơn hàng của bạn tại ';
                                     var orderNotiArr = [];
                                     lostOrder.forEach(function (order) {
                                         var txt = 'bàn <b>' + order.fromTable + '</b> đã ' + (order.action == 'G' ? 'được ghép vào' : order.action == 'CB' ? 'được chuyển sang' : 'được thao tác sang') + (order.toTable != null ? ' bàn <b>' + order.toTable + '</b>' : ' một bàn khác.');
@@ -1174,95 +1174,95 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 // console.log($scope.tables);
             });
 
-            socket.on('connect', function () {
-                isSocketConnected = true;
-                console.log('Socket is connected');
-                if (!isSocketInitialized) {
-                    $timeout(function () {
-                        if (isSocketConnected) {
-                            //Nếu đã có kết nối socket và có bật đồng bộ.
-                            if (manager && socket && $scope.isSync) {
-                                //socket = manager.socket('/');
-                                socket.connect();
-                                //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
-                                var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
-                                //data = angular.copy(unsyncOrder);
-                                //unsyncOrder = filterInitOrder(data);
-                                var initData = {
-                                    "companyId": $scope.userSession.companyId,
-                                    "storeId": $scope.currentStore.storeID,
-                                    "clientId": $scope.clientId,
-                                    "shiftId": null, //LSFactory.get('shiftId'),
-                                    "startDate": "",
-                                    "finishDate": "",
-                                    "tables": angular.copy(unsyncOrder),
-                                    "zone": $scope.tableMap,
-                                    "info": {
-                                        action: "reconnect",
-                                        deviceID: deviceID,
-                                        timestamp: genTimestamp(),
-                                        author: $scope.userSession.userId
-                                    }
-                                };
+            //socket.on('connect', function () {
+            //    isSocketConnected = true;
+            //    console.log('Socket is connected');
+            //    if (!isSocketInitialized) {
+            //        $timeout(function () {
+            //            if (isSocketConnected) {
+            //                //Nếu đã có kết nối socket và có bật đồng bộ.
+            //                if (manager && socket && $scope.isSync) {
+            //                    //socket = manager.socket('/');
+            //                    socket.connect();
+            //                    //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
+            //                    var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
+            //                    //data = angular.copy(unsyncOrder);
+            //                    //unsyncOrder = filterInitOrder(data);
+            //                    var initData = {
+            //                        "companyId": $scope.userSession.companyId,
+            //                        "storeId": $scope.currentStore.storeID,
+            //                        "clientId": $scope.clientId,
+            //                        "shiftId": null, //LSFactory.get('shiftId'),
+            //                        "startDate": "",
+            //                        "finishDate": "",
+            //                        "tables": angular.copy(unsyncOrder),
+            //                        "zone": $scope.tableMap,
+            //                        "info": {
+            //                            action: "reconnect",
+            //                            deviceID: deviceID,
+            //                            timestamp: genTimestamp(),
+            //                            author: $scope.userSession.userId
+            //                        }
+            //                    };
 
-                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-                                .then(function (data) {
-                                    ////debugger;
-                                    var shiftId = null;
-                                    if (data.docs.length > 0) {
-                                        shiftId = data.docs[0].shiftId;
-                                    }
-                                    //debugger;
-                                    initData.shiftId = shiftId;
-                                    initData = angular.toJson(initData);
-                                    initData = JSON.parse(initData);
-                                    console.log('reconnectData', initData);
-                                    socket.emit('reconnectServer', initData);
-                                })
-                                .catch(function (error) {
-                                    console.log(error);
-                                });
-                            }
-                        }
-                    }, 1000);
-                }
-                else {
-                    isSocketInitialized = false;
-                }
-            });
+            //                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            //                    .then(function (data) {
+            //                        ////debugger;
+            //                        var shiftId = null;
+            //                        if (data.docs.length > 0) {
+            //                            shiftId = data.docs[0].shiftId;
+            //                        }
+            //                        //debugger;
+            //                        initData.shiftId = shiftId;
+            //                        initData = angular.toJson(initData);
+            //                        initData = JSON.parse(initData);
+            //                        console.log('reconnectData', initData);
+            //                        socket.emit('reconnectServer', initData);
+            //                    })
+            //                    .catch(function (error) {
+            //                        console.log(error);
+            //                    });
+            //                }
+            //            }
+            //        }, 1000);
+            //    }
+            //    else {
+            //        isSocketInitialized = false;
+            //    }
+            //});
 
-            socket.on('disconnect', function (rs) {
-                console.log('Socket is disconnected', rs);
-                isSocketConnected = false;
-            });
+            //socket.on('disconnect', function (rs) {
+            //    console.log('Socket is disconnected', rs);
+            //    isSocketConnected = false;
+            //});
 
-            socket.on('reconnecting', function (num) {
-                console.log('Socket is reconnecting', num);
-            });
+            //socket.on('reconnecting', function (num) {
+            //    console.log('Socket is reconnecting', num);
+            //});
 
-            socket.on('error', function (e) {
-                console.log('Error occured', e);
-            })
+            //socket.on('error', function (e) {
+            //    console.log('Error occured', e);
+            //})
 
-            socket.on('reconnect', function (num) {
-                console.log('Socket is reconnected', num);
-            });
+            //socket.on('reconnect', function (num) {
+            //    console.log('Socket is reconnected', num);
+            //});
 
-            socket.on('ping', function () {
-                //console.log('Socket is pinging');
-            });
+            //socket.on('ping', function () {
+            //    //console.log('Socket is pinging');
+            //});
 
-            socket.on('connect_timeout', function (timeout) {
-                console.log('Socket connection is timeout', timeout);
-            });
+            //socket.on('connect_timeout', function (timeout) {
+            //    console.log('Socket connection is timeout', timeout);
+            //});
 
-            socket.on('connect_error', function (e) {
-                console.log('Socket connection is error', e);
-            });
+            //socket.on('connect_error', function (e) {
+            //    console.log('Socket connection is error', e);
+            //});
 
-            socket.on('reconnect_error', function (e) {
-                console.log('Socket reconnecting error', e);
-            });
+            //socket.on('reconnect_error', function (e) {
+            //    console.log('Socket reconnecting error', e);
+            //});
 
             var groupBy = function (arrLog) {
                 var result = arrLog.reduce(function (arr, item) {

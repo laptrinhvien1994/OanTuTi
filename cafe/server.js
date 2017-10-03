@@ -105,7 +105,10 @@ MongoClient.connect(url, function (err, database) {
     if (err) console.log(err);
     db = database;
     //initialize socket
-    io = require('socket.io').listen(connect().use(serveStatic(__dirname)).listen(port));
+    var httpServer = require('http').createServer();
+    httpServer.listen(port);
+    io = require('socket.io')(httpServer);
+    //io = require('socket.io').listen(connect().use(serveStatic(__dirname)).listen(port));
 
     io.sockets.on('connection', function (socket) {
         if (socket.handshake.query.room) {
@@ -1040,10 +1043,10 @@ MongoClient.connect(url, function (err, database) {
                                         if (order) {
                                             //Trường hợp ghép hóa đơn.
                                             //Chỉ xảy ra khi client có kết nối internet, dưới client đã xử lý log.
-
-                                            t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+                                            var index = t.tableOrder.indexOf(order);
+                                            t.tableOrder[index] = data.tables[i].tableOrder[j];
                                             //Cập nhật lại revision
-                                            t.tableOrder[t.tableOrder.indexOf(order)].saleOrder.revision++;
+                                            t.tableOrder[index].saleOrder.revision++;
                                             logDebug('order is updated');
                                         }
                                         else {

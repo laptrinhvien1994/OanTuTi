@@ -744,7 +744,6 @@ function filterUnsyncedOrderWithLogs(tables) {
 
 //Hàm filter đơn hàng chỉ lấy các logs đã đồng bộ và đơn hàng ko rỗng.
 function filterOrderWithUnsyncLogs(tables) {
-    debugger;
     var data = angular.copy(tables)
     //Lặp qua từng bàn
     for (var x = 0; x < tables.length; x++) {
