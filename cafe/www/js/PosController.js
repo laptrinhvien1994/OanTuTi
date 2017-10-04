@@ -856,6 +856,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         //- Nếu có thì đọc lên vì trong sơ đồ phòng bàn ở DB Local có thông tin bàn đang dùng và trống.
         //- Nếu chưa có => POS Cafe mới chạy lần đầu cần thực hiện lưu thông tin sơ đồ phòng bàn vào DB Local hoặc mở Modal khởi tạo phòng bàn.
         if (data[0].docs.length > 0 && data[1].docs[0] && data[1].docs[0].zones.length > 0) {
+            //debugger;
             var pDBTable = data[0].docs;
             var pDBZone = data[1].docs[0].zones;
             $scope.tables = pDBTable;
@@ -941,14 +942,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 timeout: 20000,
                 reconnectionattempts: 'infinity',
                 reconnectiondelay: 1000,
-                autoconnect: true,
+                autoconnect: false,
                 query: {
                     room: $scope.userSession.companyId + '_' + $scope.currentStore.storeID,
                     transport: ['websocket']
                 }
             });
             socket = manager.socket('/');
-            //socket.connect();
+            socket.connect();
             //console.log(manager);
             //socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
@@ -1174,95 +1175,95 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 // console.log($scope.tables);
             });
 
-            //socket.on('connect', function () {
-            //    isSocketConnected = true;
-            //    console.log('Socket is connected');
-            //    if (!isSocketInitialized) {
-            //        $timeout(function () {
-            //            if (isSocketConnected) {
-            //                //Nếu đã có kết nối socket và có bật đồng bộ.
-            //                if (manager && socket && $scope.isSync) {
-            //                    //socket = manager.socket('/');
-            //                    socket.connect();
-            //                    //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
-            //                    var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
-            //                    //data = angular.copy(unsyncOrder);
-            //                    //unsyncOrder = filterInitOrder(data);
-            //                    var initData = {
-            //                        "companyId": $scope.userSession.companyId,
-            //                        "storeId": $scope.currentStore.storeID,
-            //                        "clientId": $scope.clientId,
-            //                        "shiftId": null, //LSFactory.get('shiftId'),
-            //                        "startDate": "",
-            //                        "finishDate": "",
-            //                        "tables": angular.copy(unsyncOrder),
-            //                        "zone": $scope.tableMap,
-            //                        "info": {
-            //                            action: "reconnect",
-            //                            deviceID: deviceID,
-            //                            timestamp: genTimestamp(),
-            //                            author: $scope.userSession.userId
-            //                        }
-            //                    };
+            socket.on('connect', function () {
+                isSocketConnected = true;
+                console.log('Socket is connected');
+                if (!isSocketInitialized) {
+                    $timeout(function () {
+                        if (isSocketConnected) {
+                            //Nếu đã có kết nối socket và có bật đồng bộ.
+                            if (manager && socket && $scope.isSync) {
+                                //socket = manager.socket('/');
+                                socket.connect();
+                                //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
+                                var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
+                                //data = angular.copy(unsyncOrder);
+                                //unsyncOrder = filterInitOrder(data);
+                                var initData = {
+                                    "companyId": $scope.userSession.companyId,
+                                    "storeId": $scope.currentStore.storeID,
+                                    "clientId": $scope.clientId,
+                                    "shiftId": null, //LSFactory.get('shiftId'),
+                                    "startDate": "",
+                                    "finishDate": "",
+                                    "tables": angular.copy(unsyncOrder),
+                                    "zone": $scope.tableMap,
+                                    "info": {
+                                        action: "reconnect",
+                                        deviceID: deviceID,
+                                        timestamp: genTimestamp(),
+                                        author: $scope.userSession.userId
+                                    }
+                                };
 
-            //                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-            //                    .then(function (data) {
-            //                        ////debugger;
-            //                        var shiftId = null;
-            //                        if (data.docs.length > 0) {
-            //                            shiftId = data.docs[0].shiftId;
-            //                        }
-            //                        //debugger;
-            //                        initData.shiftId = shiftId;
-            //                        initData = angular.toJson(initData);
-            //                        initData = JSON.parse(initData);
-            //                        console.log('reconnectData', initData);
-            //                        socket.emit('reconnectServer', initData);
-            //                    })
-            //                    .catch(function (error) {
-            //                        console.log(error);
-            //                    });
-            //                }
-            //            }
-            //        }, 1000);
-            //    }
-            //    else {
-            //        isSocketInitialized = false;
-            //    }
-            //});
+                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                .then(function (data) {
+                                    ////debugger;
+                                    var shiftId = null;
+                                    if (data.docs.length > 0) {
+                                        shiftId = data.docs[0].shiftId;
+                                    }
+                                    //debugger;
+                                    initData.shiftId = shiftId;
+                                    initData = angular.toJson(initData);
+                                    initData = JSON.parse(initData);
+                                    console.log('reconnectData', initData);
+                                    socket.emit('reconnectServer', initData);
+                                })
+                                .catch(function (error) {
+                                    console.log(error);
+                                });
+                            }
+                        }
+                    }, 1000);
+                }
+                else {
+                    isSocketInitialized = false;
+                }
+            });
 
-            //socket.on('disconnect', function (rs) {
-            //    console.log('Socket is disconnected', rs);
-            //    isSocketConnected = false;
-            //});
+            socket.on('disconnect', function (rs) {
+                console.log('Socket is disconnected', rs);
+                isSocketConnected = false;
+            });
 
-            //socket.on('reconnecting', function (num) {
-            //    console.log('Socket is reconnecting', num);
-            //});
+            socket.on('reconnecting', function (num) {
+                console.log('Socket is reconnecting', num);
+            });
 
-            //socket.on('error', function (e) {
-            //    console.log('Error occured', e);
-            //})
+            socket.on('error', function (e) {
+                console.log('Error occured', e);
+            })
 
-            //socket.on('reconnect', function (num) {
-            //    console.log('Socket is reconnected', num);
-            //});
+            socket.on('reconnect', function (num) {
+                console.log('Socket is reconnected', num);
+            });
 
-            //socket.on('ping', function () {
-            //    //console.log('Socket is pinging');
-            //});
+            socket.on('ping', function () {
+                //console.log('Socket is pinging');
+            });
 
-            //socket.on('connect_timeout', function (timeout) {
-            //    console.log('Socket connection is timeout', timeout);
-            //});
+            socket.on('connect_timeout', function (timeout) {
+                console.log('Socket connection is timeout', timeout);
+            });
 
-            //socket.on('connect_error', function (e) {
-            //    console.log('Socket connection is error', e);
-            //});
+            socket.on('connect_error', function (e) {
+                console.log('Socket connection is error', e);
+            });
 
-            //socket.on('reconnect_error', function (e) {
-            //    console.log('Socket reconnecting error', e);
-            //});
+            socket.on('reconnect_error', function (e) {
+                console.log('Socket reconnecting error', e);
+            });
 
             var groupBy = function (arrLog) {
                 var result = arrLog.reduce(function (arr, item) {
@@ -1308,7 +1309,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 //debugger;
                 console.log('updateOrder', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
-                    if (!msg.hasOwnProperty('action')) {
+                    if (msg.info.action != 'splitOrder' && msg.info.action != 'stopTimer') {
                         //Cập nhật lại bàn vừa nhận từ Server gửi về
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
@@ -1424,14 +1425,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
-                        //Xử lý cho tách hóa đơn.
-                    else if (msg.hasOwnProperty('action') && msg.action == 'splitOrder') {
-                        delete msg.action;
+                    //Xử lý cho tách hóa đơn.
+                    else if (msg.info.action == 'splitOrder') {
 
                         //Cập nhật lại bàn từ Server gửi về.
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
 
+                                //Lặp qua 2 order mới tách.
                                 for (var y = 0; y < msg.tables[0].tableOrder.length; y++) {
                                     var orderIndex = -1;
                                     orderIndex = $scope.tables[x].tableOrder.findIndex(function (order) { return order.saleOrder.saleOrderUuid == msg.tables[0].tableOrder[y].saleOrder.saleOrderUuid });
@@ -1445,7 +1446,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     }
                                 }
 
-                                //Lưu vào DB Local
+                                //Lưu vào DB Local bàn đó sau khi đã xử lý xong.
                                 DBTables.$queryDoc({
                                     selector: {
                                         'store': { $eq: $scope.currentStore.storeID },
@@ -1476,55 +1477,44 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
+                    //Xử lý cho ngừng tính giờ Item
+                    else if (msg.info.action == 'stopTimer') {
+                        //Cập nhật lại bàn từ Server gửi về, vì chỉ gửi 1 bàn và 1 order nên ko cần lặp 2 vòng.
+                        debugger;
+                        for (var x = 0; x < $scope.tables.length; x++) {
+                            if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
+                                var order = $scope.tables[x].tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid });
+                                order.saleOrder = msg.tables[0].tableOrder[0].saleOrder;
+                                //Lưu vào DB Local
+                                DBTables.$queryDoc({
+                                    selector: {
+                                        'store': { $eq: $scope.currentStore.storeID },
+                                        'tableUuid': { $eq: msg.tables[0].tableUuid }
+                                    },
+                                    fields: ['_id', '_rev']
+                                })
+                                .then(function (data) {
+                                    //console.log(data);
+                                    var table = JSON.parse(JSON.stringify(msg.tables[0]));
+                                    table._id = data.docs[0]._id;
+                                    table._rev = data.docs[0]._rev;
+                                    table.store = $scope.currentStore.storeID;
+                                    return DBTables.$addDoc(table);
+                                })
+                                .then(function (data) {
+                                    //console.log(data);
+                                })
+                                .catch(function (error) {
+                                    console.log(error);
+                                });
 
-                    //Hiển thị thông báo cho Client.
-                    var alteredOrder = [];
-                    if (msg.msg && false) {//Tắt thông báo.
-                        $scope.tables.forEach(function (t) {
-                            t.tableOrder.forEach(function (order) {
-                                var orderLog = msg.msg.alteredOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
-                                if (orderLog) {
-                                    switch (orderLog.type) {
-                                        //Client liên quan là client cùng tài khoản với client thực hiện action
-                                        //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
-                                        case 1: {//Gửi cho tất cả client liên quan
-                                            if (order.saleOrder.createdBy == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
-                                                alteredOrder.push(orderLog.tableName);
-                                            }
-                                            break;
-                                        }
-                                        case 2: {//Chỉ gửi cho client đã thực hiện action
-                                            if (order.saleOrder.createdBy == msg.msg.author && msg.msg.deviceID == deviceID) {
-                                                alteredOrder.push(orderLog.tableName);
-                                            }
-                                            break;
-                                        }
-                                        case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
-                                            if ((order.saleOrder.createdBy == msg.msg.author || order.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0)
-                                                && msg.msg.deviceID != deviceID) {
-                                                alteredOrder.push(orderLog.tableName);
-                                            }
-                                            break;
-                                        }
-                                        default:
-                                            break;
-                                    }
-                                }
-                            });
-                        });
-                    }
-                    var msgForAlteredOrder = '';
-                    if (alteredOrder.length > 0) {
-                        msgForAlteredOrder = '<p style="text-align: center;">Đơn hàng của bạn tại các bàn <b>';
-                        msgForAlteredOrder += alteredOrder.join('</b>, <b>');
-                        msgForAlteredOrder += '</b> đã được thay đổi ở 1 thiết bị khác</p>';
-                        var msgContent = msgForAlteredOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
-                        if (notiPopupInstance) {
-                            showNotification.close();
+                                //Cập nhật lại trạng thái của bàn
+                                var tableStatus = tableIsActive($scope.tables[x]);
+                                $scope.tables[x].tableStatus = tableStatus ? 1 : 0;
+                                $scope.$apply();
+                                break;
+                            }
                         }
-                        $timeout(function () {
-                            showNotification('Thông báo', msgContent);
-                        }, 100);
                     }
                 }
             });
@@ -1625,6 +1615,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     $scope.$apply();
 
+                    debugger;
                     //Lưu DB Local
                     Promise.all([
                         DBTables.$queryDoc({
@@ -1643,20 +1634,29 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         })
                     ])
                     .then(function (data) {
-                        //debugger;
                         var fromTable = $scope.tables.find(function (t) { return t.tableUuid == msg.fromTableUuid });
                         fromTable._id = data[0].docs[0]._id;
                         fromTable._rev = data[0].docs[0]._rev;
-                        fromTable.strore = $scope.currentStore.storeID;
+                        fromTable.store = $scope.currentStore.storeID;
+
                         var toTable = $scope.tables.find(function (t) { return t.tableUuid == msg.tables[0].tableUuid });
                         toTable._id = data[1].docs[0]._id;
-                        toTable.rev = data[1].docs[0]._rev;
+                        toTable._rev = data[1].docs[0]._rev;
                         toTable.store = $scope.currentStore.storeID;
+
                         return DBTables.$manipulateBatchDoc([fromTable, toTable]);
                     })
                     .then(function (data) {
                         //log for debugging
                         //console.log(data);
+                        return DBTables.$queryDoc({
+                            selector: {
+                                'store': {$eq: $scope.currentStore.storeID }
+                            }
+                        });
+                    })
+                    .then(function (data) {
+                        console.log(data);
                     })
                     .catch(function (error) {
                         console.log(error);
@@ -2247,7 +2247,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var oldtable = {};
         angular.copy($scope.tableIsSelected, oldtable);
         var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
-        debugger;
         //Thêm logs cho table mới được ghép.
         var logs = []
         var timestamp = genTimestamp();
@@ -2423,7 +2422,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "finishDate": "",
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
-                "action": 'splitOrder',
                 "info": {
                     author: $scope.userSession.userId,
                     deviceID: deviceID,
@@ -4705,7 +4703,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     action: "stopTimer",
                     deviceID: deviceID,
                     timestamp: genTimestamp(),
-                    author: $scope.userSession.userId
+                    author: $scope.userSession.userId,
+                    itemID: item.itemId
                 }
             }
             DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
