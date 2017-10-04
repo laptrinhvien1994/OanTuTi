@@ -1306,7 +1306,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             };
 
             socket.on('updateOrder', function (msg) {
-                //debugger;
                 console.log('updateOrder', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
                     if (msg.info.action != 'splitOrder' && msg.info.action != 'stopTimer') {
@@ -1314,8 +1313,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
                                 if ($scope.tables[x].tableOrder.length > 0) {
+
                                     var orderIndex = null;
-                                    //Trường hợp bàn đó đã có sẵn orders.
                                     for (var y = 0; y < $scope.tables[x].tableOrder.length; y++) {
                                         if ($scope.tables[x].tableOrder[y].saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid) {
                                             orderIndex = y;
@@ -1615,7 +1614,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     $scope.$apply();
 
-                    debugger;
                     //Lưu DB Local
                     Promise.all([
                         DBTables.$queryDoc({
@@ -1656,7 +1654,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         });
                     })
                     .then(function (data) {
-                        console.log(data);
+                        //Log check data.
+                        //console.log(data);
                     })
                     .catch(function (error) {
                         console.log(error);
@@ -2526,7 +2525,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //}]
             //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[0].saleOrder);
             $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
-            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
         };
         if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length == 0 && !$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.startTime)
             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.startTime = new Date();
@@ -2559,6 +2557,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 item.sellPrice = item.vipPrice;
                 item.subTotal = item.vipPrice;
             }
+        }
+
+        //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+        var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == $scope.userSession.userId });
+        if (sWIndex < 0) {
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
         }
 
         if ($scope.printSetting.unGroupItem) {

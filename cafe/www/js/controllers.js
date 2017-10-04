@@ -86,6 +86,7 @@ var saleOrder = {
     revision: 1 //Để check đồng bộ giữa các đơn hàng khi Init.
 }
 
+//Kiểu Log cho các hàng hóa thông thường (gộp món).
 var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, status) {
     this.itemID = itemID; //ID item
     this.itemName = itemName; //Tên item
@@ -98,6 +99,19 @@ var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, sta
     //this.orderID = orderID;
     this.status = status; //Trạng thái action đã thực hiện trong 2 loại false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
     //this.startTime = null; //Thời gian bắt đầu nếu có đồng bộ về thời gian.
+}
+
+//Kiểu Log cho các đơn hàng tách món.
+var ungroupLog = function (itemID, itemName, action, quantity, timestamp, deviceID, logID, targetLogID, status) {
+    this.itemID = itemID; //ID item
+    this.itemName = itemName; //Tên item
+    this.action = action; //Tên action trong các loại BB(Báo bếp) hoặc H(Hủy).
+    this.quantity = quantity; //Số lượng action tham gia vào action
+    this.timestamp = timestamp; //Thời gian thực hiện action.
+    this.deviceID = deviceID; //ID định danh cho mỗi thiết bị.
+    this.logID = logID; //ID cho mỗi dòng log sẽ được tự sinh sau.
+    this.targetLogID = targetLogID; //Item chịu tác động của action. Nếu là BB thì logID và targetLogID bằng nhau, nếu là hủy món thì targetLogID là 1 trong số các logID đã tồn tại.
+    this.status = status; //Trạng thái action đã thực hiện trong 2 loại  false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
 }
 
 var filter = angular.injector(["ng"]).get("$filter")("number");

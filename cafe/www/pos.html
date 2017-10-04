@@ -96,7 +96,7 @@
                             <span class="font12 balanced">+{{i.newOrderCount}}</span>
                         </span>
                         <!-- Nút tăng giảm số lượng-->
-                        <div class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;">
+                        <div class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;" ng-show="!i.isChild">
                             <button on-tap="changeQuantity(1, i, $event)" style="margin-bottom: 4px; border: none; background-color:transparent; z-index: 1;"><i style="border-bottom: 1px solid black; padding-bottom: 2px;" class="ion-chevron-up"></i></button><br />
                             <button on-tap="fastRemoveItem(1, i, $event)" style="background-color: transparent;border: none; z-index: 1;"><i class="ion-chevron-down"></i></button>
                         </div>

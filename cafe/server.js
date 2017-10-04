@@ -346,7 +346,7 @@ MongoClient.connect(url, function (err, database) {
                                                 //Merge sharedWith
                                                 var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
                                                     return order.saleOrder.sharedWith.findIndex(function (i) {
-                                                        return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                                        return i.deviceID == item.deviceID && i.userID == item.userID;
                                                     }) < 0;
                                                 });
                                                 order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
@@ -574,7 +574,7 @@ MongoClient.connect(url, function (err, database) {
                 var index = arr.findIndex(function (i) { return i.itemID == item.itemID });
                 if (index == -1) {
                     //Chưa có
-                    var quantity = item.action == "BB" ? item.quantity : -item.quantity;
+                    var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
                     var logs = [{
                         action: item.action,
                         timestamp: item.timestamp,
@@ -600,7 +600,7 @@ MongoClient.connect(url, function (err, database) {
                             deviceID: item.deviceID
                         });
                         //Cập nhật lại total
-                        var quantity = item.action == "BB" ? item.quantity : -item.quantity;
+                        var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
                         arr[index].totalQuantity += quantity;
                     }
                 }
@@ -687,7 +687,7 @@ MongoClient.connect(url, function (err, database) {
                                         //Merge sharedWith
                                         var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
                                             return order.saleOrder.sharedWith.findIndex(function (i) {
-                                                return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                                return i.deviceID == item.deviceID && i.userID == item.userID;
                                             }) < 0;
                                         });
                                         order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
@@ -834,7 +834,7 @@ MongoClient.connect(url, function (err, database) {
                                             //Merge sharedWith
                                             var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
                                                 return order.saleOrder.sharedWith.findIndex(function (i) {
-                                                    return i.deviceID == item.deviceID && i.userID == item.deviceID;
+                                                    return i.deviceID == item.deviceID && i.userID == item.userID;
                                                 }) < 0;
                                             });
                                             order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
