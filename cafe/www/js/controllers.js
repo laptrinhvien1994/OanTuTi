@@ -102,14 +102,14 @@ var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, sta
 }
 
 //Kiểu Log cho các đơn hàng tách món.
-var UngroupLog = function (itemID, itemName, action, quantity, timestamp, deviceID, logID, affectedID, status) {
+var UngroupLog = function (itemID, itemName, action, quantity, timestamp, deviceID, detailID, affectedID, status) {
     this.itemID = itemID; //ID item
     this.itemName = itemName; //Tên item
     this.action = action; //Tên action trong các loại BB(Báo bếp) hoặc H(Hủy).
     this.quantity = quantity; //Số lượng action tham gia vào action
     this.timestamp = timestamp; //Thời gian thực hiện action.
     this.deviceID = deviceID; //ID định danh cho mỗi thiết bị.
-    this.logID = logID; //ID cho mỗi dòng log sẽ được tự sinh.
+    this.detailID = detailID; //ID cho mỗi dòng tương ứng với detail nào.
     this.affectedID = affectedID; //Item chịu tác động của action. Nếu là BB thì logID và affectedID bằng nhau, nếu là hủy món thì affectedID là 1 trong số các logID đã tồn tại.
     this.status = status; //Trạng thái action đã thực hiện trong 2 loại  false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
 }

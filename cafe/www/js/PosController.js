@@ -2583,8 +2583,24 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (detailIndex !== undefined || detailIndex !== null) {
                     flagItem.parentID = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[detailIndex].detailID;
                 }
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.splice($scope.selectedItemIndex + 1, 0, flagItem);
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex = $scope.selectedItemIndex;
+                
+                var itemDetail = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.filter(function (d) {
+                    return d.isChild && d.parentID == $scope.pinItem.detailID;
+                }).find(function (d) {
+                    return d.itemId == item.itemId;
+                });
+
+                //Nếu không có trong ds child của item được pin thì thêm vào. 
+                if (!itemDetail) {
+                    //Thêm item vào vị trí $scope.selectedItemIndex + 1.
+                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.splice($scope.selectedItemIndex + 1, 0, flagItem);
+                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex = $scope.selectedItemIndex;
+                }
+                else { //Nếu có rồi thì tăng thêm số lượng.
+                    itemDetail.quantity++;
+                    itemDetail.newOrderCount++;
+                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex = $scope.selectedItemIndex;
+                }
             } else {
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.push(flagItem);
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length - 1;
@@ -2731,8 +2747,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         quantity: printOrder.saleOrder.orderDetails[i].quantity,
                     }
                     if($scope.printSetting.unGroupItem) {
-                        obj.logID = uuid.v1();
-                        obj.affectedID = item.detailID; 
+                        obj.detailID = printOrder.saleOrder.orderDetails[i].detailID;
+                        obj.affectedID = printOrder.saleOrder.orderDetails[i].detailID;
                     }
                     untrackedItem.push(obj);
                 }
@@ -2799,7 +2815,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                         else {
                             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
-                                new UngroupLog(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, untrackedItem[x].logID, untrackedItem[x].affectedID, false));
+                                new UngroupLog(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, untrackedItem[x].detailID, untrackedItem[x].affectedID, false));
                         }
                     }
                     //$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].logs.push(new Log());
