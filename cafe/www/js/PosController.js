@@ -851,12 +851,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         ]);
     })
     .then(function (data) {
-        //debugger;
         //Kiểm tra trong DB Local đã có có sơ đồ phòng bàn chưa.
         //- Nếu có thì đọc lên vì trong sơ đồ phòng bàn ở DB Local có thông tin bàn đang dùng và trống.
         //- Nếu chưa có => POS Cafe mới chạy lần đầu cần thực hiện lưu thông tin sơ đồ phòng bàn vào DB Local hoặc mở Modal khởi tạo phòng bàn.
         if (data[0].docs.length > 0 && data[1].docs[0] && data[1].docs[0].zones.length > 0) {
-            //debugger;
             var pDBTable = data[0].docs;
             var pDBZone = data[1].docs[0].zones;
             $scope.tables = pDBTable;
@@ -2569,8 +2567,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             item.quantity = 1;
             item.newOrderCount = 1;
 
-            var flagItem = {};
-            angular.copy(item, flagItem);
+            var flagItem = angular.copy(item);
+            //Thêm affectedID cho mỗi item.
+            flagItem.detailID = uuid.v1();
             if ($scope.hourService.isUse && !$scope.hourService.allProduct && $scope.hourService.itemArr.length > 0) {
                 var itemIndexArr = findIndex($scope.hourService.itemArr, 'itemId', item.itemId);
                 if (itemIndexArr != null) {
@@ -2579,7 +2578,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             }
             if ($scope.pinItem) {
-                flagItem.isChild = '(+)';
+                flagItem.isChild = '--';
+                var detailIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex;
+                if (detailIndex !== undefined || detailIndex !== null) {
+                    flagItem.parentID = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[detailIndex].detailID;
+                }
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.splice($scope.selectedItemIndex + 1, 0, flagItem);
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex = $scope.selectedItemIndex;
             } else {
@@ -2722,11 +2725,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 //Mảng chứa các món mới báo bếp cho đồng bộ.
                 var untrackedItem = [];
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
-                    untrackedItem.push({
+                    var obj = {
                         itemID: printOrder.saleOrder.orderDetails[i].itemId,
                         itemName: printOrder.saleOrder.orderDetails[i].itemName,
-                        quantity: printOrder.saleOrder.orderDetails[i].quantity
-                    });
+                        quantity: printOrder.saleOrder.orderDetails[i].quantity,
+                    }
+                    if($scope.printSetting.unGroupItem) {
+                        obj.logID = uuid.v1();
+                        obj.affectedID = item.detailID; 
+                    }
+                    untrackedItem.push(obj);
                 }
                 printOrder.saleOrder.printedCount = currentOrder.saleOrder.printed.length + 1;
                 if (printOrder.saleOrder.printed) delete printOrder.saleOrder.printed;
@@ -2785,8 +2793,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     var timestamp = genTimestamp();
                     //console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     for (var x = 0; x < untrackedItem.length; x++) {
-                        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
-                            new Log(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, false));
+                        if(!$scope.printSetting.unGroupItem){
+                            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
+                                new Log(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, false));
+                        }
+                        else {
+                            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
+                                new UngroupLog(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, untrackedItem[x].logID, untrackedItem[x].affectedID, false));
+                        }
                     }
                     //$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].logs.push(new Log());
                     //for (var x = 0; x < currentTableOrder.length; x++) {
@@ -2957,6 +2971,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.fastRemoveItem = function (quantity, item, $event) {
         // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
+        $scope.pinItem = null;
         $scope.selectedItem = item;
         $scope.checkRemoveItem(-quantity, $scope.selectedItem);
         $scope.selectedItem.changeQuantity = null;
@@ -2982,6 +2997,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
             }
             if (num > 0) {
+                $scope.pinItem = null;
                 item.newOrderCount = parseFloat(num) + parseFloat(item.newOrderCount);
                 item.newOrderCount = (item.newOrderCount === parseInt(item.newOrderCount, 10)) ? item.newOrderCount : parseFloat(item.newOrderCount).toFixed(2);
                 item.quantity = parseFloat(num) + parseFloat(item.quantity);
@@ -2993,8 +3009,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (item.newOrderCount > 0 && item.newOrderCount >= -num) {
                     item.newOrderCount = parseFloat(num) + parseFloat(item.newOrderCount);
                     item.newOrderCount = (item.newOrderCount === parseInt(item.newOrderCount, 10)) ? item.newOrderCount : parseFloat(item.newOrderCount).toFixed(2);
-                } else
+                } else {
                     if (item.newOrderCount > 0 && item.newOrderCount < -num) item.newOrderCount = 0;
+                }
 
             }
             var itemIndex = findIndex($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails, 'itemId', item.itemId);
@@ -3006,6 +3023,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
             calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
 
+            if ($scope.printSetting.unGroupItem) {
+                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.forEach(function (d) {
+                    if (d.isChild && d.parentID == item.detailID) {
+                        d.quantity = 0;
+                    }
+                });
+            }
             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] = removeItemZero($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             removeUnNotice($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
@@ -3028,8 +3052,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                    currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
-                    new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
+                    if (!$scope.printSetting.unGroupItem) {
+                        currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
+                    } else {
+                        currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, uuid.v1(), item.detailID, false));
+                    }
+                    
                     var completeOrder = {
                         "companyId": $scope.userSession.companyId,
                         "storeId": $scope.currentStore.storeID,
@@ -3074,8 +3104,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                    currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
-                    new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
+                    if (!$scope.printSetting.unGroupItem) {
+                        currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
+                    } else {
+                        currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, uuid.v1(), item.detailID, false));
+                    }
                     var updateData = {
                         "companyId": $scope.userSession.companyId,
                         "storeId": $scope.currentStore.storeID,
@@ -3348,7 +3383,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.showOption = false;
 
     $scope.openItemOption = function (i, itemIndex) {
-
+        $scope.pinItem = null;
         $scope.selectedItem = i;
         $scope.showOption = true;
         $scope.selectedItemIndex = itemIndex;
@@ -4442,6 +4477,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.endSession = function () {
+        if (!isSocketConnected && $scope.isSync) {
+            return toaster.pop({
+                type: 'error',
+                title: 'Thông báo',
+                body: 'Đã mất kết nối internet. Vui lòng kết nối Internet và thực hiện lại thao tác kết ca.',
+                timeout: 10000
+            });
+        }
         $ionicPopup.show({
             title: 'Kết ca cuối ngày',
             subTitle: 'Tất cả thông tin hóa đơn sẽ được xóa hết và tồn quỹ đầu ca sẽ được thiết lập về 0.',
@@ -4505,7 +4548,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                                 completeShift = angular.toJson(completeShift);
                                 completeShift = JSON.parse(completeShift);
-                                console.log('completeShift', completeShift);
+                                console.log('dataCompleteShift', completeShift);
                                 socket.emit('completeShift', completeShift);
                             });
                         }
@@ -5397,6 +5440,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     };
 
     $scope.removeAll = function (item, $event) {
+        $scope.pinItem = null;
         $scope.selectedItem = item;
         $scope.checkRemoveItem(-$scope.selectedItem.quantity, $scope.selectedItem);
         $scope.selectedItem.changeQuantity = null;
@@ -5495,3 +5539,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         });
     };
 }
+
+//Kết ca lúc offline thì khi online lại thì data sẽ vẫn còn trên server.
+
+//Điều chỉnh lại cấu trúc dữ liệu cho hàng tách món.
+//Cấu trúc lại logs
+//Gửi lên server cấu hình tách món
+//Merge lại theo cấu trúc logs mới.

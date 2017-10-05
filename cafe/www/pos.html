@@ -84,7 +84,8 @@
           </div>
           <ion-scroll delegate-handle="orders-details" class="orders-details" ng-show="!showOrderDiscount" overflow-scroll="false">
             <ion-list class="orders-details" ng-show="!showOption" tabindex="2">
-                <ion-item style="cursor: pointer;" class="item item-icon-left border-0px" ng-class="{'warning': $index == tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex, 'blu-dark': i.isChild != null}" ng-repeat="i in tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails track by $index" on-tap="openItemOption(i,$index)">
+                <ion-item style="cursor: pointer; overflow:visible;" class="item item-icon-left border-0px" ng-class="{'warning': $index == tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex, 'blu-dark': i.isChild != null}" ng-repeat="i in tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails track by $index" on-tap="openItemOption(i,$index)">
+                    <div ng-if="i.isChild" style="position: absolute; top: -12px; right: -10px; width: 25px; height: 25px; z-index: 5; display: none;"><i class="ion-paperclip" style="font-size: 25px;"></i></div>
                     <div ng-show="!i.timer && !i.endTime">
                         <span class="icon" style="border: 0px solid green;" ng-show="i.newOrderCount==0" on-tap="changeQuantity(1,i,$event)" ng-class="{'font20': getQuatityLength(p.quantity) > 2,'font16': getQuatityLength(p.quantity) > 3,'font14': getQuatityLength(p.quantity) > 5}">
                             {{i.quantity}}
@@ -96,7 +97,7 @@
                             <span class="font12 balanced">+{{i.newOrderCount}}</span>
                         </span>
                         <!-- Nút tăng giảm số lượng-->
-                        <div class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;" ng-show="!i.isChild">
+                        <div class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;">
                             <button on-tap="changeQuantity(1, i, $event)" style="margin-bottom: 4px; border: none; background-color:transparent; z-index: 1;"><i style="border-bottom: 1px solid black; padding-bottom: 2px;" class="ion-chevron-up"></i></button><br />
                             <button on-tap="fastRemoveItem(1, i, $event)" style="background-color: transparent;border: none; z-index: 1;"><i class="ion-chevron-down"></i></button>
                         </div>
@@ -131,8 +132,8 @@
                             <span ng-show="!i.timer" class="right font14 assertive">{{i.blockCount}}</span>
                         </div>
                     </div>
-                    <div class="pin-btn" ng-show="!i.isChild && printSetting.unGroupItem">
-                        <button class="button-small button button-clear" ng-class="{'button-assertive': selectedItemIndex == $index && pinItem}" on-tap="pin(i,$index,$event)"><i class="ion-pin font20"></i></button>
+                    <div class="pin-btn" ng-show="!i.isChild && printSetting.unGroupItem" style="position: absolute; right: 0px;">
+                        <button class="button-small button button-clear" ng-class="{'button-assertive': selectedItemIndex == $index && pinItem}" on-tap="pin(i,$index,$event)" title="Thêm tem/nhãn"><i class="ion-ios-pricetags font16"></i></button>
                     </div>
                 </ion-item>
             </ion-list>
@@ -730,7 +731,7 @@
                     <ul class="list">
                         <li class="item" ng-repeat="i in modalSplitOrder.fOrder.saleOrder.orderDetails track by $index" ng-show="i.quantity > 0" on-tap="pickToSplitOrder(i)">
                           <span class="left quantity">{{i.quantity}}</span>
-                          {{i.itemName}}
+                          {{i.isChild}} {{i.itemName}}
                         </li>
                     </ul>
                   </ion-scroll>
