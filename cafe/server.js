@@ -569,6 +569,8 @@ MongoClient.connect(url, function (err, database) {
             });
         };
 
+
+        //GroupBy cho hàng hóa bình thường.
         var groupBy = function (arrLog) {
             var result = arrLog.reduce(function (arr, item) {
                 var index = arr.findIndex(function (i) { return i.itemID == item.itemID });
@@ -609,6 +611,50 @@ MongoClient.connect(url, function (err, database) {
             return result;
         };
 
+
+        //GroupBy cho hàng hóa tách món kiểu trà sữa, hàng combo.
+        var groupByUngroupItem = function (arrLog) {
+            var result = arrLog.reduce(function (arr, item) {
+                var index = arr.findIndex(function (i) { return i.detailID == item.detailID });
+                if (index == -1) {
+                    //Chưa có
+                    var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
+                    var logs = [{
+                        action: item.action,
+                        timestamp: item.timestamp,
+                        quantity: item.quantity,
+                        deviceID: item.deviceID,
+                    }]
+                    arr.push({
+                        itemID: item.itemID,
+                        itemName: item.itemName,
+                        totalQuantity: quantity,
+                        detailID: item.detailID,
+                        logs: logs
+                    });
+                }
+                else {
+                    //Có
+                    var indexLog = arr[index].logs.findIndex(function (i) { return i.timestamp == item.timestamp });
+                    //Distinct value
+                    if (indexLog == -1) {
+                        arr[index].logs.push({
+                            action: item.action,
+                            timestamp: item.timestamp,
+                            quantity: item.quantity,
+                            deviceID: item.deviceID
+                        });
+                        //Cập nhật lại total
+                        var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
+                        arr[index].totalQuantity += quantity;
+                    }
+                }
+                return arr;
+            }, []);
+            return result;
+        }
+
+
         var time = 0;
         var findOrder = function (serverLog, tables, tableID, orderID) {
             var log = serverLog.find(function (l) { return l.tableID == tableID && orderID == tableID });
@@ -642,6 +688,7 @@ MongoClient.connect(url, function (err, database) {
                 return null;
             }
         }
+
 
         //Hàm xử lý khi client báo bếp, hủy món đã báo bếp, tách hóa đơn, ngưng tính thời gian,...
         var updateOrder = function (id, data) {
@@ -692,52 +739,102 @@ MongoClient.connect(url, function (err, database) {
                                         });
                                         order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
 
-                                        //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
-                                        //Điều chỉnh data cho phù hợp
-                                        //Luôn giữ log chỉ tính toán và cập nhật lại số lượng.
-                                        //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
-                                        var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
-                                            return order.saleOrder.logs.findIndex(function (i) {
-                                                return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                            }) < 0;
-                                        });
-                                        var arr = order.saleOrder.logs.concat(orderClient);
-                                        order.saleOrder.logs = arr; //Cập nhật log cho server.
+                                        if (!data.info.isUngroupItem) { //Xử lý cho đơn hàng bình thường.
 
-                                        //B2: Tính toán lại số lượng dựa trên logs
-                                        var groupLog = groupBy(order.saleOrder.logs);
-
-                                        //B3: Cập nhật lại số lượng item
-                                        groupLog.forEach(function (log) {
-                                            var index = order.saleOrder.orderDetails.findIndex(function (d) {
-                                                return d.itemId == log.itemID;
+                                            //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
+                                            //Điều chỉnh data cho phù hợp
+                                            //Luôn giữ log chỉ tính toán và cập nhật lại số lượng.
+                                            //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                            var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                return order.saleOrder.logs.findIndex(function (i) {
+                                                    return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                }) < 0;
                                             });
-                                            if (log.totalQuantity > 0 && index < 0) {
-                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
-                                                var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                order.saleOrder.orderDetails.push(itemDetail);
-                                            }
-                                            else if (log.totalQuantity > 0 && index >= 0) {
-                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
-                                                var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                itemDetail.quantity = log.totalQuantity;
-                                            }
-                                            else if (log.totalQuantity <= 0 && index >= 0) {
-                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
-                                                var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
-                                                order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
-                                            }
-                                            else if (log.totalQuantity <= 0 && index < 0) {
-                                                //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
-                                            }
-                                        });
+                                            var arr = order.saleOrder.logs.concat(orderClient);
+                                            order.saleOrder.logs = arr; //Cập nhật log cho server.
 
-                                        //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
-                                        //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
-                                        if (data.info.action !== 'splitOrder') {
-                                            order.saleOrder.logs.forEach(function (log) {
-                                                if (!log.status) log.status = true;
+                                            //B2: Tính toán lại số lượng dựa trên logs
+                                            var groupLog = groupBy(order.saleOrder.logs);
+
+                                            //B3: Cập nhật lại số lượng item
+                                            groupLog.forEach(function (log) {
+                                                var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                    return d.itemId == log.itemID;
+                                                });
+                                                if (log.totalQuantity > 0 && index < 0) {
+                                                    //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                    var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                    order.saleOrder.orderDetails.push(itemDetail);
+                                                }
+                                                else if (log.totalQuantity > 0 && index >= 0) {
+                                                    //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                    var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                    itemDetail.quantity = log.totalQuantity;
+                                                }
+                                                else if (log.totalQuantity <= 0 && index >= 0) {
+                                                    //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                    var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                                    order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index < 0) {
+                                                    //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                }
                                             });
+
+                                            //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                            //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
+                                            if (data.info.action !== 'splitOrder') {
+                                                order.saleOrder.logs.forEach(function (log) {
+                                                    if (!log.status) log.status = true;
+                                                });
+                                            }
+                                        }
+                                        else { //Xử lý cho đơn hàng tách món, kiểu trà sữa.
+                                            //Điều chỉnh data cho phù hợp
+                                            //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                            var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                return order.saleOrder.logs.findIndex(function (i) {
+                                                    return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID && i.detailID == item.detailID;
+                                                }) < 0;
+                                            });
+                                            var arr = order.saleOrder.logs.concat(orderClient);
+                                            order.saleOrder.logs = arr; //Cập nhật log cho server.
+
+                                            //B2: Tính toán lại số lượng dựa trên logs
+                                            var groupLog = groupByUngroupItem(order.saleOrder.logs);
+
+                                            //B3: Cập nhật lại số lượng item
+                                            groupLog.forEach(function (log) {
+                                                var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                    return d.itemId == log.itemID && d.detailID == log.detailID;
+                                                });
+                                                if (log.totalQuantity > 0 && index < 0) {
+                                                    //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                    var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    order.saleOrder.orderDetails.push(itemDetail);
+                                                }
+                                                else if (log.totalQuantity > 0 && index >= 0) {
+                                                    //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                    var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    itemDetail.quantity = log.totalQuantity;
+                                                }
+                                                else if (log.totalQuantity <= 0 && index >= 0) {
+                                                    //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                    var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index < 0) {
+                                                    //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                }
+                                            });
+
+                                            //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                            //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
+                                            if (data.info.action !== 'splitOrder') {
+                                                order.saleOrder.logs.forEach(function (log) {
+                                                    if (!log.status) log.status = true;
+                                                });
+                                            }
                                         }
 
                                         //Cập nhật lại revision

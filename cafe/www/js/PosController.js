@@ -1263,6 +1263,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 console.log('Socket reconnecting error', e);
             });
 
+            //GroupBy cho hàng hóa bình thường.
             var groupBy = function (arrLog) {
                 var result = arrLog.reduce(function (arr, item) {
                     var index = arr.findIndex(function (i) { return i.itemID == item.itemID });
@@ -1303,6 +1304,48 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return result;
             };
 
+            //GroupBy cho hàng hóa tách món kiểu trà sữa, hàng combo.
+            var groupByUngroupItem = function (arrLog) {
+                var result = arrLog.reduce(function (arr, item) {
+                    var index = arr.findIndex(function (i) { return i.detailID == item.detailID });
+                    if (index == -1) {
+                        //Chưa có
+                        var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
+                        var logs = [{
+                            action: item.action,
+                            timestamp: item.timestamp,
+                            quantity: item.quantity,
+                            deviceID: item.deviceID,
+                        }]
+                        arr.push({
+                            itemID: item.itemID,
+                            itemName: item.itemName,
+                            totalQuantity: quantity,
+                            detailID: item.detailID,
+                            logs: logs
+                        });
+                    }
+                    else {
+                        //Có
+                        var indexLog = arr[index].logs.findIndex(function (i) { return i.timestamp == item.timestamp });
+                        //Distinct value
+                        if (indexLog == -1) {
+                            arr[index].logs.push({
+                                action: item.action,
+                                timestamp: item.timestamp,
+                                quantity: item.quantity,
+                                deviceID: item.deviceID
+                            });
+                            //Cập nhật lại total
+                            var quantity = item.action == "BB" ? item.quantity : item.action == "H" ? -item.quantity : 0;
+                            arr[index].totalQuantity += quantity;
+                        }
+                    }
+                    return arr;
+                }, []);
+                return result;
+            }
+
             socket.on('updateOrder', function (msg) {
                 console.log('updateOrder', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
@@ -1326,63 +1369,117 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         $scope.tables[x].tableOrder[0].saleOrder = angular.copy(msg.tables[0].tableOrder[0].saleOrder);
                                     }
                                     else {
-                                        //$scope.tables[x].tableOrder[orderIndex].saleOrder = angular.copy(msg.tables[0].tableOrder[0].saleOrder);
+                                        
+                                        if (!msg.info.isUngroupItem) { //Cập nhật cho hàng hóa kiểu bình thường
+                                            //Điều chỉnh data cho phù hợp
+                                            //B1: Merge log giữa client và server có distinct
+                                            //var orderServer = msg.tables[0].tableOrder[0].saleOrder.logs.filter(function (item) {
+                                            //    return $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.findIndex(function (i) {
+                                            //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                            //    }) < 0;
+                                            //});
 
-                                        //Điều chỉnh data cho phù hợp
-                                        //B1: Merge log giữa client và server có distinct
-                                        //var orderServer = msg.tables[0].tableOrder[0].saleOrder.logs.filter(function (item) {
-                                        //    return $scope.tables[x].tableOrder[orderIndex].saleOrder.logs.findIndex(function (i) {
-                                        //        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                        //    }) < 0;
-                                        //});
-
-                                        var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
-                                        var orderClient = z.logs.filter(function (item) {
-                                            return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
-                                                return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                            }) < 0;
-                                        });
-
-                                        //z.logs = z.logs.concat(orderServer);
-                                        orderServer = msg.tables[0].tableOrder[0].saleOrder.logs;
-                                        z.logs = orderClient.concat(orderServer);
-
-                                        //B2: Tính toán lại số lượng dựa trên logs
-                                        var groupLog = groupBy(z.logs);
-
-                                        //B3: Cập nhật lại số lượng item
-                                        groupLog.forEach(function (log) {
-                                            var index = z.orderDetails.findIndex(function (d) {
-                                                return d.itemId == log.itemID;
+                                            var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
+                                            var orderClient = z.logs.filter(function (item) {
+                                                return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
+                                                    return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                }) < 0;
                                             });
-                                            if (log.totalQuantity > 0 && index < 0) {
-                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
-                                                var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                z.orderDetails.push(itemDetail);
-                                            }
-                                            else if (log.totalQuantity > 0 && index >= 0) {
-                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
-                                                var itemDetail = z.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                itemDetail.quantity = log.totalQuantity;
-                                                //Cập nhật lại trạng thái của order chưa báo bếp.
-                                                //if (itemDetail.newOrderCount > 0) 
-                                                itemDetail.quantity += itemDetail.newOrderCount;
-                                                itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
-                                                //$scope.watchCallback(null, null);
-                                            }
-                                            else if (log.totalQuantity <= 0 && index >= 0) {
-                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
-                                                var itemDetailIndex = z.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
-                                                z.orderDetails.splice(itemDetailIndex, 1);
-                                            }
-                                            else if (log.totalQuantity <= 0 && index < 0) {
-                                                //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
-                                            }
-                                        });
-                                        $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
-                                        $timeout(function () {
-                                            $scope.watchCallback(null, null);
-                                        }, 150);
+
+                                            //z.logs = z.logs.concat(orderServer);
+                                            orderServer = msg.tables[0].tableOrder[0].saleOrder.logs;
+                                            z.logs = orderClient.concat(orderServer);
+
+                                            //B2: Tính toán lại số lượng dựa trên logs
+                                            var groupLog = groupBy(z.logs);
+
+                                            //B3: Cập nhật lại số lượng item
+                                            groupLog.forEach(function (log) {
+                                                var index = z.orderDetails.findIndex(function (d) {
+                                                    return d.itemId == log.itemID;
+                                                });
+                                                if (log.totalQuantity > 0 && index < 0) {
+                                                    //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
+                                                    var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                    z.orderDetails.push(itemDetail);
+                                                }
+                                                else if (log.totalQuantity > 0 && index >= 0) {
+                                                    //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
+                                                    var itemDetail = z.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                    itemDetail.quantity = log.totalQuantity;
+                                                    //Cập nhật lại trạng thái của order chưa báo bếp.
+                                                    //if (itemDetail.newOrderCount > 0) 
+                                                    itemDetail.quantity += itemDetail.newOrderCount;
+                                                    itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
+                                                    //$scope.watchCallback(null, null);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index >= 0) {
+                                                    //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
+                                                    var itemDetailIndex = z.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                                    z.orderDetails.splice(itemDetailIndex, 1);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index < 0) {
+                                                    //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                }
+                                            });
+                                            $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
+                                            $timeout(function () {
+                                                $scope.watchCallback(null, null);
+                                            }, 150);
+                                        }
+                                        else { //Cập nhật cho hàng hóa tách món kiểu trà sữa,...
+
+                                            //Điều chỉnh data cho phù hợp
+                                            //B1: Merge log giữa client và server có distinct
+
+                                            var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
+                                            var orderClient = z.logs.filter(function (item) {
+                                                return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
+                                                    return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID && i.detailID == item.detailID;
+                                                }) < 0;
+                                            });
+
+                                            //z.logs = z.logs.concat(orderServer);
+                                            orderServer = msg.tables[0].tableOrder[0].saleOrder.logs;
+                                            z.logs = orderClient.concat(orderServer);
+
+                                            //B2: Tính toán lại số lượng dựa trên logs
+                                            var groupLog = groupByUngroupItem(z.logs);
+
+                                            //B3: Cập nhật lại số lượng item
+                                            groupLog.forEach(function (log) {
+                                                var index = z.orderDetails.findIndex(function (d) {
+                                                    return d.itemId == log.itemID && d.detailID == log.detailID;
+                                                });
+                                                if (log.totalQuantity > 0 && index < 0) {
+                                                    //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
+                                                    var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    z.orderDetails.push(itemDetail);
+                                                }
+                                                else if (log.totalQuantity > 0 && index >= 0) {
+                                                    //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
+                                                    var itemDetail = z.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    itemDetail.quantity = log.totalQuantity;
+                                                    //Cập nhật lại trạng thái của order chưa báo bếp.
+                                                    //if (itemDetail.newOrderCount > 0) 
+                                                    itemDetail.quantity += itemDetail.newOrderCount;
+                                                    itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
+                                                    //$scope.watchCallback(null, null);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index >= 0) {
+                                                    //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
+                                                    var itemDetailIndex = z.orderDetails.findIndex(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                    z.orderDetails.splice(itemDetailIndex, 1);
+                                                }
+                                                else if (log.totalQuantity <= 0 && index < 0) {
+                                                    //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                }
+                                            });
+                                            $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
+                                            $timeout(function () {
+                                                $scope.watchCallback(null, null);
+                                            }, 150);
+                                        }
                                     }
 
                                     $timeout(function () {
@@ -2349,23 +2446,25 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.pickToSplitOrder = function (t) {
-        t.quantity -= 1;
+        console.log($scope.modalSplitOrder.fOrder.saleOrder.orderDetails);
+        var quantity = t.quantity;
+        //t.quantity -= 1;
+        t.quantity -= quantity;
         if (!$scope.splitOrder) {
-            $scope.splitOrder = {};
-            $scope.splitOrder.saleOrder = {};
-            angular.copy(saleOrder, $scope.splitOrder.saleOrder);
+            $scope.splitOrder = { 
+                saleOrder: angular.copy(saleOrder)
+            };
             if (!$scope.splitOrder.saleOrder.saleOrderUuid) $scope.splitOrder.saleOrder.saleOrderUuid = uuid.v1();
             if (!$scope.splitOrder.saleOrder.createdBy) $scope.splitOrder.saleOrder.createdBy = $scope.userSession.userId;
             if (!$scope.splitOrder.saleOrder.storeId) $scope.splitOrder.saleOrder.storeId = $scope.currentStore.storeID;
-
         }
         var itemIndex = findIndex($scope.splitOrder.saleOrder.orderDetails, 'itemId', t.itemId);
         if (itemIndex != null) {
             $scope.splitOrder.saleOrder.orderDetails[itemIndex].quantity++;
         } else {
-            var temp = {};
-            angular.copy(t, temp);
-            temp.quantity = 1;
+            var temp = angular.copy(t);
+            //angular.copy(t, temp);
+            temp.quantity = quantity;
             $scope.splitOrder.saleOrder.orderDetails.push(temp);
         }
     }
@@ -2578,7 +2677,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             }
             if ($scope.pinItem) {
-                flagItem.isChild = '--';
+                flagItem.isChild = '—';
                 var detailIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.lastInputedIndex;
                 if (detailIndex !== undefined || detailIndex !== null) {
                     flagItem.parentID = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[detailIndex].detailID;
@@ -2718,6 +2817,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
             }
 
+            $scope.pinItem = null;
             $scope.showOption = false;
             // Kiem tra co mon trong hoa don can bao bep hay ko, neu hoa don ko co cap nhat mon moi thi ko bao bep nua
             //debugger;
@@ -2748,7 +2848,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                     if($scope.printSetting.unGroupItem) {
                         obj.detailID = printOrder.saleOrder.orderDetails[i].detailID;
-                        obj.affectedID = printOrder.saleOrder.orderDetails[i].detailID;
+                        //obj.affectedID = printOrder.saleOrder.orderDetails[i].detailID;
                     }
                     untrackedItem.push(obj);
                 }
@@ -2815,7 +2915,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                         else {
                             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
-                                new UngroupLog(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, untrackedItem[x].detailID, untrackedItem[x].affectedID, false));
+                                new UngroupLog(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, untrackedItem[x].detailID, false));
                         }
                     }
                     //$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].logs.push(new Log());
@@ -2838,7 +2938,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             author: $scope.userSession.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
-                            action: 'BB'
+                            action: 'BB',
+                            isUngroupItem: $scope.printSetting.unGroupItem
                         }
                     }
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -3008,6 +3109,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
 
         if (num) {
+            debugger;
+            if ($scope.printSetting.unGroupItem && num > 0 && !item.isChild) {
+                toaster.pop('error', "", 'Thao tác tăng số lượng không thực hiện được, vui lòng tách thành món mới.');
+                if ($event) {
+                    $event.stopPropagation();
+                    $event.preventDefault();
+                }
+                return;
+            }
             var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == $scope.userSession.userId });
             if (sWIndex < 0) {
                 $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
@@ -3038,10 +3148,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 $scope.showOption = false;
             }
             calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
-
+            var childItems = [];
             if ($scope.printSetting.unGroupItem) {
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.forEach(function (d) {
                     if (d.isChild && d.parentID == item.detailID) {
+                        childItems.push({
+                            itemID: d.itemId,
+                            itemName: d.itemName,
+                            detailID: d.detailID,
+                            quantity: d.quantity
+                        });
                         d.quantity = 0;
                     }
                 });
@@ -3068,12 +3184,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
+                    debugger;
                     if (!$scope.printSetting.unGroupItem) {
                         currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
                             new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
                     } else {
                         currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
-                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, uuid.v1(), item.detailID, false));
+                            new UngroupLog(item.itemId, item.itemName, "H", -num, timestamp, deviceID, item.detailID, false));
+                        //Thêm logs của các child items bị xóa do xóa item chính.
+                        childItems.forEach(function (i) {
+                            currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                                new UngroupLog(i.itemID, i.itemName, "H", i.quantity, timestamp, deviceID, i.detailID, false));
+                        });
                     }
                     
                     var completeOrder = {
@@ -3089,7 +3211,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             action: "clearItem",
                             deviceID: deviceID,
                             timestamp: timestamp,
-                            author: $scope.userSession.userId
+                            author: $scope.userSession.userId,
+                            isUngroupItem: $scope.printSetting.unGroupItem
                         }
                     };
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
@@ -3125,7 +3248,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
                     } else {
                         currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
-                            new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, uuid.v1(), item.detailID, false));
+                            new UngroupLog(item.itemId, item.itemName, "H", -num, timestamp, deviceID, item.detailID, false));
+                        //Thêm logs của các child items bị xóa do xóa item chính.
+                        childItems.forEach(function (i) {
+                            currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
+                                new UngroupLog(i.itemID, i.itemName, "H", i.quantity, timestamp, deviceID, i.detailID, false));
+                        });
                     }
                     var updateData = {
                         "companyId": $scope.userSession.companyId,
@@ -3140,7 +3268,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             author: $scope.userSession.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
-                            action: "H"
+                            action: "H",
+                            isUngroupItem: $scope.printSetting.unGroupItem
                         }
                     }
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })

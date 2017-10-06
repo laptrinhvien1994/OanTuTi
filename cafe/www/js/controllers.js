@@ -102,7 +102,7 @@ var Log = function (itemID, itemName, action, quantity, timestamp, deviceID, sta
 }
 
 //Kiểu Log cho các đơn hàng tách món.
-var UngroupLog = function (itemID, itemName, action, quantity, timestamp, deviceID, detailID, affectedID, status) {
+var UngroupLog = function (itemID, itemName, action, quantity, timestamp, deviceID, detailID, status) {
     this.itemID = itemID; //ID item
     this.itemName = itemName; //Tên item
     this.action = action; //Tên action trong các loại BB(Báo bếp) hoặc H(Hủy).
@@ -110,7 +110,7 @@ var UngroupLog = function (itemID, itemName, action, quantity, timestamp, device
     this.timestamp = timestamp; //Thời gian thực hiện action.
     this.deviceID = deviceID; //ID định danh cho mỗi thiết bị.
     this.detailID = detailID; //ID cho mỗi dòng tương ứng với detail nào.
-    this.affectedID = affectedID; //Item chịu tác động của action. Nếu là BB thì logID và affectedID bằng nhau, nếu là hủy món thì affectedID là 1 trong số các logID đã tồn tại.
+    //this.affectedID = affectedID; //Item chịu tác động của action. Nếu là BB thì logID và affectedID bằng nhau, nếu là hủy món thì affectedID là 1 trong số các logID đã tồn tại.
     this.status = status; //Trạng thái action đã thực hiện trong 2 loại  false(Offline, mất kết nối hoặc unsync) hoặc true(Online sync).
 }
 
@@ -257,9 +257,10 @@ function calculateTotal(saleOrder) {
 }
 
 function prepProcessStamps(saleOrder) {
+    debugger;
     // Ghép món phụ vào cùng 1 tem với món chính
     for (var i = 0; i < saleOrder.orderDetails.length; i++) {
-        var lastItem;
+        var lastItem = 0;
         if (typeof saleOrder.orderDetails[i].isChild == 'undefined')
             lastItem = i;
         if (!saleOrder.orderDetails[lastItem].childItem) saleOrder.orderDetails[lastItem].childItem = [];

@@ -23,7 +23,7 @@ angular.module('sunoPos.printerFactory', [])
             openNewWindow(html);
             return;
         }
-        var hiddenFrame = $('<iframe style="display: none"></iframe>').appendTo('body')[0];
+        var hiddenFrame = $('<iframe style="visibility: hidden; border: none; pointer-events: none;"></iframe>').appendTo('body')[0];
 
         var doc;
         if (hiddenFrame.contentDocument) { // DOM
