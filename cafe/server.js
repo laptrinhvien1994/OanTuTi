@@ -811,7 +811,16 @@ MongoClient.connect(url, function (err, database) {
                                                 if (log.totalQuantity > 0 && index < 0) {
                                                     //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
                                                     var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
-                                                    order.saleOrder.orderDetails.push(itemDetail);
+                                                    //Nếu item chưa có là parent thì push vào như bình thường.
+                                                    if (!itemDetail.isChild) {
+                                                        order.saleOrder.orderDetails.push(itemDetail);
+                                                    }
+                                                    else { //Nếu item chưa có là child
+                                                        //Kiếm parent của item đó.
+                                                        var parentDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.detailID == itemDetail.parentID });
+                                                        //Push ngay bên dưới parent.
+                                                        order.saleOrder.orderDetails.splice(parentDetailIndex + 1, 0, itemDetail);
+                                                    }
                                                 }
                                                 else if (log.totalQuantity > 0 && index >= 0) {
                                                     //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
@@ -828,7 +837,22 @@ MongoClient.connect(url, function (err, database) {
                                                 }
                                             });
 
-                                            //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                            //B4: Sắp xếp lại parent và child Item.
+                                            var parentItemList = order.saleOrder.orderDetails.filter(function (d) { return !d.isChild });
+                                            var addCount = 0;
+                                            var length = parentItemList.length;
+                                            for (var x = 0; x < length; x++) {
+                                                var pIndex = x + addCount;
+                                                var childItemList = order.saleOrder.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
+                                                for (var y = childItemList.length - 1; y >= 0; y--) {
+                                                    parentItemList.splice(pIndex + 1, 0, childItemList[y]);
+                                                    addCount++;
+                                                }
+                                            }
+
+                                            order.saleOrder.orderDetails = parentItemList;
+
+                                            //B5: Cập nhật status cho mỗi dòng log là đã cập nhật
                                             //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
                                             if (data.info.action !== 'splitOrder') {
                                                 order.saleOrder.logs.forEach(function (log) {

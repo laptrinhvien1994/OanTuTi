@@ -1042,7 +1042,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         t.tableOrder.forEach(function (order) {
                                             var orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
                                             //Thông báo về cho chỉ client đã thực hiện Init.
-                                            if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >=0 ) {
+                                            if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
                                                 lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow.tableName, action: orderLog.action });
                                             }
                                         });
@@ -1369,7 +1369,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         $scope.tables[x].tableOrder[0].saleOrder = angular.copy(msg.tables[0].tableOrder[0].saleOrder);
                                     }
                                     else {
-                                        
+
                                         if (!msg.info.isUngroupItem) { //Cập nhật cho hàng hóa kiểu bình thường
                                             //Điều chỉnh data cho phù hợp
                                             //B1: Merge log giữa client và server có distinct
@@ -1454,7 +1454,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 if (log.totalQuantity > 0 && index < 0) {
                                                     //Nếu số lượng trong log > 0 và item chưa có trong ds order của client thì thêm vào danh sách details
                                                     var itemDetail = msg.tables[0].tableOrder[0].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
-                                                    z.orderDetails.push(itemDetail);
+                                                    //Nếu item chưa có là parent thì push vào như bình thường.
+                                                    if (!itemDetail.isChild) {
+                                                        z.orderDetails.push(itemDetail);
+                                                    }
+                                                    else { //Nếu item chưa có là child
+                                                        //Kiếm parent của item đó.
+                                                        var parentDetailIndex = z.orderDetails.findIndex(function (d) { return d.detailID == itemDetail.parentID });
+                                                        //Push ngay bên dưới parent.
+                                                        z.orderDetails.splice(parentDetailIndex + 1, 0, itemDetail);
+                                                    }
                                                 }
                                                 else if (log.totalQuantity > 0 && index >= 0) {
                                                     //Nếu số lượng trong log > 0 và item đã có trong ds order của client thì cập nhật lại số lượng
@@ -1475,6 +1484,24 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                     //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
                                                 }
                                             });
+
+                                            //B4: Sắp xếp lại parent và child Item.
+                                            debugger;
+                                            var parentItemList = z.orderDetails.filter(function (d) { return !d.isChild });
+                                            var addCount = 0;
+                                            var length = parentItemList.length; //Gán lại để tránh thay đổi length gây ra sai khi push vào mảng.
+                                            for (var i = 0; i < length; i++) {
+                                                var pIndex = i + addCount;
+                                                var childItemList = z.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
+                                                //Lặp ngược để push cho đúng vị trí khi thêm child cho parent.
+                                                for (var y = childItemList.length - 1; y >= 0; y--) {
+                                                    parentItemList.splice(pIndex + 1, 0, childItemList[y]);
+                                                    addCount++;
+                                                }
+                                            }
+
+                                            z.orderDetails = parentItemList;
+
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
                                             $timeout(function () {
                                                 $scope.watchCallback(null, null);
@@ -1519,7 +1546,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
-                    //Xử lý cho tách hóa đơn.
+                        //Xử lý cho tách hóa đơn.
                     else if (msg.info.action == 'splitOrder') {
 
                         //Cập nhật lại bàn từ Server gửi về.
@@ -1571,7 +1598,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
-                    //Xử lý cho ngừng tính giờ Item
+                        //Xử lý cho ngừng tính giờ Item
                     else if (msg.info.action == 'stopTimer') {
                         //Cập nhật lại bàn từ Server gửi về, vì chỉ gửi 1 bàn và 1 order nên ko cần lặp 2 vòng.
                         debugger;
@@ -1744,7 +1771,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         //console.log(data);
                         return DBTables.$queryDoc({
                             selector: {
-                                'store': {$eq: $scope.currentStore.storeID }
+                                'store': { $eq: $scope.currentStore.storeID }
                             }
                         });
                     })
@@ -2446,12 +2473,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.pickToSplitOrder = function (t) {
-        console.log($scope.modalSplitOrder.fOrder.saleOrder.orderDetails);
+        //console.log($scope.modalSplitOrder.fOrder.saleOrder.orderDetails);
+        //console.log(t);
+
         var quantity = t.quantity;
         //t.quantity -= 1;
         t.quantity -= quantity;
         if (!$scope.splitOrder) {
-            $scope.splitOrder = { 
+            $scope.splitOrder = {
                 saleOrder: angular.copy(saleOrder)
             };
             if (!$scope.splitOrder.saleOrder.saleOrderUuid) $scope.splitOrder.saleOrder.saleOrderUuid = uuid.v1();
@@ -2459,13 +2488,62 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if (!$scope.splitOrder.saleOrder.storeId) $scope.splitOrder.saleOrder.storeId = $scope.currentStore.storeID;
         }
         var itemIndex = findIndex($scope.splitOrder.saleOrder.orderDetails, 'itemId', t.itemId);
-        if (itemIndex != null) {
+        if (itemIndex != null && !$scope.printSetting.unGroupItem) {
             $scope.splitOrder.saleOrder.orderDetails[itemIndex].quantity++;
         } else {
-            var temp = angular.copy(t);
-            //angular.copy(t, temp);
-            temp.quantity = quantity;
-            $scope.splitOrder.saleOrder.orderDetails.push(temp);
+            if (!$scope.printSetting.unGroupItem) {
+                var temp = angular.copy(t);
+                //angular.copy(t, temp);
+                temp.quantity = quantity;
+                $scope.splitOrder.saleOrder.orderDetails.push(temp);
+            }
+            else if ($scope.printSetting.unGroupItem) {
+                debugger;
+                if (!t.isChild) {
+                    //Push parent
+                    var pQuantity = quantity;
+                    var parentTemp = angular.copy(t);
+                    parentTemp.quantity = pQuantity;
+                    $scope.splitOrder.saleOrder.orderDetails.push(parentTemp);
+                    //Kiếm child
+                    var itemChildList = $scope.modalSplitOrder.fOrder.saleOrder.orderDetails.filter(function (d) { return d.isChild && d.parentID == t.detailID; });
+                    //Trừ số lượng của child.
+                    //Push vào ds bên tay phải
+                    itemChildList.forEach(function (item) {
+                        var cQuantity = item.quantity;
+                        item.quantity -= cQuantity;
+                        var childTemp = angular.copy(item);
+                        childTemp.quantity = cQuantity;
+                        $scope.splitOrder.saleOrder.orderDetails.push(childTemp);
+                    });
+                }
+                else {
+                    //Kiếm parent
+                    var parentItem = $scope.modalSplitOrder.fOrder.saleOrder.orderDetails.find(function (d) { return d.detailID == t.parentID });
+                    //Kiếm sibling của parent
+                    var itemChildList = $scope.modalSplitOrder.fOrder.saleOrder.orderDetails.filter(function (d) { return d.isChild && d.parentID == parentItem.detailID; });
+                    //Trừ số lượng của parent và sibling
+                    //Push vào ds bên tay phải.
+                    var pQuantity = parentItem.quantity;
+                    parentItem.quantity -= pQuantity;
+                    var parentTemp = angular.copy(parentItem);
+                    parentTemp.quantity = pQuantity;
+                    $scope.splitOrder.saleOrder.orderDetails.push(parentTemp);
+                    itemChildList.forEach(function (item) {
+                        var cQuantity = item.quantity;
+                        //Do đã cập nhật ở trên rồi nên sẽ bị quantity về 0 nếu item trùng với t truyền vào.
+                        if (item.detailID == t.detailID) {
+                            cQuantity = quantity;
+                        } else {
+                            item.quantity -= cQuantity;
+                        }
+                        var childTemp = angular.copy(item);
+                        childTemp.quantity = cQuantity;
+                        $scope.splitOrder.saleOrder.orderDetails.push(angular.copy(childTemp));
+                    });
+                }
+            }
+
         }
     }
 
@@ -2682,7 +2760,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (detailIndex !== undefined || detailIndex !== null) {
                     flagItem.parentID = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails[detailIndex].detailID;
                 }
-                
+
                 var itemDetail = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.filter(function (d) {
                     return d.isChild && d.parentID == $scope.pinItem.detailID;
                 }).find(function (d) {
@@ -2846,7 +2924,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         itemName: printOrder.saleOrder.orderDetails[i].itemName,
                         quantity: printOrder.saleOrder.orderDetails[i].quantity,
                     }
-                    if($scope.printSetting.unGroupItem) {
+                    if ($scope.printSetting.unGroupItem) {
                         obj.detailID = printOrder.saleOrder.orderDetails[i].detailID;
                         //obj.affectedID = printOrder.saleOrder.orderDetails[i].detailID;
                     }
@@ -2888,11 +2966,36 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                     }
                 }
-
                 for (var i = 0; i < currentOrder.saleOrder.orderDetails.length; i++) {
                     currentOrder.saleOrder.orderDetails[i].newOrderCount = 0;
                     currentOrder.saleOrder.orderDetails[i].comment = '';
                 }
+                //Cập nhật xuống DB Local.
+                DBTables.$queryDoc({
+                    selector: {
+                        'store': { $eq: $scope.currentStore.storeID },
+                        'tableUuid': { $eq: $scope.tableIsSelected.tableUuid }
+                    },
+                    fields: ['_id', '_rev']
+                })
+                .then(function (data) {
+                    if (data.docs.length > 0) {
+                        var table = angular.copy($scope.tableIsSelected);
+                        table._id = data.docs[0]._id;
+                        table._rev = data.docs[0]._rev;
+                        table.store = $scope.currentStore.storeID;
+                        return DBTables.$addDoc(table);
+                    }
+                    return null;
+                })
+                .then(function (data) {
+                    //log for debug.
+                    //console.log(data);
+                })
+                .catch(function (e) {
+                    console.log(e);
+                })
+
                 //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
                 toaster.pop('success', "", 'Đã gửi đơn hàng xuống bếp!');
 
@@ -2909,7 +3012,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     var timestamp = genTimestamp();
                     //console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     for (var x = 0; x < untrackedItem.length; x++) {
-                        if(!$scope.printSetting.unGroupItem){
+                        if (!$scope.printSetting.unGroupItem) {
                             $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.logs.push(
                                 new Log(untrackedItem[x].itemID, untrackedItem[x].itemName, "BB", untrackedItem[x].quantity, timestamp, deviceID, false));
                         }
@@ -3197,7 +3300,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 new UngroupLog(i.itemID, i.itemName, "H", i.quantity, timestamp, deviceID, i.detailID, false));
                         });
                     }
-                    
+
                     var completeOrder = {
                         "companyId": $scope.userSession.companyId,
                         "storeId": $scope.currentStore.storeID,
@@ -5691,3 +5794,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 //Cấu trúc lại logs
 //Gửi lên server cấu hình tách món
 //Merge lại theo cấu trúc logs mới.
+
+
+//Cập nhật lại printed.
+//Cập nhật lại thông báo.
+//Tách ghép hóa đơn ở hàng tách món.

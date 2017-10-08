@@ -298,7 +298,7 @@
                <i class="ion-navicon font16"></i>
             </button>
             <button class="button button-positive button-small right relative switch margin-left-10" on-tap="switchLayout(true)">
-              <i class="ion-android-bar"></i> {{!isInTable?'SƠ ĐỒ BÀN':'THỰC ĐƠN'}}
+              <i ng-if="isInTable" class="ion-android-bar"></i><i ng-if="!isInTable" class="ion-android-apps"></i> {{!isInTable?'SƠ ĐỒ BÀN':'THỰC ĐƠN'}}
             </button>
 
             <button class="button button-small button-clear right hidden-1110" ng-if="isWebView">
