@@ -999,7 +999,22 @@ MongoClient.connect(url, function (err, database) {
                                                     }
                                                 });
 
-                                                //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                                //B4: Sắp xếp lại parent và child Item.
+                                                var parentItemList = order.saleOrder.orderDetails.filter(function (d) { return !d.isChild });
+                                                var addCount = 0;
+                                                var length = parentItemList.length;
+                                                for (var x = 0; x < length; x++) {
+                                                    var pIndex = x + addCount;
+                                                    var childItemList = order.saleOrder.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
+                                                    for (var y = childItemList.length - 1; y >= 0; y--) {
+                                                        parentItemList.splice(pIndex + 1, 0, childItemList[y]);
+                                                        addCount++;
+                                                    }
+                                                }
+
+                                                order.saleOrder.orderDetails = parentItemList;
+
+                                                //B5: Cập nhật status cho mỗi dòng log là đã cập nhật
                                                 //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
                                                 order.saleOrder.logs.forEach(function (log) {
                                                     if (!log.status) log.status = true;

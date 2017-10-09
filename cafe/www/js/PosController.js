@@ -68,6 +68,28 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $ionicSideMenuDelegate.canDragContent(false);
 
+    var utils = {
+        debounce: function(execution, wait, immediate)
+        {
+            wait = 200;
+            if(!window.timeout) window.timeout = null;
+            return function () {
+                var later = function () {
+                    window.timeout = null;
+                    if (!immediate) {
+                        execution();
+                    }
+                };
+                var callNow = immediate && !window.timeout;
+                clearTimeout(window.timeout);
+                window.timeout = setTimeout(later, wait || 200);
+                if (callNow) {
+                    execution();
+                }
+            };
+        }
+    };
+
     //Hàm kiểm tra kết nối internet.
     var checkingInternetConnection = function () {
         return new Promise(function (resolve, reject) {
@@ -778,7 +800,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
                 //console.log('fired');
                 //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
-                updateTableToDB();
+                utils.debounce(updateTableToDB, 300, false)();
+                //updateTableToDB();
                 ////LSFactory.set($scope.currentStore.storeID, {
                 ////    tables: $scope.tables,
                 ////    zone: $scope.tableMap
@@ -796,7 +819,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
                 //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
                 //console.log('fired');
-                updateTableToDB();
+                utils.debounce(updateTableToDB, 300, false)();
                 ////LSFactory.set($scope.currentStore.storeID, {
                 ////    tables: $scope.tables,
                 ////    zone: $scope.tableMap
@@ -1226,7 +1249,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 });
                             }
                         }
-                    }, 1000);
+                    }, 2000);
                 }
                 else {
                     isSocketInitialized = false;
@@ -1259,11 +1282,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             });
 
             socket.on('connect_error', function (e) {
-                console.log('Socket connection is error', e);
+                //console.log('Socket connection is error', e);
             });
 
             socket.on('reconnect_error', function (e) {
-                console.log('Socket reconnecting error', e);
+                //console.log('Socket reconnecting error', e);
             });
 
             //GroupBy cho hàng hóa bình thường.
@@ -1489,7 +1512,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             });
 
                                             //B4: Sắp xếp lại parent và child Item.
-                                            debugger;
                                             var parentItemList = z.orderDetails.filter(function (d) { return !d.isChild });
                                             var addCount = 0;
                                             var length = parentItemList.length; //Gán lại để tránh thay đổi length gây ra sai khi push vào mảng.
@@ -1604,7 +1626,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         //Xử lý cho ngừng tính giờ Item
                     else if (msg.info.action == 'stopTimer') {
                         //Cập nhật lại bàn từ Server gửi về, vì chỉ gửi 1 bàn và 1 order nên ko cần lặp 2 vòng.
-                        debugger;
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
                                 var order = $scope.tables[x].tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid });
@@ -3293,7 +3314,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
 
         if (num) {
-            debugger;
             if ($scope.isUngroupItem && num > 0 && !item.isChild) {
                 toaster.pop('error', "", 'Thao tác tăng số lượng không thực hiện được, vui lòng tách thành món mới.');
                 if ($event) {
@@ -3368,7 +3388,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     currentTableOrder.push(curtentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
-                    debugger;
                     if (!$scope.isUngroupItem) {
                         currentTableOrder[0].tableOrder[0].saleOrder.logs.push(
                             new Log(item.itemId, item.itemName, "H", -num, timestamp, deviceID, false));
@@ -5059,7 +5078,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
         $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
         if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
-            updateTableToDB();
+            utils.debounce(updateTableToDB, 300, false)();
+            //updateTableToDB();
             //LSFactory.set($scope.currentStore.storeID, {
             //    tables: $scope.tables,
             //    zone: $scope.tableMap
@@ -5121,7 +5141,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
         if (item.startTime) {
             if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
-                updateTableToDB();
+                utils.debounce(updateTableToDB, 300, false)(); //updateTableToDB();
                 //LSFactory.set($scope.currentStore.storeID, {
                 //    tables: $scope.tables,
                 //    zone: $scope.tableMap
@@ -5524,7 +5544,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     var enterHandler = function () {
         if ($scope.isUseKeyboard) {
-            debugger;
             //Nếu đang ở màn hình sơ đồ bàn và không có chọn hàng hóa ở ô search.
             if ($scope.isInTable && !$scope.onSearchField) {
                 //Xác định context đang chọn.
@@ -5868,7 +5887,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     resolve(data);
                 }
             }, function (error) {
-                debugger;
                 console.log(error);
                 reject("Có lỗi xảy ra khi get Access Token!");
             }, true, 'refreshAccessToken');
