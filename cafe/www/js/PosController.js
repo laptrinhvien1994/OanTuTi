@@ -1,5 +1,5 @@
 angular.module('SunoPosCafe.posController', ['toaster', 'ion-datetime-picker', 'btford.socket-io', "cfp.hotkeys"])
-  .controller('PosCtrl', ["$location", "$ionicPosition", "$ionicSideMenuDelegate", "$ionicHistory", "$timeout", "$interval", "$q", "$scope", "$http", "$rootScope", "AuthFactory", "$state", "$ionicPopover", "$ionicPopup", "$ionicModal", "LSFactory", "$ionicScrollDelegate", "toaster", "printer", "$filter", "hotkeys", "Auth", "$PouchDB", PosCtrl])
+  .controller('PosCtrl', ["$location", "$ionicPosition", "$ionicSideMenuDelegate", "$ionicHistory", "$timeout", "$interval", "$q", "$scope", "$http", "$rootScope", "AuthFactory", "$state", "$ionicPopover", "$ionicPopup", "$ionicModal", "LSFactory", "$ionicScrollDelegate", "toaster", "printer", "$filter", "hotkeys", "Auth", "$PouchDB", "utils", PosCtrl])
   .run(function ($ionicPickerI18n) {
       $ionicPickerI18n.weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
       $ionicPickerI18n.months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
@@ -7,7 +7,7 @@ angular.module('SunoPosCafe.posController', ['toaster', 'ion-datetime-picker', '
       $ionicPickerI18n.cancel = "Hủy";
   });
 
-function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistory, $timeout, $interval, $q, $scope, $http, $rootScope, AuthFactory, $state, $ionicPopover, $ionicPopup, $ionicModal, LSFactory, $ionicScrollDelegate, toaster, printer, $filter, hotkeys, Auth, $PouchDB) {
+function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistory, $timeout, $interval, $q, $scope, $http, $rootScope, AuthFactory, $state, $ionicPopover, $ionicPopup, $ionicModal, LSFactory, $ionicScrollDelegate, toaster, printer, $filter, hotkeys, Auth, $PouchDB, utils) {
     // check platform
     // $scope.timerRunning = true;
     $scope.offline = null;
@@ -28,11 +28,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     var isSocketConnected = false;
     var isSocketInitialized = true;
 
-    //Tạo key để định danh client trong đồng bộ.
+    //Tạo key để định danh client device trong đồng bộ.
     var deviceID = localStorage.getItem('deviceID');
     if (deviceID == null) {
         deviceID = uuid.v1();
         localStorage.setItem('deviceID', deviceID);
+    }
+
+    //cafe version.
+    var version = localStorage.getItem('version');
+    if (version == null) {
+        version = '2.0.0';
+        localStorage.setItem('version', version);
     }
 
     //Tạo timestamp để đồng bộ
@@ -68,27 +75,27 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $ionicSideMenuDelegate.canDragContent(false);
 
-    var utils = {
-        debounce: function(execution, wait, immediate)
-        {
-            wait = 200;
-            if(!window.timeout) window.timeout = null;
-            return function () {
-                var later = function () {
-                    window.timeout = null;
-                    if (!immediate) {
-                        execution();
-                    }
-                };
-                var callNow = immediate && !window.timeout;
-                clearTimeout(window.timeout);
-                window.timeout = setTimeout(later, wait || 200);
-                if (callNow) {
-                    execution();
-                }
-            };
-        }
-    };
+    //var utils = {
+    //    debounce: function(execution, wait, immediate)
+    //    {
+    //        wait = 200;
+    //        if(!window.timeout) window.timeout = null;
+    //        return function () {
+    //            var later = function () {
+    //                window.timeout = null;
+    //                if (!immediate) {
+    //                    execution();
+    //                }
+    //            };
+    //            var callNow = immediate && !window.timeout;
+    //            clearTimeout(window.timeout);
+    //            window.timeout = setTimeout(later, wait || 200);
+    //            if (callNow) {
+    //                execution();
+    //            }
+    //        };
+    //    }
+    //};
 
     //Hàm kiểm tra kết nối internet.
     var checkingInternetConnection = function () {
@@ -1201,11 +1208,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             socket.on('connect', function () {
                 isSocketConnected = true;
                 console.log('Socket is connected');
-                if (!isSocketInitialized) {
+                if (!isSocketInitialized) { //Nếu không phải khởi động app thì trường hợp này là vừa bị mất kết nối socket và kết nối lại.
                     $timeout(function () {
                         if (isSocketConnected) {
                             //Nếu đã có kết nối socket và có bật đồng bộ.
-                            if (manager && socket && $scope.isSync) {
+                            if (socket && $scope.isSync) {
                                 //socket = manager.socket('/');
                                 socket.connect();
                                 //Gửi hết thông tin đơn hàng với logs chưa đồng bộ lên cho server.
@@ -1249,7 +1256,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 });
                             }
                         }
-                    }, 2000);
+                    }, 1000);
                 }
                 else {
                     isSocketInitialized = false;
@@ -1449,9 +1456,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 }
                                             });
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
-                                            $timeout(function () {
-                                                $scope.watchCallback(null, null);
-                                            }, 150);
+                                            //$timeout(function () {
+                                            //    $scope.watchCallback(null, null);
+                                            //}, 150);
+                                            $scope.watchCallback(null, null);
                                         }
                                         else { //Cập nhật cho hàng hóa tách món kiểu trà sữa,...
 
@@ -1499,7 +1507,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                     //if (itemDetail.newOrderCount > 0) 
                                                     itemDetail.quantity += itemDetail.newOrderCount;
                                                     itemDetail.subTotal = itemDetail.quantity * itemDetail.sellPrice;
-                                                    //$scope.watchCallback(null, null);
                                                 }
                                                 else if (log.totalQuantity <= 0 && index >= 0) {
                                                     //Nếu số lượng trong log <= 0 và item đã có trong ds order của client thì xóa item đó đi khỏi danh sách details
@@ -1528,9 +1535,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             z.orderDetails = parentItemList;
 
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
-                                            $timeout(function () {
-                                                $scope.watchCallback(null, null);
-                                            }, 150);
+                                            //$timeout(function () {
+                                            //    $scope.watchCallback(null, null);
+                                            //}, 150);
+                                            $scope.watchCallback(null, null);
                                         }
                                     }
 
@@ -1913,6 +1921,45 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             });
 
+            socket.on('getVersion', function (msg) {
+                var data = {
+                    info: {
+                        action: "getVersion",
+                        author: $scope.userSession.userId,
+                        deviceID: deviceID,
+                        timestamp: genTimestamp(),
+                    },
+                    version: version
+                }
+                if(isSocketConnected)
+                    socket.emit('version', data);
+            });
+
+            socket.on('notification', function (msg) {
+                var title = msg.title;
+                var content = msg.content;
+                var type = msg.type; //alert 1 or mininoti 2
+                var action = msg.action //reload or logout.
+                var isForce = msg.isForce;
+                if (type == 1) {
+                    var pop = $ionicPopup.alert({
+                        title: title,
+                        content: content
+                    });
+                    pop.then(function (d) {
+                        if (action == 'reload') {
+                            window.location.reload(msg.isForce);
+                        }
+                        else if(action == 'logout') {
+                            $scope.logout();
+                        }
+                    })
+                }
+                else if (type == 2) {
+                    toaster.pop('info', title, content);
+                }
+            });
+
             var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
             data = angular.copy(unsyncOrder);
             unsyncOrder = filterInitOrder(data);
@@ -1945,8 +1992,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 initData.shiftId = shiftId;
                 initData = angular.toJson(initData);
                 initData = JSON.parse(initData);
-                console.log('initData', initData);
-                socket.emit('initShift', initData);
+                if (isSocketConnected) {
+                    console.log('initData', initData);
+                    socket.emit('initShift', initData);
+                }
             })
             .catch(function (error) {
                 console.log(error);
@@ -2281,11 +2330,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + oldtable.tableName + '] sang [' + newtable.tableName + ']');
         var timestamp = genTimestamp();
         if ($scope.isSync) {
-            var curtentTable = {};
-            angular.copy($scope.tableIsSelected, curtentTable);
+            //var currentTable = {};
+            var currentTable = angular.copy($scope.tableIsSelected);
 
             var currentTableOrder = [];
-            currentTableOrder.push(curtentTable);
+            currentTableOrder.push(currentTable);
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             var updateData = {
@@ -2429,7 +2478,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.orderIndexIsSelected = index;
 
         if ($scope.isSync) {
-            //var curtentTable = {};
+            //var currentTable = {};
             var currentTable = angular.copy($scope.tableIsSelected);
 
             var currentTables = [];
@@ -2684,7 +2733,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.splitOrder = null;
         toaster.pop('success', "", 'Đã tách hoá đơn [' + $scope.tableIsSelected.tableName + ']');
 
-        if ($scope.isSync) {
+        if ($scope.isSync && isSocketConnected) {
             var currentTableOrder = [];
             currentTableOrder.push($scope.tableIsSelected);
             // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
@@ -2714,8 +2763,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData-splitOrder', updateData);
-                socket.emit('updateOrder', updateData);
+                if (isSocketConnected) {
+                    console.log('updateData-splitOrder', updateData);
+                    socket.emit('updateOrder', updateData);
+                }
             })
             .catch(function (error) {
                 console.log(error);
@@ -3008,10 +3059,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed) {
                     $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed = [];
                 }
+                debugger;
                 // Chi in nhung mon moi order
                 var currentOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected];
-                var printOrder = {};
-                angular.copy(currentOrder, printOrder);
+                //var printOrder = {};
+                var printOrder = angular.copy(currentOrder);
 
 
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
@@ -3032,8 +3084,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                     untrackedItem.push(obj);
                 }
+                var printTemp = angular.copy(printOrder);
                 printOrder.saleOrder.printedCount = currentOrder.saleOrder.printed.length + 1;
                 if (printOrder.saleOrder.printed) delete printOrder.saleOrder.printed;
+                if (printOrder.saleOrder.logs) delete printOrder.saleOrder.logs;
+                if (printOrder.saleOrder.sharedWith) delete printOrder.saleOrder.sharedWith;
                 currentOrder.saleOrder.printed.push(printOrder);
                 var setting = {
                     companyInfo: $scope.companyInfo.companyInfo,
@@ -3068,6 +3123,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         }
                     }
                 }
+
+                var pOrderIndex = currentOrder.saleOrder.printed.indexOf(printOrder);
+                currentOrder.saleOrder.printed[pOrderIndex] = printTemp;
+                //printOrder.saleOrder.printed = printTemp;
                 for (var i = 0; i < currentOrder.saleOrder.orderDetails.length; i++) {
                     currentOrder.saleOrder.orderDetails[i].newOrderCount = 0;
                     currentOrder.saleOrder.orderDetails[i].comment = '';
@@ -3105,10 +3164,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     // var currentTableOrder = [];
                     // currentTableOrder.push($scope.tableIsSelected);
                     // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
-                    var curtentTable = {};
-                    angular.copy($scope.tableIsSelected, curtentTable);
+                    //var currentTable = {};
+                    var currentTable = angular.copy($scope.tableIsSelected);
                     var currentTableOrder = [];
-                    currentTableOrder.push(curtentTable);
+                    currentTableOrder.push(currentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     var timestamp = genTimestamp();
@@ -3156,8 +3215,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         updateData.shiftId = shiftId;
                         updateData = angular.toJson(updateData);
                         updateData = JSON.parse(updateData);
-                        console.log('updateData', updateData);
-                        socket.emit('updateOrder', updateData);
+                        if (isSocketConnected) {
+                            console.log('updateData', updateData);
+                            socket.emit('updateOrder', updateData);
+                        }
                     })
                     .catch(function (error) {
                         console.log(error);
@@ -3183,7 +3244,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                             printHelperData = angular.toJson(printHelperData);
                             printHelperData = JSON.parse(printHelperData);
-                            socket.emit('printHelper', printHelperData);
+                            if (isSocketConnected) {
+                                socket.emit('printHelper', printHelperData);
+                            }
                         })
                         .catch(function (error) {
                             console.log(error);
@@ -3380,12 +3443,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 // currentTableOrder.push($scope.tableIsSelected);
                 // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
                 if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length == 0 && $scope.isSync) {
-                    var curtentTable = {};
-                    angular.copy($scope.tableIsSelected, curtentTable);
+                    var currentTable = {};
+                    angular.copy($scope.tableIsSelected, currentTable);
 
                     var timestamp = genTimestamp();
                     var currentTableOrder = [];
-                    currentTableOrder.push(curtentTable);
+                    currentTableOrder.push(currentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     if (!$scope.isUngroupItem) {
@@ -3427,8 +3490,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         completeOrder.shiftId = shiftId;
                         completeOrder = angular.toJson(completeOrder);
                         completeOrder = JSON.parse(completeOrder);
-                        console.log('completeData', completeOrder);
-                        socket.emit('completeOrder', completeOrder);
+                        if (isSocketConnected) {
+                            console.log('completeData', completeOrder);
+                            socket.emit('completeOrder', completeOrder);
+                        }
                     })
                     .catch(function (error) {
                         console.log(error);
@@ -3438,12 +3503,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                 } else if (checkItem.newOrderCount == 0) {
                     //!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice
-                    var curtentTable = {};
-                    angular.copy($scope.tableIsSelected, curtentTable);
+                    var currentTable = {};
+                    angular.copy($scope.tableIsSelected, currentTable);
 
                     var timestamp = genTimestamp();
                     var currentTableOrder = [];
-                    currentTableOrder.push(curtentTable);
+                    currentTableOrder.push(currentTable);
                     currentTableOrder[0].tableOrder = [];
                     currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                     if (!$scope.isUngroupItem) {
@@ -3484,15 +3549,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         updateData.shiftId = shiftId;
                         updateData = angular.toJson(updateData);
                         updateData = JSON.parse(updateData);
-                        console.log('updateData', updateData);
-                        socket.emit('updateOrder', updateData);
+                        if (isSocketConnected) {
+                            console.log('updateData', updateData);
+                            socket.emit('updateOrder', updateData);
+                        }
                     })
                     .catch(function (error) {
                         console.log(error);
                     })
                 }
             }
-
 
         } else {
             return toaster.pop('warning', "", 'Vui lòng nhập số lượng thay đổi');
@@ -3991,11 +4057,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     if ($scope.isSync) {
                         //debugger;
-                        var curtentTable = {};
-                        angular.copy($scope.tableIsSelected, curtentTable);
+                        var currentTable = {};
+                        angular.copy($scope.tableIsSelected, currentTable);
 
                         var currentTableOrder = [];
-                        currentTableOrder.push(curtentTable);
+                        currentTableOrder.push(currentTable);
                         currentTableOrder[0].tableOrder = [];
                         currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                         var completeOrder = {
@@ -4029,7 +4095,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             console.log('completeOrderData', completeOrder);
                             completeOrder = angular.toJson(completeOrder);
                             completeOrder = JSON.parse(completeOrder);
-                            socket.emit('completeOrder', completeOrder);
+                            if (isSocketConnected) {
+                                socket.emit('completeOrder', completeOrder);
+                            }
                         })
                         .catch(function (error) {
                             console.log(error);
@@ -4062,7 +4130,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                                 printHelperData = angular.toJson(printHelperData);
                                 printHelperData = JSON.parse(printHelperData);
-                                socket.emit('printHelper', printHelperData);
+                                if (isSocketConnected) {
+                                    socket.emit('printHelper', printHelperData);
+                                }
                             })
                             .catch(function (error) {
                                 console.log(error);
@@ -5119,8 +5189,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('updateData-stopTimer', updateData);
-                socket.emit('updateOrder', updateData);
+                if (isSocketConnected) {
+                    console.log('updateData-stopTimer', updateData);
+                    socket.emit('updateOrder', updateData);
+                }
             })
             .catch(function (error) {
                 console.log(error);

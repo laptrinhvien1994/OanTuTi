@@ -94,7 +94,7 @@ var db;
 var io;
 // Connection URL 
 // var url = 'mongodb://172.16.1.3:27017/cafe?maxPoolSize=100';
-//var url = 'mongodb://192.168.1.6:27017/cafe?maxPoolSize=100';
+//var url = 'mongodb://192.168.1.6:27017,192.168.1.8:27017/cafe?replicaSet=rs0&maxPoolSize=100';
 var url = 'mongodb://127.0.0.1:27017/sunocafe?maxPoolSize=100';
 // Use connect method to connect to the Server 
 
@@ -114,6 +114,7 @@ MongoClient.connect(url, function (err, database) {
         if (socket.handshake.query.room) {
             logDebug(socket.handshake.query.room);
             socket.join(socket.handshake.query.room);
+            //socket.emit('getVersion', null);
         }
         socket.on('initShift', function (clientData) {
             //console.log('initShift', data);
@@ -283,6 +284,18 @@ MongoClient.connect(url, function (err, database) {
                 }
             });
         });
+        socket.on('version', function (data) {
+            if (data.version == '2.0.0') {
+                var noti = {
+                    title: '<b>SUNO thông báo</b>',
+                    content: '<p style="text-align: center;">Phiên bản hiện tại bạn đang dùng là phiên bản Cafe mới nhất.</p>',
+                    type: 1, //1 alert, 2 noti.
+                    action: 'logout',
+                    isForce: true
+                }
+                socket.emit('notification', noti);
+            }
+        });
 
         //Lần đầu báo bếp revision là 1, các lần cập nhật sau thì revision tăng lên.
 
@@ -381,73 +394,153 @@ MongoClient.connect(url, function (err, database) {
 
                                                 else if (order.saleOrder.revision > data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length > 0) {
                                                     //Order client đã cũ nhưng phía client gửi lên có sự thay đổi -> Xảy ra conflict.
-                                                    //Merge dữ liệu của client và server
-                                                    //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
-                                                    var errorFont = [];
-                                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
-                                                        return order.saleOrder.logs.findIndex(function (i) {
-                                                            var rs = i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                                            if (rs) { //Có thể xảy ra lỗi font trong socket tại đây.
-                                                                errorFont.push(i.itemID);
-                                                            }
-                                                            return rs;
-                                                        }) < 0;
-                                                    });
-                                                    order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
-                                                    //Dùng cách trên vì có trường hợp update lúc mất kết nối internet, nhưng khi kết nối lại thì server vẫn nhận đc tín hiệu của socket gửi lên nhưng ko emit lại để cập nhật xuống client.
-                                                    //Sau khi có kết nối lại thì client auto reconnect lại gửi tiếp tục những log đó lên server.
-                                                    //order.saleOrder.logs = order.saleOrder.logs.concat(data.tables[i].tableOrder[j].saleOrder.logs);
 
-                                                    //B2: Tính toán lại số lượng dựa trên logs
-                                                    var groupLog = groupBy(order.saleOrder.logs);
+                                                    if (!data.info.isUngroupItem) {
 
-                                                    //B3: Cập nhật lại số lượng item
-                                                    groupLog.forEach(function (log) {
-                                                        var index = order.saleOrder.orderDetails.findIndex(function (d) {
-                                                            return d.itemId == log.itemID;
+                                                        //Merge dữ liệu của client và server
+                                                        //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                                        var errorFont = [];
+                                                        var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                            return order.saleOrder.logs.findIndex(function (i) {
+                                                                var rs = i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                                if (rs) { //Có thể xảy ra lỗi font trong socket tại đây.
+                                                                    errorFont.push(i.itemID);
+                                                                }
+                                                                return rs;
+                                                            }) < 0;
                                                         });
-                                                        if (log.totalQuantity > 0 && index < 0) {
-                                                            //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
-                                                            var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                            order.saleOrder.orderDetails.push(itemDetail);
-                                                        }
-                                                        else if (log.totalQuantity > 0 && index >= 0) {
-                                                            //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
-                                                            var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                            itemDetail.quantity = log.totalQuantity;
-                                                            //Sửa lỗi font trong socket.
-                                                            if (errorFont.length > 0) {
-                                                                var e = errorFont.find(function (eLog) { return eLog == itemDetail.itemId; });
-                                                                if (e) {
-                                                                    var itemName = data.tables[i].tableOrder[j].saleOrder.logs.find(function (l) { return l.itemID == e }).itemName;
-                                                                    itemDetail.itemName = itemName;
+                                                        order.saleOrder.logs = order.saleOrder.logs.concat(orderClient);
+                                                        //Dùng cách trên vì có trường hợp update lúc mất kết nối internet, nhưng khi kết nối lại thì server vẫn nhận đc tín hiệu của socket gửi lên nhưng ko emit lại để cập nhật xuống client.
+                                                        //Sau khi có kết nối lại thì client auto reconnect lại gửi tiếp tục những log đó lên server.
+                                                        //order.saleOrder.logs = order.saleOrder.logs.concat(data.tables[i].tableOrder[j].saleOrder.logs);
+
+                                                        //B2: Tính toán lại số lượng dựa trên logs
+                                                        var groupLog = groupBy(order.saleOrder.logs);
+
+                                                        //B3: Cập nhật lại số lượng item
+                                                        groupLog.forEach(function (log) {
+                                                            var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                                return d.itemId == log.itemID;
+                                                            });
+                                                            if (log.totalQuantity > 0 && index < 0) {
+                                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                                var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                                order.saleOrder.orderDetails.push(itemDetail);
+                                                            }
+                                                            else if (log.totalQuantity > 0 && index >= 0) {
+                                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                                var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                                itemDetail.quantity = log.totalQuantity;
+                                                                //Sửa lỗi font trong socket.
+                                                                if (errorFont.length > 0) {
+                                                                    var e = errorFont.find(function (eLog) { return eLog == itemDetail.itemId; });
+                                                                    if (e) {
+                                                                        var itemName = data.tables[i].tableOrder[j].saleOrder.logs.find(function (l) { return l.itemID == e }).itemName;
+                                                                        itemDetail.itemName = itemName;
+                                                                    }
                                                                 }
                                                             }
-                                                        }
-                                                        else if (log.totalQuantity < 0 && index >= 0) {
-                                                            //Nếu số lượng trong log < 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
-                                                            var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
-                                                            order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
-                                                        }
-                                                        else if (log.totalQuantity < 0 && index < 0) {
-                                                            //Nếu số lượng trong log < 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
-                                                        }
-                                                    });
+                                                            else if (log.totalQuantity < 0 && index >= 0) {
+                                                                //Nếu số lượng trong log < 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                                var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                                                order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                            }
+                                                            else if (log.totalQuantity < 0 && index < 0) {
+                                                                //Nếu số lượng trong log < 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                            }
+                                                        });
 
-                                                    //B4: Cập nhật status cho mỗi dòng log là đã cập nhật.
-                                                    order.saleOrder.logs.forEach(function (log) {
-                                                        if (!log.status) log.status = true;
-                                                    });
+                                                        //B4: Cập nhật status cho mỗi dòng log là đã cập nhật.
+                                                        order.saleOrder.logs.forEach(function (log) {
+                                                            if (!log.status) log.status = true;
+                                                        });
 
-                                                    //Update revision.
-                                                    order.saleOrder.revision++;
+                                                        //Update revision.
+                                                        order.saleOrder.revision++;
 
-                                                    //Thông báo cho client đã bị conflict.
-                                                    //Thêm vào thông báo cho Client về sự thay đổi.
-                                                    msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid, type: 1 });
+                                                        //Thông báo cho client đã bị conflict.
+                                                        //Thêm vào thông báo cho Client về sự thay đổi.
+                                                        msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid, type: 1 });
+
+                                                    } else {
+
+                                                        //Điều chỉnh data cho phù hợp
+                                                        //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                                        var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                            return order.saleOrder.logs.findIndex(function (i) {
+                                                                return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID && i.detailID == item.detailID;
+                                                            }) < 0;
+                                                        });
+                                                        var arr = order.saleOrder.logs.concat(orderClient);
+                                                        order.saleOrder.logs = arr; //Cập nhật log cho server.
+
+                                                        //B2: Tính toán lại số lượng dựa trên logs
+                                                        var groupLog = groupByUngroupItem(order.saleOrder.logs);
+
+                                                        //B3: Cập nhật lại số lượng item
+                                                        groupLog.forEach(function (log) {
+                                                            var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                                return d.itemId == log.itemID && d.detailID == log.detailID;
+                                                            });
+                                                            if (log.totalQuantity > 0 && index < 0) {
+                                                                //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                                var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                                //Nếu item chưa có là parent thì push vào như bình thường.
+                                                                if (!itemDetail.isChild) {
+                                                                    order.saleOrder.orderDetails.push(itemDetail);
+                                                                }
+                                                                else { //Nếu item chưa có là child
+                                                                    //Kiếm parent của item đó.
+                                                                    var parentDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.detailID == itemDetail.parentID });
+                                                                    //Push ngay bên dưới parent.
+                                                                    order.saleOrder.orderDetails.splice(parentDetailIndex + 1, 0, itemDetail);
+                                                                }
+                                                            }
+                                                            else if (log.totalQuantity > 0 && index >= 0) {
+                                                                //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                                var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                                itemDetail.quantity = log.totalQuantity;
+                                                            }
+                                                            else if (log.totalQuantity <= 0 && index >= 0) {
+                                                                //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                                var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                                order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                            }
+                                                            else if (log.totalQuantity <= 0 && index < 0) {
+                                                                //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                            }
+                                                        });
+
+                                                        //B4: Sắp xếp lại parent và child Item.
+                                                        var parentItemList = order.saleOrder.orderDetails.filter(function (d) { return !d.isChild });
+                                                        var addCount = 0;
+                                                        var length = parentItemList.length;
+                                                        for (var x = 0; x < length; x++) {
+                                                            var pIndex = x + addCount;
+                                                            var childItemList = order.saleOrder.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
+                                                            for (var y = childItemList.length - 1; y >= 0; y--) {
+                                                                parentItemList.splice(pIndex + 1, 0, childItemList[y]);
+                                                                addCount++;
+                                                            }
+                                                        }
+
+                                                        order.saleOrder.orderDetails = parentItemList;
+
+                                                        //B5: Cập nhật status cho mỗi dòng log là đã cập nhật.
+                                                        order.saleOrder.logs.forEach(function (log) {
+                                                            if (!log.status) log.status = true;
+                                                        });
+
+                                                        //Update revision.
+                                                        order.saleOrder.revision++;
+
+                                                        //Thông báo cho client đã bị conflict.
+                                                        //Thêm vào thông báo cho Client về sự thay đổi.
+                                                        msg.alteredOrder.push({ tableName: t.tableName, orderID: order.saleOrder.saleOrderUuid, type: 1 });
+
+                                                    }
                                                 }
                                                 //t.tableOrder[t.tableOrder.indexOf(order)] = data.tables[i].tableOrder[j];
-
                                             }
                                             //Nếu order chưa tồn tại thì kiểm tra trong collection tableOrderHistory
                                             //- Có thì đơn hàng Client gửi lên không hợp lệ (Trường hợp đăng nhập cùng 1 tài khoản trên 2 thiết bị, thoát 1 thiết bị nhưng vẫn còn lưu ở DB Local)
@@ -505,7 +598,7 @@ MongoClient.connect(url, function (err, database) {
                                                         storedOrder.saleOrder.saleOrderUuid = uuid.v1();
                                                         //Lưu lại đơn tên của người tạo và đổi tên thành lưu tạm.
                                                         storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
-                                                        storedOrder.saleOrder.createdByName = "LƯU TẠM";
+                                                        storedOrder.saleOrder.createdByName = "LƯU TẠM - " + storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.startTime = new Date();
                                                         t.tableOrder.push(storedOrder);
 
@@ -961,64 +1054,118 @@ MongoClient.connect(url, function (err, database) {
                                             order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
 
                                             if (data.info.action == 'clearItem') {
-                                                //Cập nhật lại log và số lượng đối với trường hợp xóa trống đơn hàng.
-                                                //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
-                                                var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
-                                                    return order.saleOrder.logs.findIndex(function (i) {
-                                                        return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
-                                                    }) < 0;
-                                                });
-                                                var arr = order.saleOrder.logs.concat(orderClient);
-                                                order.saleOrder.logs = arr; //Cập nhật log cho server.
-
-                                                //B2: Tính toán lại số lượng dựa trên logs
-                                                var groupLog = groupBy(order.saleOrder.logs);
-
-                                                //B3: Cập nhật lại số lượng item
-                                                groupLog.forEach(function (log) {
-                                                    var index = order.saleOrder.orderDetails.findIndex(function (d) {
-                                                        return d.itemId == log.itemID;
+                                                if (!data.info.isUngroupItem) {
+                                                    //Cập nhật lại log và số lượng đối với trường hợp xóa trống đơn hàng.
+                                                    //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                        return order.saleOrder.logs.findIndex(function (i) {
+                                                            return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                        }) < 0;
                                                     });
-                                                    if (log.totalQuantity > 0 && index < 0) {
-                                                        //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
-                                                        var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                        order.saleOrder.orderDetails.push(itemDetail);
-                                                    }
-                                                    else if (log.totalQuantity > 0 && index >= 0) {
-                                                        //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
-                                                        var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
-                                                        itemDetail.quantity = log.totalQuantity;
-                                                    }
-                                                    else if (log.totalQuantity <= 0 && index >= 0) {
-                                                        //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
-                                                        var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
-                                                        order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
-                                                    }
-                                                    else if (log.totalQuantity <= 0 && index < 0) {
-                                                        //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
-                                                    }
-                                                });
+                                                    var arr = order.saleOrder.logs.concat(orderClient);
+                                                    order.saleOrder.logs = arr; //Cập nhật log cho server.
 
-                                                //B4: Sắp xếp lại parent và child Item.
-                                                var parentItemList = order.saleOrder.orderDetails.filter(function (d) { return !d.isChild });
-                                                var addCount = 0;
-                                                var length = parentItemList.length;
-                                                for (var x = 0; x < length; x++) {
-                                                    var pIndex = x + addCount;
-                                                    var childItemList = order.saleOrder.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
-                                                    for (var y = childItemList.length - 1; y >= 0; y--) {
-                                                        parentItemList.splice(pIndex + 1, 0, childItemList[y]);
-                                                        addCount++;
-                                                    }
+                                                    //B2: Tính toán lại số lượng dựa trên logs
+                                                    var groupLog = groupBy(order.saleOrder.logs);
+
+                                                    //B3: Cập nhật lại số lượng item
+                                                    groupLog.forEach(function (log) {
+                                                        var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                            return d.itemId == log.itemID;
+                                                        });
+                                                        if (log.totalQuantity > 0 && index < 0) {
+                                                            //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                            var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                            order.saleOrder.orderDetails.push(itemDetail);
+                                                        }
+                                                        else if (log.totalQuantity > 0 && index >= 0) {
+                                                            //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                            var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID });
+                                                            itemDetail.quantity = log.totalQuantity;
+                                                        }
+                                                        else if (log.totalQuantity <= 0 && index >= 0) {
+                                                            //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                            var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID });
+                                                            order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                        }
+                                                        else if (log.totalQuantity <= 0 && index < 0) {
+                                                            //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                        }
+                                                    });
+
+                                                    //B4: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                                    order.saleOrder.logs.forEach(function (log) {
+                                                        if (!log.status) log.status = true;
+                                                    });
                                                 }
+                                                else {
+                                                    //Cập nhật lại log và số lượng đối với trường hợp xóa trống đơn hàng.
+                                                    //B1: Merge log giữa client và server có distinct -> cập nhật lại log cho server.
+                                                    var orderClient = data.tables[i].tableOrder[j].saleOrder.logs.filter(function (item) {
+                                                        return order.saleOrder.logs.findIndex(function (i) {
+                                                            return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
+                                                        }) < 0;
+                                                    });
+                                                    var arr = order.saleOrder.logs.concat(orderClient);
+                                                    order.saleOrder.logs = arr; //Cập nhật log cho server.
 
-                                                order.saleOrder.orderDetails = parentItemList;
+                                                    //B2: Tính toán lại số lượng dựa trên logs
+                                                    var groupLog = groupByUngroupItem(order.saleOrder.logs);
 
-                                                //B5: Cập nhật status cho mỗi dòng log là đã cập nhật
-                                                //Chỉ cập nhật đối với các action khác tách hóa đơn, vì tách hóa đơn thì các món trc đó đã đc server cập nhật log rồi và dưới client khi tách cũng set luôn là log = true.
-                                                order.saleOrder.logs.forEach(function (log) {
-                                                    if (!log.status) log.status = true;
-                                                });
+                                                    //B3: Cập nhật lại số lượng item
+                                                    groupLog.forEach(function (log) {
+                                                        var index = order.saleOrder.orderDetails.findIndex(function (d) {
+                                                            return d.itemId == log.itemID && d.detailID == log.detailID;
+                                                        });
+                                                        if (log.totalQuantity > 0 && index < 0) {
+                                                            //Nếu số lượng trong log > 0 và item chưa có trong ds order của server thì thêm vào danh sách details
+                                                            var itemDetail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                            //Nếu item chưa có là parent thì push vào như bình thường.
+                                                            if (!itemDetail.isChild) {
+                                                                order.saleOrder.orderDetails.push(itemDetail);
+                                                            }
+                                                            else { //Nếu item chưa có là child
+                                                                //Kiếm parent của item đó.
+                                                                var parentDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.detailID == itemDetail.parentID });
+                                                                //Push ngay bên dưới parent.
+                                                                order.saleOrder.orderDetails.splice(parentDetailIndex + 1, 0, itemDetail);
+                                                            }
+                                                        }
+                                                        else if (log.totalQuantity > 0 && index >= 0) {
+                                                            //Nếu số lượng trong log > 0 và item đã có trong ds order của server thì cập nhật lại số lượng
+                                                            var itemDetail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                            itemDetail.quantity = log.totalQuantity;
+                                                        }
+                                                        else if (log.totalQuantity <= 0 && index >= 0) {
+                                                            //Nếu số lượng trong log <= 0 và item đã có trong ds order của server thì xóa item đó đi khỏi danh sách details
+                                                            var itemDetailIndex = order.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == log.itemID && d.detailID == log.detailID; });
+                                                            order.saleOrder.orderDetails.splice(itemDetailIndex, 1);
+                                                        }
+                                                        else if (log.totalQuantity <= 0 && index < 0) {
+                                                            //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
+                                                        }
+                                                    });
+
+                                                    //B4: Sắp xếp lại parent và child Item.
+                                                    var parentItemList = order.saleOrder.orderDetails.filter(function (d) { return !d.isChild });
+                                                    var addCount = 0;
+                                                    var length = parentItemList.length;
+                                                    for (var x = 0; x < length; x++) {
+                                                        var pIndex = x + addCount;
+                                                        var childItemList = order.saleOrder.orderDetails.filter(function (d) { return d.parentID && d.parentID == parentItemList[pIndex].detailID });
+                                                        for (var y = childItemList.length - 1; y >= 0; y--) {
+                                                            parentItemList.splice(pIndex + 1, 0, childItemList[y]);
+                                                            addCount++;
+                                                        }
+                                                    }
+
+                                                    order.saleOrder.orderDetails = parentItemList;
+
+                                                    //B5: Cập nhật status cho mỗi dòng log là đã cập nhật
+                                                    order.saleOrder.logs.forEach(function (log) {
+                                                        if (!log.status) log.status = true;
+                                                    });
+                                                }
                                             }
 
                                             //Xóa order đó ra khỏi ds orders trên server.
@@ -1043,7 +1190,7 @@ MongoClient.connect(url, function (err, database) {
                                             if (docsLog[0].logs.length > 0) {
                                                 var logs = docsLog[0].logs.filter(function (log) { return log.fromOrderID == order.saleOrder.saleOrderUuid || log.toOrderID == order.saleOrder.saleOrderUuid });
                                                 logs.forEach(function (log) {
-                                                    var index = docsLog[0].indexOf(log);
+                                                    var index = docsLog[0].logs.indexOf(log);
                                                     docsLog[0].logs.splice(index, 1);
                                                 });
                                             }

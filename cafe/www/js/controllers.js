@@ -1250,6 +1250,26 @@ angular.module('SunoPosCafe.controllers', ['SunoPosCafe.loginController', 'SunoP
         return null;
     }
 })
+.service('utils', function () {
+    this.debounce = function (execution, wait, immediate) {
+        wait = 200;
+        if (!window.timeout) window.timeout = null;
+        return function () {
+            var later = function () {
+                window.timeout = null;
+                if (!immediate) {
+                    execution();
+                }
+            };
+            var callNow = immediate && !window.timeout;
+            clearTimeout(window.timeout);
+            window.timeout = setTimeout(later, wait || 200);
+            if (callNow) {
+                execution();
+            }
+        };
+    };
+})
 
 /* --- Made by justgoscha and licensed under MIT license --- */
 
