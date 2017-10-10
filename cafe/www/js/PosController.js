@@ -1381,13 +1381,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
             socket.on('updateOrder', function (msg) {
                 console.log('updateOrder', msg);
+                debugger;
                 if (msg.storeId == $scope.currentStore.storeID) {
-                    if (msg.info.action != 'splitOrder' && msg.info.action != 'stopTimer') {
+                    if (msg.info.action != 'splitOrder' && msg.info.action != 'stopTimer' && msg.info.action != 'renameOrder') {
                         //Cập nhật lại bàn vừa nhận từ Server gửi về
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
                                 if ($scope.tables[x].tableOrder.length > 0) {
-
+                               
                                     var orderIndex = null;
                                     for (var y = 0; y < $scope.tables[x].tableOrder.length; y++) {
                                         if ($scope.tables[x].tableOrder[y].saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid) {
@@ -1403,6 +1404,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     }
                                     else {
 
+                                        var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
+                                        //Merge sharedWith
+                                        z.sharedWith = msg.tables[0].tableOrder[0].saleOrder.sharedWith;
+
+                                        //Merge printed
+                                        z.printed = msg.tables[0].tableOrder[0].saleOrder.printed;
+
                                         if (!msg.info.isUngroupItem) { //Cập nhật cho hàng hóa kiểu bình thường
                                             //Điều chỉnh data cho phù hợp
                                             //B1: Merge log giữa client và server có distinct
@@ -1412,7 +1420,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             //    }) < 0;
                                             //});
 
-                                            var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
                                             var orderClient = z.logs.filter(function (item) {
                                                 return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
                                                     return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID;
@@ -1455,10 +1462,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                     //Nếu số lượng trong log <= 0 và item chưa có trong ds order của server thì ko thực hiện gì cả.
                                                 }
                                             });
+
+                                            //Cập nhật lại revision.
+                                            z.revision = msg.tables[0].tableOrder[0].saleOrder.revision;
+
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
                                             //$timeout(function () {
                                             //    $scope.watchCallback(null, null);
                                             //}, 150);
+
                                             $scope.watchCallback(null, null);
                                         }
                                         else { //Cập nhật cho hàng hóa tách món kiểu trà sữa,...
@@ -1466,7 +1478,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             //Điều chỉnh data cho phù hợp
                                             //B1: Merge log giữa client và server có distinct
 
-                                            var z = angular.copy($scope.tables[x].tableOrder[orderIndex].saleOrder);
                                             var orderClient = z.logs.filter(function (item) {
                                                 return msg.tables[0].tableOrder[0].saleOrder.logs.findIndex(function (i) {
                                                     return i.itemID == item.itemID && i.timestamp == item.timestamp && i.deviceID == item.deviceID && i.detailID == item.detailID;
@@ -1534,6 +1545,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                                             z.orderDetails = parentItemList;
 
+                                            //Cập nhật lại revision.
+                                            z.revision = msg.tables[0].tableOrder[0].saleOrder.revision;
+
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
                                             //$timeout(function () {
                                             //    $scope.watchCallback(null, null);
@@ -1541,31 +1555,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             $scope.watchCallback(null, null);
                                         }
                                     }
-
-                                    $timeout(function () {
-                                        //Lưu vào DB Local
-                                        DBTables.$queryDoc({
-                                            selector: {
-                                                'store': { $eq: $scope.currentStore.storeID },
-                                                'tableUuid': { $eq: msg.tables[0].tableUuid }
-                                            },
-                                            fields: ['_id', '_rev']
-                                        })
-                                        .then(function (data) {
-                                            //console.log(data);
-                                            var table = angular.copy(msg.tables[0]);
-                                            table._id = data.docs[0]._id;
-                                            table._rev = data.docs[0]._rev;
-                                            table.store = $scope.currentStore.storeID;
-                                            return DBTables.$addDoc(table);
-                                        })
-                                        .then(function (data) {
-                                            //console.log(data);
-                                        })
-                                        .catch(function (error) {
-                                            console.log(error);
-                                        });
-                                    }, 300);
+                                    
                                 }
                                 else {
                                     $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[0]));
@@ -1577,6 +1567,31 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 $scope.$apply();
                                 break;
                             }
+
+                            $timeout(function () {
+                                //Lưu vào DB Local
+                                DBTables.$queryDoc({
+                                    selector: {
+                                        'store': { $eq: $scope.currentStore.storeID },
+                                        'tableUuid': { $eq: msg.tables[0].tableUuid }
+                                    },
+                                    fields: ['_id', '_rev']
+                                })
+                                .then(function (data) {
+                                    //console.log(data);
+                                    var table = angular.copy(msg.tables[0]);
+                                    table._id = data.docs[0]._id;
+                                    table._rev = data.docs[0]._rev;
+                                    table.store = $scope.currentStore.storeID;
+                                    return DBTables.$addDoc(table);
+                                })
+                                .then(function (data) {
+                                    //console.log(data);
+                                })
+                                .catch(function (error) {
+                                    console.log(error);
+                                });
+                            }, 300);
                         }
                     }
                         //Xử lý cho tách hóa đơn.
@@ -1631,8 +1646,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                     }
-                        //Xử lý cho ngừng tính giờ Item
-                    else if (msg.info.action == 'stopTimer') {
+                        //Xử lý cho ngừng tính giờ Item hoặc đổi tên
+                    else if (msg.info.action == 'stopTimer' || msg.info.action == 'renameOrder') {
                         //Cập nhật lại bàn từ Server gửi về, vì chỉ gửi 1 bàn và 1 order nên ko cần lặp 2 vòng.
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
@@ -1762,8 +1777,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     //Cập nhật lại ở bàn mới
                     table = $scope.tables.find(function (t) { return t.tableUuid == msg.tables[0].tableUuid });
                     if (table) {
-                        $scope.tables[$scope.tables.indexOf(table)].tableOrder = msg.tables[0].tableOrder;
-                        table.tableStatus = 1;
+                        var order = table.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid; });
+                        if (order) {
+                            order.saleOrder = msg.tables[0].tableOrder[0].saleOrder;
+                            table.tableStatus = 1;
+                        }
+                        //$scope.tables[$scope.tables.indexOf(table)].tableOrder = msg.tables[0].tableOrder;
                     }
 
                     $scope.$apply();
@@ -2463,6 +2482,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 o.saleOrder.orderDetails.push(item);
             }
         }
+        //Thêm printed của order cũ sang order mới.
+        o.saleOrder.printed = o.saleOrder.printed.concat(oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed);
+        //Thêm logs cho order mới.
         o.saleOrder.logs = o.saleOrder.logs.concat(logs);
 
         angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
@@ -3065,7 +3087,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 //var printOrder = {};
                 var printOrder = angular.copy(currentOrder);
 
-
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
                     printOrder.saleOrder.orderDetails[i].quantity = printOrder.saleOrder.orderDetails[i].newOrderCount;
                 }
@@ -3084,12 +3105,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                     untrackedItem.push(obj);
                 }
-                var printTemp = angular.copy(printOrder);
                 printOrder.saleOrder.printedCount = currentOrder.saleOrder.printed.length + 1;
                 if (printOrder.saleOrder.printed) delete printOrder.saleOrder.printed;
                 if (printOrder.saleOrder.logs) delete printOrder.saleOrder.logs;
                 if (printOrder.saleOrder.sharedWith) delete printOrder.saleOrder.sharedWith;
                 currentOrder.saleOrder.printed.push(printOrder);
+                var printTemp = angular.copy(printOrder);
+                printTemp.saleOrder.timestamp = genTimestamp();
+
                 var setting = {
                     companyInfo: $scope.companyInfo.companyInfo,
                     allUsers: $scope.authBootloader.users,
@@ -3263,7 +3286,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             allUsers: $scope.authBootloader.users,
             store: $scope.currentStore
         }
-        var printOrder = o;
+        var printOrder = angular.copy(o);
         // if($scope.isWebView){
         //   // console.log('In bếp từ trình duyệt');
         //   printOrderInBrowser(printer, o.saleOrder, 128, setting);
@@ -5880,6 +5903,62 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.redirectToManage = function () {
         window.open('https://pos.suno.vn', '_blank');
     };
+
+    $scope.changeTempOrderName = function () {
+        if ($scope.tableIsSelected
+              && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId
+              && $scope.permissionIndex == -1
+              ) {
+            return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
+        }
+        if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasOwnProperty('note')) {
+            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.note;
+            delete $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.note;
+            $scope.popoverTableAction.hide();
+            if ($scope.isSync) {
+                var currentTable = angular.copy($scope.tableIsSelected);
+                var currentTableOrder = [];
+                currentTableOrder.push(currentTable);
+                currentTableOrder[0].tableOrder = [];
+                currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
+                var updateData = {
+                    "companyId": $scope.userSession.companyId,
+                    "storeId": $scope.currentStore.storeID,
+                    "clientId": $scope.clientId,
+                    "shiftId": null,//LSFactory.get('shiftId'),
+                    "startDate": "",
+                    "finishDate": "",
+                    "tables": angular.copy(currentTableOrder),
+                    "zone": $scope.tableMap,
+                    "info": {
+                        action: "renameOrder",
+                        deviceID: deviceID,
+                        timestamp: genTimestamp(),
+                        author: $scope.userSession.userId
+                    }
+                }
+                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                .then(function (data) {
+                    var shiftId = null;
+                    if (data.docs.length > 0) {
+                        shiftId = data.docs[0].shiftId;
+                    }
+                    updateData.shiftId = shiftId;
+                    updateData = angular.toJson(updateData);
+                    updateData = JSON.parse(updateData);
+                    if (isSocketConnected) {
+                        console.log('updateData-renameOrder', updateData);
+                        socket.emit('updateOrder', updateData);
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+            }
+            return toaster.pop('success', '', 'Đã đổi tên cho đơn hàng LƯU TẠM thành công!');
+        }
+        return toaster.pop('warning', '', 'Thao tác không được thực hiện, đổi tên chỉ áp dụng các đơn hàng LƯU TẠM.');
+    }
 
     $ionicPopover.fromTemplateUrl('SupportPopOver', {
         scope: $scope

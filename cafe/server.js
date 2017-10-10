@@ -364,6 +364,14 @@ MongoClient.connect(url, function (err, database) {
                                                 });
                                                 order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
 
+                                                //Merge printed
+                                                var printedClient = data.tables[i].tableOrder[j].saleOrder.printed.filter(function (item) {
+                                                    return order.saleOrder.printed.findIndex(function (i) {
+                                                        return i.saleOrder.timestamp == item.saleOrder.timestamp;
+                                                    }) < 0;
+                                                });
+                                                order.saleOrder.printed = order.saleOrder.printed.concat(printedClient);
+
                                                 if (order.saleOrder.revision == data.tables[i].tableOrder[j].saleOrder.revision && data.tables[i].tableOrder[j].saleOrder.logs.length == 0) {
                                                     //Order client đã được đồng bộ và phía client gửi lên không có thay đổi gì.
                                                     //Do nothing.
@@ -817,8 +825,8 @@ MongoClient.connect(url, function (err, database) {
 
                                 //Nếu đơn hàng Client gửi lên đang tồn tại trong ds đơn hàng trên Server thì cập nhật lại đơn hàng đó trên Server dựa vào logs.
                                 if (order) {
-                                    if (data.info.action == 'stopTimer') {
-                                        //Xử lý cho ngừng tính giờ item.
+                                    if (data.info.action == 'stopTimer' || data.info.action == 'renameOrder') {
+                                        //Xử lý cho ngừng tính giờ item hoặc đổi tên đơn hàng lưu tạm.
                                         //detail = order.saleOrder.orderDetails.find(function (d) { return d.itemId == data.info.itemID });
                                         order.saleOrder = data.tables[0].tableOrder[0].saleOrder;
                                         orderList.push(order);
@@ -826,11 +834,19 @@ MongoClient.connect(url, function (err, database) {
                                     else {
                                         //Merge sharedWith
                                         var sWClient = data.tables[i].tableOrder[j].saleOrder.sharedWith.filter(function (item) {
-                                            return order.saleOrder.sharedWith.findIndex(function (i) {
-                                                return i.deviceID == item.deviceID && i.userID == item.userID;
+                                            return order.saleOrder.sharedWith.findIndex(function (s) {
+                                                return s.deviceID == item.deviceID && s.userID == item.userID;
                                             }) < 0;
                                         });
                                         order.saleOrder.sharedWith = order.saleOrder.sharedWith.concat(sWClient);
+
+                                        //Merge printed
+                                        var printedClient = data.tables[i].tableOrder[j].saleOrder.printed.filter(function (item) {
+                                            return order.saleOrder.printed.findIndex(function (p) {
+                                                return p.saleOrder.timestamp == item.saleOrder.timestamp;
+                                            }) < 0;
+                                        });
+                                        order.saleOrder.printed = order.saleOrder.printed.concat(printedClient);
 
                                         if (!data.info.isUngroupItem) { //Xử lý cho đơn hàng bình thường.
 

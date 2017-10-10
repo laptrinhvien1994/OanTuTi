@@ -16,6 +16,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
     $scope.hasAccount = false;
     $scope.initLogin = function () {
         AuthFactory.getAccount()
+        //AuthFactory.getSessionId()
         .then(function (data) {
             if (data.docs.length > 0) {
                 $scope.hasAccount = true;
@@ -38,6 +39,25 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             } else {
                 $scope.hasAccount = false;
             }
+            //if (data.docs.length > 0) {
+            //    var url = Api.getSession + 'cliendId=' + data.docs[0].session;
+            //    asynRequest($state, $http, 'GET', url, false, 'json', null, function (data, status) {
+            //        console.log(data);
+            //    }, function (e, status) {
+            //        $scope.hasAccount = false;
+            //        $scope.loginData = {
+            //            username: '',
+            //            password: ''
+            //        };
+            //    });
+            //}
+            //else {
+            //    $scope.hasAccount = false;
+            //    $scope.loginData = {
+            //        username: '',
+            //        password: ''
+            //    };
+            //}
         });
     }
     $scope.$watch('$root.w_logout', function () {
