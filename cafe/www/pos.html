@@ -21,17 +21,17 @@
     </div>
     <div class="col col-60">
        <div class="col col-60 left hidden-320" style="text-align: center;">
-          <button class="button button-clear font14 hidden-custom" on-tap="redirectToManage()" style="overflow:hidden; height: 40px;"><b>Quản lý</b></button>
-          <span style="overflow:hidden; line-height: 35px;" class="hidden-custom"> | </span>
-          <button class="button button-clear font14" on-tap="openPopOverStoreList($event)" style="overflow:hidden; height: 40px;"><!--<i class="font20 ion-ios-location-outline"></i>--> <b>{{currentStore.storeName}}</b></button>
-          <span style="overflow:hidden; line-height: 35px;" class="hidden-custom"> | </span>
+          <button class="button button-clear font14 hidden-custom" on-tap="redirectToManage()" style="overflow:hidden; height: 40px;"><b style="font-weight: 600">Quản lý</b></button>
+          <span style="overflow:hidden; line-height: 40px;" class="hidden-custom"> | </span>
+          <button class="button button-clear font14" on-tap="openPopOverStoreList($event)" style="overflow:hidden; height: 40px;"><b style="font-weight: 600">{{currentStore.storeName}}</b></button>
+          <span style="overflow:hidden; line-height: 40px;" class="hidden-custom"> | </span>
           <!--<button class="button button-clear font14 hidden-custom visible-700" on-tap="openStoreReport()" style="overflow:hidden;"><i class="font20 ion-ios-stats-bars"></i> <b>Báo cáo cuối ngày</b></button>-->
-          <button class="button button-clear font14 hidden-custom" on-tap="openStoreReport()" style="overflow:hidden;"><i class="font20 ion-ios-stats-bars"></i> <b>Báo cáo</b></button>
+          <button class="button button-clear font14 hidden-custom" on-tap="openStoreReport()" style="overflow:hidden; height: 40px;"><b style="font-weight: 600">Báo cáo</b></button>
         </div>
         <div class="col col-20 right border-left-white height44">
           <button class="user button button-clear font14 hidden-480" on-tap="openPopoverSettings($event)">
             <span>Xin chào, <i class="ion-ios-arrow-down"></i></span>
-            <span class="ellipsis"><b>{{userSession.displayName}}</b></span>
+            <span class="ellipsis"><b style="font-weight: 600">{{userSession.displayName}}</b></span>
           </button>
             <button class="user button button-clear font14 visible-480" on-tap="openPopoverSettings($event)">
                 <span><i class="ion-chevron-down"></i></span>
@@ -41,8 +41,8 @@
         <div class="col col-20 right hidden-700" ng-if="isWebView">
           <button class="user button button-clear visible-" style="font-size: 14px; font-weight: bold;" on-tap="openSupportPopOver($event)">
             <i class="ion-ios-telephone"></i>
-            Hỗ trợ kỹ thuật
-            <span class="hidden-736-1279">02871.088.188</span>
+              <b style="font-weight: 600">Hỗ trợ kỹ thuật
+            <span class="hidden-736-1279">02871.088.188</span></b>
           </button>
         <!--<button class="user button button-clear visible-">
             Hỗ trợ kỹ thuật <b>02871.088.188</b>
@@ -55,7 +55,7 @@
                     <button class="right button button-clear ion-close" style="color: white;" on-tap="closeSupportPopOver($event)"></button>
                 </ion-header-bar>
                 <ion-content>
-                    <p class="text-center" style="margin-top: 15px;">Khi có thắc mắc hoặc gặp sự cố trong quá trình sử dụng phần mềm, vui lòng gọi vào hotline <br/><span style="font-weight: bold; font-size: 18px;">02871.088.188</span><br /> để được hỗ trợ. Xin cảm ơn.</p>
+                    <p class="text-center" style="margin-top: 15px; font-weight: 600;">Khi có thắc mắc hoặc gặp sự cố trong quá trình sử dụng phần mềm, vui lòng gọi vào hotline <br/><span style="font-weight: bold; font-size: 18px;">02871.088.188</span><br /> để được hỗ trợ. Xin cảm ơn.</p>
                 </ion-content>
             </ion-popover-view>
         </script>
@@ -236,8 +236,8 @@
                     </div>
                 </button>
                 <div class="wrap-button more-submit-btn">
-                    <button class="button button-calm right padding openOrderDetails" on-tap="openOrderDetails()" tabindex="5"><i class="ion-card font40"></i><span>Chi tiết</span></button>
-                    <button class="button button-energized right padding noticeToTheKitchen" on-tap="noticeToTheKitchen()" tabindex="4"><i class="ion-android-restaurant font40"></i><span>Báo bếp</span></button>
+                    <button class="button button-calm right padding openOrderDetails" on-tap="openOrderDetails()" tabindex="5"><i class="ion-ios-list-outline font40"></i><span>Chi tiết</span></button>
+                    <button class="button button-energized right padding noticeToTheKitchen" on-tap="noticeToTheKitchen()" tabindex="4"><i class="ion-ios-bell font40"></i><span>Báo bếp</span></button>
                 </div>
             </div>
           <!--<div class="bottom-bar">
@@ -271,7 +271,7 @@
                <i class="ion-navicon font16"></i>
             </button>
             <button class="button button-positive button-small right relative switch" on-tap="switchLayout(true)">
-              <i class="ion-android-bar"></i> THỰC ĐƠN
+              <i class="ion-coffee"></i> THỰC ĐƠN
             </button>
             <button class="button button-stable button-small margin-left-10" on-tap="filterTables('status',1)" ng-class="{'button-positive': buttonStatus == 1}">
               Đang dùng
@@ -298,7 +298,7 @@
                <i class="ion-navicon font16"></i>
             </button>
             <button class="button button-positive button-small right relative switch margin-left-10" on-tap="switchLayout(true)">
-              <i ng-if="isInTable" class="ion-android-bar"></i><i ng-if="!isInTable" class="ion-android-apps"></i> {{!isInTable?'SƠ ĐỒ BÀN':'THỰC ĐƠN'}}
+              <i ng-if="isInTable" class="ion-coffee"></i><i ng-if="!isInTable" class="ion-android-apps"></i> {{!isInTable?'SƠ ĐỒ BÀN':'THỰC ĐƠN'}}
             </button>
 
             <button class="button button-small button-clear right hidden-1110" ng-if="isWebView">

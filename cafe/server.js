@@ -598,13 +598,17 @@ MongoClient.connect(url, function (err, database) {
                                                                 };
                                                             }
                                                             else {
-                                                                orderPlace = findOrder();
+                                                                var svLog = docsLog[0].logs;
+                                                                var tables = docs[0].tables;
+                                                                var tbID = data.tables[i].tableUuid;
+                                                                var oID = data.tables[i].tableOrder[j].saleOrder.saleOrderUuid;
+                                                                orderPlace = findOrder(svLog, tables, tbID, oID);
                                                             }
                                                         }
                                                         //Tạo đơn hàng mới với dữ liệu của order push lên để lưu tạm.
                                                         var storedOrder = clone(data.tables[i].tableOrder[j]);
                                                         storedOrder.saleOrder.saleOrderUuid = uuid.v1();
-                                                        //Lưu lại đơn tên của người tạo và đổi tên thành lưu tạm.
+                                                        //Lưu lại trên đơn tên của người tạo và đổi tên thành lưu tạm.
                                                         storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.createdByName = "LƯU TẠM - " + storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.startTime = new Date();
@@ -620,6 +624,11 @@ MongoClient.connect(url, function (err, database) {
                                                         //Thêm vào collection tableOrder.
                                                         t.tableOrder.push(data.tables[i].tableOrder[j]);
                                                         logDebug('order is inserted');
+
+                                                        //Cập nhật logs lại
+                                                        data.tables[i].tableOrder[j].saleOrder.logs.forEach(function (log) {
+                                                            if (!log.status) log.status = true;
+                                                        });
                                                     }
                                                 }
                                                 else {
@@ -758,11 +767,11 @@ MongoClient.connect(url, function (err, database) {
 
         var time = 0;
         var findOrder = function (serverLog, tables, tableID, orderID) {
-            var log = serverLog.find(function (l) { return l.tableID == tableID && orderID == tableID });
+            var log = serverLog.find(function (l) { return l.fromTableID == tableID && l.fromOrderID == orderID });
             if (log) {
-                var t = tables.find(function (t) { return t.tableUuid == log.toTableUuid });
+                var t = tables.find(function (t) { return t.tableUuid == log.toTableID });
                 if (t) {
-                    var order = t.tableOrder.find(function (order) { order.saleOrder.saleOrderUuid == orderID });
+                    var order = t.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == orderID });
                     if (order) {
                         return {
                             tableName: t.tableName,

@@ -1075,7 +1075,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             var orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
                                             //Thông báo về cho chỉ client đã thực hiện Init.
                                             if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
-                                                lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow.tableName, action: orderLog.action });
+                                                lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow ? orderLog.orderPlaceNow.tableName : null, action: orderLog.action });
                                             }
                                         });
                                     });
