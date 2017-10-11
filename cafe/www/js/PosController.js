@@ -1097,9 +1097,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         var txt = 'bàn <b>' + order.fromTable + '</b> đã ' + (order.action == 'G' ? 'được ghép vào' : order.action == 'CB' ? 'được chuyển sang' : 'được thao tác sang') + (order.toTable != null ? ' bàn <b>' + order.toTable + '</b>' : ' một bàn khác.');
                                         orderNotiArr.push(txt);
                                     });
-                                    msgForLostOrder += orderNotiArr.join('</b>, <b>');
+                                    msgForLostOrder += orderNotiArr.join(',');
+                                    msgForLostOrder += '.</p>';
                                     //msgForLostOrder += '</b> đã được đổi bàn hoặc ghép hóa đơn ở 1 thiết bị khác.</p>';
-                                    msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể xóa nếu không cần thiết.</p>';
+                                    msgForLostOrder += '<p style="text-align: center;">Hệ thống sẽ tạo đơn hàng <b style="color: red;">LƯU TẠM</b> để đối soát. Bạn có thể dùng như đơn hàng bình thường hoặc xóa nếu không cần thiết.</p>';
                                 }
                                 var msgContent = msgForAlteredOrder + msgForLostOrder + '<p style="text-align: center;">Vui lòng kiểm tra và cập nhật lại số lượng, nếu có sai lệch.<p/>';
                                 if (notiPopupInstance) {
@@ -1779,7 +1780,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     if (table) {
                         var order = table.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == msg.tables[0].tableOrder[0].saleOrder.saleOrderUuid; });
                         if (order) {
+                            //Nếu order có sẵn là trường hợp ghép hóa đơn
                             order.saleOrder = msg.tables[0].tableOrder[0].saleOrder;
+                            table.tableStatus = 1;
+                        }
+                        else {
+                            //Nếu order không có là trường hợp đổi bàn
+                            table.tableOrder.push(msg.tables[0].tableOrder[0]);
                             table.tableStatus = 1;
                         }
                         //$scope.tables[$scope.tables.indexOf(table)].tableOrder = msg.tables[0].tableOrder;

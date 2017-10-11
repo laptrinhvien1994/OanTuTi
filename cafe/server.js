@@ -612,6 +612,9 @@ MongoClient.connect(url, function (err, database) {
                                                         storedOrder.saleOrder.note = storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.createdByName = "LƯU TẠM - " + storedOrder.saleOrder.createdByName;
                                                         storedOrder.saleOrder.startTime = new Date();
+                                                        storedOrder.saleOrder.logs.forEach(function (log) {
+                                                            if (!log.status) log.status = true;
+                                                        });
                                                         t.tableOrder.push(storedOrder);
 
 
