@@ -2392,7 +2392,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('moveData', updateData);
+                console.log('moveData-changeTable', updateData);
                 socket.emit('moveOrder', updateData);
             })
             .catch(function (error) {
@@ -2543,7 +2543,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 updateData.shiftId = shiftId;
                 updateData = angular.toJson(updateData);
                 updateData = JSON.parse(updateData);
-                console.log('moveData', updateData);
+                console.log('moveData-pairOrder', updateData);
                 socket.emit('moveOrder', updateData);
             })
             .catch(function (error) {
@@ -2976,7 +2976,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 item.newOrderCount = 1;
                 var flagItem = {};
                 angular.copy(item, flagItem);
-                if ($scope.hourService.isUse && !$scope.hourService.allProduct && $scope.hourService.itemArr.length > 0) {
+                if ($scope.hourService.isUse && !$scope.hourService.allProduct) {
                     var itemIndexArr = findIndex($scope.hourService.itemArr, 'itemId', item.itemId);
                     if (itemIndexArr != null) {
                         flagItem.isServiceItem = true;
@@ -5980,6 +5980,23 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.closeSupportPopOver = function ($event) {
         $scope.popOver.hide();
+    }
+
+    $scope.promotionTab = 1;
+
+    $scope.openPromotionPopOver = function () {
+        $ionicModal.fromTemplateUrl('promotion.html', {
+            scope: $scope,
+            animation: 'slide-in-up',
+            backdropClickToClose: true
+        }).then(function (modal) {
+            $scope.promotionPopOver = modal;
+            $scope.promotionPopOver.show();
+        });
+    }
+
+    $scope.closePromotionPopOver = function ($event) {
+        $scope.promotionPopOver.hide();
     }
 
     var updateTableToDB = function () {

@@ -562,49 +562,60 @@ MongoClient.connect(url, function (err, database) {
                                                     //Nếu trong server logs có action chuyển bàn hoặc ghép HD.
                                                     if (log) {
                                                         var orderPlace = null;
-                                                        //Lấy bàn đó trong ds bàn của server ra để kiểm tra
-                                                        var tb = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
-                                                        if (tb) {
-                                                            //Lấy order cần kiểm tra xong bàn đó xem còn hay không? (Có thể đã bị đổi hoặc ghép 1 hoặc n lần nữa.)
-                                                            var curOrder = tb.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.toOrderID; });
-                                                            //Nếu còn nghĩa là order đó ko có đổi hoặc ghép gì thêm.
-                                                            if (curOrder) {
-                                                                ////Kiểm tra log và push đơn hàng vào cho phù hợp.
-                                                                ////Lặp qua từng dòng logs mà client gửi lên.
-                                                                //for (var x = 0; x < data.tables[i].tableOrder[j].saleOrder.logs.length; x++) {
-                                                                //    //Nếu thời gian action trong log thực hiện trc khi bàn được chuyển thì apply action đó vào order đó.
-                                                                //    if (data.tables[i].tableOrder[j].saleOrder.logs[x].timestamp < log.timestamp) {
-                                                                //        //Kiểm tra xem item đó đã có trong log hay chưa nếu chưa thì push vào, rồi thì cập nhật.
-                                                                //        var curDetailsIndex = curOrder.saleOrder.orderDetails.findIndex(function (i) { return i.itemId == data.tables[i].tableOrder[j].saleOrder.logs[x].itemID });
-                                                                //        if (curOrderIndex >= 0) {
-                                                                //            curOrder.saleOrder.orderDetails[curDetailsIndex].quantity += data.tables[i].tableOrder[j].saleOrder.logs[x].action == "BB" ? data.tables[i].tableOrder[j].saleOrder.logs[x].quantity :
-                                                                //                data.tables[i].tableOrder[j].saleOrder.logs[x].action == "H" ? -data.tables[i].tableOrder[j].saleOrder.logs[x].quantity : 0;
-                                                                //        }
-                                                                //        else {
-                                                                //            var detail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (i) { return i.itemId == log.itemID });
-                                                                //            detail.quantity = log.quantity;
-                                                                //            curOrder.saleOrder.orderDetails.push(detail);
-                                                                //        }
-                                                                //        //Kiểm tra nếu số lượng <=0 thì xóa khỏi ds detail của order đó.
-                                                                //        if (item.quantity <= 0) {
-                                                                //            curOrder.saleOrder.orderDetails.splice(curDetailsIndex, 1);
-                                                                //        }
-                                                                //    }
-                                                                //}
-                                                                orderPlace = {
-                                                                    tableName: tb.tableName,
-                                                                    tableID: tb.tableUuid,
-                                                                    orderID: curOrder.saleOrder.saleOrderUuid
-                                                                };
-                                                            }
-                                                            else {
-                                                                var svLog = docsLog[0].logs;
-                                                                var tables = docs[0].tables;
-                                                                var tbID = data.tables[i].tableUuid;
-                                                                var oID = data.tables[i].tableOrder[j].saleOrder.saleOrderUuid;
-                                                                orderPlace = findOrder(svLog, tables, tbID, oID);
+                                                        if (log.action == 'CB') { //Chuyển bàn
+                                                            //Lấy bàn đó trong ds bàn của server ra để kiểm tra
+                                                            var tb = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
+                                                            if (tb) {
+                                                                //Lấy order cần kiểm tra xong bàn đó xem còn hay không? (Có thể đã bị đổi hoặc ghép 1 hoặc n lần nữa.)
+                                                                var curOrder = tb.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == log.toOrderID; });
+                                                                //Nếu còn nghĩa là order đó ko có đổi hoặc ghép gì thêm.
+                                                                if (curOrder) {
+                                                                    ////Kiểm tra log và push đơn hàng vào cho phù hợp.
+                                                                    ////Lặp qua từng dòng logs mà client gửi lên.
+                                                                    //for (var x = 0; x < data.tables[i].tableOrder[j].saleOrder.logs.length; x++) {
+                                                                    //    //Nếu thời gian action trong log thực hiện trc khi bàn được chuyển thì apply action đó vào order đó.
+                                                                    //    if (data.tables[i].tableOrder[j].saleOrder.logs[x].timestamp < log.timestamp) {
+                                                                    //        //Kiểm tra xem item đó đã có trong log hay chưa nếu chưa thì push vào, rồi thì cập nhật.
+                                                                    //        var curDetailsIndex = curOrder.saleOrder.orderDetails.findIndex(function (i) { return i.itemId == data.tables[i].tableOrder[j].saleOrder.logs[x].itemID });
+                                                                    //        if (curOrderIndex >= 0) {
+                                                                    //            curOrder.saleOrder.orderDetails[curDetailsIndex].quantity += data.tables[i].tableOrder[j].saleOrder.logs[x].action == "BB" ? data.tables[i].tableOrder[j].saleOrder.logs[x].quantity :
+                                                                    //                data.tables[i].tableOrder[j].saleOrder.logs[x].action == "H" ? -data.tables[i].tableOrder[j].saleOrder.logs[x].quantity : 0;
+                                                                    //        }
+                                                                    //        else {
+                                                                    //            var detail = data.tables[i].tableOrder[j].saleOrder.orderDetails.find(function (i) { return i.itemId == log.itemID });
+                                                                    //            detail.quantity = log.quantity;
+                                                                    //            curOrder.saleOrder.orderDetails.push(detail);
+                                                                    //        }
+                                                                    //        //Kiểm tra nếu số lượng <=0 thì xóa khỏi ds detail của order đó.
+                                                                    //        if (item.quantity <= 0) {
+                                                                    //            curOrder.saleOrder.orderDetails.splice(curDetailsIndex, 1);
+                                                                    //        }
+                                                                    //    }
+                                                                    //}
+                                                                    orderPlace = {
+                                                                        tableName: tb.tableName,
+                                                                        tableID: tb.tableUuid,
+                                                                        orderID: curOrder.saleOrder.saleOrderUuid
+                                                                    };
+                                                                }
+                                                                else {
+                                                                    var svLog = docsLog[0].logs;
+                                                                    var tables = docs[0].tables;
+                                                                    var tbID = data.tables[i].tableUuid;
+                                                                    var oID = data.tables[i].tableOrder[j].saleOrder.saleOrderUuid;
+                                                                    orderPlace = findOrder(svLog, tables, tbID, oID);
+                                                                }
                                                             }
                                                         }
+                                                        else if (log.action == 'G') { //Ghép hóa đơn
+                                                            var tb = docs[0].tables.find(function (t) { return t.tableUuid == log.toTableID; });
+                                                            orderPlace = {
+                                                                tableName: tb.tableName,
+                                                                tableID: tb.tableUuid,
+                                                                orderID: log.toOrderID
+                                                            };
+                                                        }
+                                                        
                                                         //Tạo đơn hàng mới với dữ liệu của order push lên để lưu tạm.
                                                         var storedOrder = clone(data.tables[i].tableOrder[j]);
                                                         storedOrder.saleOrder.saleOrderUuid = uuid.v1();
@@ -616,7 +627,6 @@ MongoClient.connect(url, function (err, database) {
                                                             if (!log.status) log.status = true;
                                                         });
                                                         t.tableOrder.push(storedOrder);
-
 
                                                         //Thêm vào thông báo cho Client về sự thay đổi.
                                                         var notiLog = { tableName: data.tables[i].tableName, orderID: data.tables[i].tableOrder[j].saleOrder.saleOrderUuid, orderPlaceNow: orderPlace, action: log.action, type: 2 };
@@ -776,6 +786,7 @@ MongoClient.connect(url, function (err, database) {
                 if (t) {
                     var order = t.tableOrder.find(function (order) { return order.saleOrder.saleOrderUuid == orderID });
                     if (order) {
+                        if (time > 0) time = 0;
                         return {
                             tableName: t.tableName,
                             tableID: tableID,
@@ -794,10 +805,12 @@ MongoClient.connect(url, function (err, database) {
                     }
                 }
                 else {
+                    if (time > 0) time = 0;
                     return null;
                 }
             }
             else {
+                if (time > 0) time = 0;
                 return null;
             }
         }

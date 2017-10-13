@@ -405,7 +405,7 @@
                 <span class="detail">Hoá đơn : </span>
                 <span class="detail">{{tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.subTotal | number }}</span>
               </div>
-              <div class="item-detail-prices">
+              <div class="item-detail-prices" ng-show="false">
                 <div class="detail toogle-discount-lbs">
                   <ion-toggle ng-model="tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent" toggle-class="toggle-calm" ><span class="font14">Giảm giá ({{tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent?'%':'vnđ'}})</span>
                   </ion-toggle>
@@ -414,6 +414,16 @@
                   <input type="number" ng-show="tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent == true" ng-model="tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.DiscountInPercent" placeholder="Nhập tỷ lệ" valid-number>
                   <input type="number" ng-show="tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent == false" ng-model="tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.discount" placeholder="Nhập số tiền" valid-number>
                 </div>
+              </div>
+              <div class="item-detail-prices">
+                  <div class="detail toogle-discount-lbs">
+                      <span>Chương trình khuyến mãi 50%</span>
+                  </div>
+                  <div class="detail input-discount" style="position:relative; top:-20px;">
+                      <button class="button button-small button-balanced" title="Chương trình khuyến mãi" on-tap="openPromotionPopOver()">
+                          <i class="icon ion-star"></i> <b>CTKM</b>
+                      </button>
+                  </div>
               </div>
               <div class="item-detail-prices subfee">
                 <div class="detail toogle-discount-lbs">
@@ -1473,4 +1483,80 @@
       </div>
     </ion-content>
   </ion-modal-view>
+</script>
+<script id="promotion.html" type="text/ng-template">
+    <ion-modal-view>
+        <ion-header-bar class="bar bar-header bar-positive">
+            <h1 class="title">Chương trình khuyến mãi</h1>
+            <button class="right button button-clear ion-close" on-tap="closePromotionPopOver()"></button>
+        </ion-header-bar>
+        <ion-content style="overflow: auto;">
+            <div class="row">
+                <button class="button button-small button-positive button-outline" ng-class="{'active':promotionTab==1}" on-tap="promotionTab = 1"><i class="ion-checkmark font20"></i> Áp dụng</button>
+                <button class="button button-small button-positive button-outline margin-left-10" ng-class="{'active':promotionTab==2}" on-tap="promotionTab = 2"><i class="ion-android-list font20"></i> Danh sách</button>
+            </div>
+            <br/>
+            <div class="custom-tab-content" id="tab-1" ng-show="promotionTab == 1">
+                &nbsp;&nbsp;<i style="color: green;" class="ion-ios-checkmark"></i> Áp dụng khuyến mãi theo hàng hóa
+                <div class="row" style="padding-bottom: 0px;">
+                    <div class="col col-40 text-center left border-top header-promotion-custom">Hàng hóa</div>
+                    <div class="col col-10 text-center left border-top header-promotion-custom">Số lượng</div>
+                    <div class="col col-20 text-center left border-top header-promotion-custom">Tiền giảm</div>
+                    <div class="col col-30 text-center left border-top header-promotion-custom">Áp dụng</div>
+                </div>
+                <ion-scroll direction="y" style="height: 200px;">
+                    <div class="row"  style="padding-top: 0px;">
+                        <div class="col col-40 text-center left border-top">LG G Pro 2</div>
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-20 text-center left border-top">1.400.000</div>
+                        <div class="col col-30 text-center left border-top">
+                            <select style="width: 100%;">
+                                <option>Tên CTKM theo hóa đơn</option>
+                                <option selected>Tên CKTM theo hóa đơn 2</option>
+                                <option>Tên CTKM theo hóa đơn</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-40 text-center left border-top">LG G Pro 2</div>
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-20 text-center left border-top">1.400.000</div>
+                        <div class="col col-30 text-center left border-top">
+                            <select style="width: 100%;">
+                                <option>Tên CTKM theo hóa đơn</option>
+                                <option selected>Tên CKTM theo hóa đơn 2</option>
+                                <option>Tên CTKM theo hóa đơn</option>
+                            </select>
+                        </div>
+                    </div>
+                </ion-scroll>
+                <br/>
+                <div class="row">                   
+                    <div class="col col-50 left">
+                        <i style="color: green;" class="ion-ios-checkmark"></i> Áp dụng khuyến mãi theo hóa đơn
+                    </div>
+                    <div class="col col-50 left">
+                        <select style="width: 100%;">
+                            <option>Tên CTKM theo hóa đơn</option>
+                            <option selected>Tên CKTM theo hóa đơn 2</option>
+                            <option>Tên CTKM theo hóa đơn</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col left">&nbsp;&nbsp;&nbsp;&nbsp;Giảm giá KM: <b>45.000</b></div>
+                </div>
+                <div class="row">
+                    <div class="col left">&nbsp;&nbsp;&nbsp;&nbsp;Thanh toán <b>405.000</b></div>
+                </div>
+                <div class="row">
+                    <button style="margin: 0px auto;" class="button button-full button-balanced"><i class="ion-checkmark"></i> Áp dụng</button>&nbsp;
+                    <button style="margin: 0px auto;" class="button button-full button-positive"><i class="ion-arrow-graph-up-right"></i> Tối ưu</button>
+                </div>
+            </div>
+            <div class="custom-tab-content" id="tab-2" ng-show="promotionTab == 2">
+                
+            </div>
+        </ion-content>
+    </ion-modal-view>
 </script>

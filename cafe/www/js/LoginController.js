@@ -238,6 +238,8 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
 
 
     $scope.doLogin = function () {
+        $scope.loginData.username = $('#username').val();
+        $scope.loginData.password = $('#password').val();
         if (window.cordova) {
             var isAndroid = ionic.Platform.isAndroid();
             var isIPad = ionic.Platform.isIPad();
