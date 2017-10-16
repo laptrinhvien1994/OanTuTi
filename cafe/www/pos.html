@@ -1494,7 +1494,7 @@
         <ion-content style="overflow: auto;">
             <div class="row">
                 <button class="button button-small button-positive button-outline" ng-class="{'active':promotionTab==1}" on-tap="promotionTab = 1"><i class="ion-checkmark font20"></i> Áp dụng</button>
-                <button class="button button-small button-positive button-outline margin-left-10" ng-class="{'active':promotionTab==2}" on-tap="promotionTab = 2"><i class="ion-android-list font20"></i> Danh sách</button>
+                <button class="button button-small button-positive button-outline margin-left-10" ng-class="{'active':promotionTab==2}" on-tap="promotionTab = 2"><i class="ion-android-list font20"></i> Danh sách CTKM</button>
             </div>
             <br/>
             <div class="custom-tab-content" id="tab-1" ng-show="promotionTab == 1">
@@ -1505,7 +1505,7 @@
                     <div class="col col-20 text-center left border-top header-promotion-custom">Tiền giảm</div>
                     <div class="col col-30 text-center left border-top header-promotion-custom">Áp dụng</div>
                 </div>
-                <ion-scroll direction="y" style="height: 200px;">
+                <ion-scroll delegate-handle="promotionTab1" style="height: 150px;">
                     <div class="row"  style="padding-top: 0px;">
                         <div class="col col-40 text-center left border-top">LG G Pro 2</div>
                         <div class="col col-10 text-center left border-top">1</div>
@@ -1551,12 +1551,47 @@
                     <div class="col left">&nbsp;&nbsp;&nbsp;&nbsp;Thanh toán <b>405.000</b></div>
                 </div>
                 <div class="row">
-                    <button style="margin: 0px auto;" class="button button-full button-balanced"><i class="ion-checkmark"></i> Áp dụng</button>&nbsp;
-                    <button style="margin: 0px auto;" class="button button-full button-positive"><i class="ion-arrow-graph-up-right"></i> Tối ưu</button>
+                    <div class="col-50">
+                        <button style="float: right; margin-right: 5px;" class="button button-balanced"><i class="ion-checkmark"></i> Áp dụng</button>
+                    </div>
+                    <div class="col-50">
+                        <button style="float: left;" class="button button-positive"><i class="ion-arrow-graph-up-right"></i> Tối ưu</button>
+                    </div>
                 </div>
             </div>
             <div class="custom-tab-content" id="tab-2" ng-show="promotionTab == 2">
-                
+                <div class="row" style="padding-bottom: 0px;">
+                    <div class="col col-10 text-center left border-top header-promotion-custom">STT</div>
+                    <div class="col col-40 text-center left border-top header-promotion-custom">Chương trình KM</div>
+                    <div class="col col-20 text-center left border-top header-promotion-custom">Giảm giá</div>
+                    <div class="col col-30 text-center left border-top header-promotion-custom">Loại</div>
+                </div>
+                <ion-scroll delegate-handle="promotionTab2" style="height: 200px;">
+                    <div class="row" style="padding-top: 0px;">
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-40 text-center left border-top">CTKM 1</div>
+                        <div class="col col-20 text-center left border-top">5.00%</div>
+                        <div class="col col-30 text-center left border-top">Giảm giá trên hàng hóa</div>
+                    </div>
+                    <div class="row" style="padding-top: 0px;">
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-40 text-center left border-top">CTKM 1</div>
+                        <div class="col col-20 text-center left border-top">5.00%</div>
+                        <div class="col col-30 text-center left border-top">Giảm giá trên hàng hóa</div>
+                    </div>
+                    <div class="row" style="padding-top: 0px;">
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-40 text-center left border-top">CTKM 1</div>
+                        <div class="col col-20 text-center left border-top">10.00%</div>
+                        <div class="col col-30 text-center left border-top">Giảm giá trên hàng hóa</div>
+                    </div>
+                    <div class="row" style="padding-top: 0px;">
+                        <div class="col col-10 text-center left border-top">1</div>
+                        <div class="col col-40 text-center left border-top">CTKM 1</div>
+                        <div class="col col-20 text-center left border-top">10.00%</div>
+                        <div class="col col-30 text-center left border-top">Giảm giá trên hàng hóa</div>
+                    </div>
+                </ion-scroll>
             </div>
         </ion-content>
     </ion-modal-view>

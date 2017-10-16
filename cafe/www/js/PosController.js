@@ -4568,65 +4568,143 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.savePrintSetting = function (setting, printHelper) {
-        if (printHelper) {
-            DBSettings.$getDocByID({ _id: 'printHelper' })
-            .then(function (data) {
-                if (data.docs.length > 0) {
-                    DBSettings.$addDoc({ _id: 'printHelper', printHelper: data.docs[0].printHelper, _rev: data.docs[0]._rev })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
-                }
-                else {
-                    DBSettings.$addDoc({ _id: 'printHelper', printHelper: data.docs[0].printHelper })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
-                }
-            })
-            $scope.printHelper = printHelper;
-            //window.localStorage.setItem('printHelper', JSON.stringify(printHelper));
-            //$scope.printHelper = printHelper;
-        }
-
-        if ($scope.permissionIndex >= 0) {
-            var s = {
-                'printSubmitOrder': setting && setting.printSubmitOrder ? setting.printSubmitOrder : false,
-                'printNoticeKitchen': setting && setting.printNoticeKitchen ? setting.printNoticeKitchen : false,
-                'prePrint': setting && setting.prePrint ? setting.prePrint : false,
-                'unGroupItem': setting && setting.unGroupItem ? setting.unGroupItem : false,
-                'unGroupBarKitchen': setting && setting.unGroupBarKitchen ? setting.unGroupBarKitchen : false,
-                'noticeByStamps': setting && setting.noticeByStamps ? setting.noticeByStamps : false
-            };
-
-            var data = {
-                "key": "printSetting",
-                "value": JSON.stringify(s),
-                "extConfig": {
-                    db: DBSettings,
-                    token: $scope.token
-                }
-            }
-
-            var url = Api.postKeyValue;
-
-            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-                if (data) {
-                    if ($scope.isUngroupItem == $scope.printSetting.unGroupItem) {
-                        toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
+        $ionicPopup.show({
+            title: 'Thông báo',
+            template: '<p style="text-align: center;">Để hoàn tất việc lưu thiết lập in, bạn phải thực hiện <b>KẾT CA</b> cuối ngày, bấm xác nhận để thực hiện.</p><p style="text-align: center;">Nếu đang trong ca làm việc, bạn có thể nên thiết lập cấu hình vào cuối ca hoặc ca ngày hôm sau.</p>',
+            buttons: [
+                {
+                    text: 'Hủy',
+                    onTap: function (e) {
                     }
-                    else {
-                        $ionicPopup.alert({ title: 'Thông báo', template: '<p style="text-align: center;">Đã lưu thiết lập in cho cửa hàng, vui lòng thực hiện việc <b>Kết ca</b> và khởi động lại ứng dụng để áp dụng cấu hình mới!</p>'});
+                },
+                {
+                    text: '<b>Xác nhận</b>',
+                    type: 'button-positive',
+                    onTap: function (e) {
+                        if (printHelper) {
+                            DBSettings.$getDocByID({ _id: 'printHelper' })
+                                .then(function (data) {
+                                    if (data.docs.length > 0) {
+                                        DBSettings.$addDoc({ _id: 'printHelper', printHelper: data.docs[0].printHelper, _rev: data.docs[0]._rev })
+                                            .catch(function (error) {
+                                                console.log(error);
+                                            });
+                                    }
+                                    else {
+                                        DBSettings.$addDoc({ _id: 'printHelper', printHelper: data.docs[0].printHelper })
+                                            .catch(function (error) {
+                                                console.log(error);
+                                            });
+                                    }
+                                })
+                            $scope.printHelper = printHelper;
+                            //window.localStorage.setItem('printHelper', JSON.stringify(printHelper));
+                            //$scope.printHelper = printHelper;
+                        }
+
+                        if ($scope.permissionIndex >= 0) {
+                            var s = {
+                                'printSubmitOrder': setting && setting.printSubmitOrder ? setting.printSubmitOrder : false,
+                                'printNoticeKitchen': setting && setting.printNoticeKitchen ? setting.printNoticeKitchen : false,
+                                'prePrint': setting && setting.prePrint ? setting.prePrint : false,
+                                'unGroupItem': setting && setting.unGroupItem ? setting.unGroupItem : false,
+                                'unGroupBarKitchen': setting && setting.unGroupBarKitchen ? setting.unGroupBarKitchen : false,
+                                'noticeByStamps': setting && setting.noticeByStamps ? setting.noticeByStamps : false
+                            };
+
+                            var data = {
+                                "key": "printSetting",
+                                "value": JSON.stringify(s),
+                                "extConfig": {
+                                    db: DBSettings,
+                                    token: $scope.token
+                                }
+                            }
+
+                            var url = Api.postKeyValue;
+
+                            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+                                if (data) {
+                                    //if ($scope.isUngroupItem == $scope.printSetting.unGroupItem) {
+                                    //    toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
+                                    //}
+                                    //else {
+                                    //    $ionicPopup.alert({ title: 'Thông báo', template: '<p style="text-align: center;">Đã lưu thiết lập in cho cửa hàng, vui lòng thực hiện việc <b>Kết ca</b> và khởi động lại ứng dụng để áp dụng cấu hình mới!</p>' });
+                                    //}
+                                    Promise.all([
+                                        DBTables.$queryDoc({
+                                            selector: {
+                                                'store': { $eq: $scope.currentStore.storeID }
+                                            },
+                                        }),
+                                        DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                    ])
+                                        .then(function (data) {
+                                            data[0].docs.forEach(function (d) { d._deleted = true; });
+                                            return DBTables.$manipulateBatchDoc(data[0].docs);
+                                        })
+                                        .then(function (data) {
+                                            ////debugger;
+                                            $scope.updateBalance(0);
+                                            audit(5, 'Kết ca cuối ngày', '');
+                                            if ($scope.modalStoreReport) $scope.modalStoreReport.hide();
+
+                                            // $state.reload();
+                                            toaster.pop('success', "", 'Đã hoàn thành kết ca cuối ngày!');
+                                            if (!$scope.isSync) {
+                                                window.location.reload(true);
+                                            }
+                                            else {
+                                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                                    .then(function (data) {
+                                                        ////debugger;
+                                                        var shiftId = null;
+                                                        if (data.docs.length > 0) {
+                                                            shiftId = data.docs[0].shiftId;
+                                                            //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                                            //.then(function (data) {
+                                                            //    //console.log(data)
+                                                            //    //log for debugging.
+                                                            //})
+                                                            ////.catch(function (error) { throw error }); //throw error to outer catch 
+                                                        }
+                                                        var completeShift = {
+                                                            "companyId": $scope.userSession.companyId,
+                                                            "storeId": $scope.currentStore.storeID,
+                                                            "clientId": $scope.clientId,
+                                                            "shiftId": shiftId, //LSFactory.get('shiftId')
+                                                            "info": {
+                                                                action: "completeShift",
+                                                                deviceID: deviceID,
+                                                                timestamp: genTimestamp(),
+                                                                author: $scope.userSession.userId,
+                                                                isUngroupItem: $scope.isUngroupItem
+                                                            }
+                                                        }
+
+                                                        completeShift = angular.toJson(completeShift);
+                                                        completeShift = JSON.parse(completeShift);
+                                                        console.log('dataCompleteShift', completeShift);
+                                                        socket.emit('completeShift', completeShift);
+                                                    });
+                                            }
+                                        })
+                                        .catch(function (error) {
+                                            console.log(error);
+                                        });
+                                    $scope.modalPrintSetting.hide();
+                                }
+                            }, function (error) {
+                                console.log(error)
+                            }, true, 'savePrintSetting');
+                        } else {
+                            toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
+                            return $scope.modalPrintSetting.hide();
+                        }
                     }
-                    return $scope.modalPrintSetting.hide();
                 }
-            }, function (error) {
-                console.log(error)
-            }, true, 'savePrintSetting');
-        } else {
-            toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
-            return $scope.modalPrintSetting.hide();
-        }
+            ]
+        });
     }
 
     // angular.copy($scope.removeSetting,$scope.choice);
