@@ -8,7 +8,7 @@
           <autocomplete attr-id="suggestProduct" on-tap="tapInputSearch" attr-inputid="productSearchInput" ng-model="key" template-id="SuggestProductTemplate" attr-placeholder="Tìm hàng hóa (bằng tên hoặc mã hàng hóa)" on-select="pickProduct" on-type="getSearchResult" data="suggestproducts" on-search="onSearchField"></autocomplete>
       </label>
         <script type="text/x-angular-template" id="SuggestProductTemplate">
-            <ion-item suggestion class="item" id="p0-{{i.itemId}}" ng-repeat="i in suggestions track by $index" ng-class="{ active: ($index === selectedIndex) }" on-tap="onSelect(i)" index="{{ $index }}" val="{{suggestion}}"  style="cursor: pointer;">
+            <ion-item suggestion class="item" ng-repeat="i in suggestions track by $index" id="p0-{{i.itemId}}" ng-class="{ active: ($index === selectedIndex) }" on-tap="onSelect(i)" index="{{ $index }}" val="{{suggestion}}"  style="cursor: pointer;">
                 <div>
                     <h3>{{i.itemName}}</h3>
                     <div>
@@ -97,7 +97,7 @@
                             <span class="font12 balanced">+{{i.newOrderCount}}</span>
                         </span>
                         <!-- Nút tăng giảm số lượng-->
-                        <div ng-if="!isUngroupItem || (isUngroupItem && i.isChild)" class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;">
+                        <div class="updown-button" style="width: 26px; height: 48px; margin: 0px; border: 0px solid black; position: absolute;">
                             <button on-tap="changeQuantity(1, i, $event)" style="margin-bottom: 4px; border: none; background-color:transparent; z-index: 1;"><i style="border-bottom: 1px solid black; padding-bottom: 2px;" class="ion-chevron-up"></i></button><br />
                             <button on-tap="fastRemoveItem(1, i, $event)" style="background-color: transparent;border: none; z-index: 1;"><i class="ion-chevron-down"></i></button>
                         </div>
@@ -133,7 +133,7 @@
                         </div>
                     </div>
                     <div class="pin-btn" ng-show="!i.isChild && isUngroupItem" style="position: absolute; right: 0px;">
-                        <button class="button-small button button-clear" ng-class="{'button-assertive': selectedItemIndex == $index && pinItem}" on-tap="pin(i,$index,$event)" title="Thêm tem/nhãn"><i class="ion-paperclip font20"></i></button>
+                        <button class="button-small button button-clear" ng-class="{'button-assertive': selectedItemIndex == $index && pinItem}" on-tap="pin(i,$index,$event)" title="Thêm tem/nhãn"><i class="ion-pin font20"></i></button>
                     </div>
                 </ion-item>
             </ion-list>
@@ -182,8 +182,8 @@
                 <div class="border-bottom col col-100" ng-show="showChangeQuantity">
 
                   <div class="col col-100 left discount-price text-center">
-                    <span class="input-label left font14">{{showChangeQuantityOption == 1 ? 'Giảm số lượng' : 'Tăng số lượng'}}</span>
-                    <input type="number" ng-model="selectedItem.changeQuantity" placeholder="Nhập số lượng " valid-number class="left">
+                    <span class="input-label left font14">{{showChangeQuantityOption == 1 ? 'Giảm số lượng' : showChangeQuantityOption == 2 ? 'Tăng số lượng' : 'Số lượng mới'}}</span>
+                    <input type="number" ng-model="selectedItem.changeQuantity" placeholder="Nhập số lượng " min="1" valid-number class="left">
                     <button class="button button-balanced button-clear button-small" on-tap="submitChangeQuantity(selectedItem.changeQuantity)">Hoàn tất</button>
                     <button class="button button-stable button-clear button-small" on-tap="closeChangeQuantity()">Hủy</button>
                   </div>
@@ -196,11 +196,12 @@
                   </div>
                 </div>
                 <div class="col col-100 text-center">
-                  <button class="button button-stable" on-tap="closeChangeQuantity();hideItemOption()"><i class="ion-reply"></i> Trở về</button>
-                  <button class="button button-assertive" on-tap="removeItem(selectedItem.quantity)" ng-show="selectedItem.isServiceItem || hourService.allProduct && selectedItem.startTime"><i class="ion-ios-trash"></i> Xóa</button>
-                  <button class="button button-assertive" on-tap="openChangeQuantity(1)" ng-hide="selectedItem.isServiceItem || hourService.allProduct && hourService.isUse && selectedItem.startTime"><i class="ion-minus-round"></i></button>
-                  <button class="button button-calm" on-tap="openChangeQuantity(2)" ng-hide="selectedItem.isServiceItem || hourService.allProduct && hourService.isUse && selectedItem.startTime"><i class="ion-plus-round"></i></button>
-                  <button class="button button-balanced" ng-show="settings.saleSetting.allowPriceModified" on-tap="showChangePrice=true"><i class="ion-social-usd"></i> Giá mới</button>
+                  <button class="button button-stable button-small" on-tap="closeChangeQuantity();hideItemOption()"><i class="ion-reply"></i> Trở về</button>
+                  <button class="button button-assertive button-small" on-tap="removeItem(selectedItem.quantity)" ng-show="selectedItem.isServiceItem || hourService.allProduct && selectedItem.startTime"><i class="ion-ios-trash"></i> Xóa</button>
+                  <button class="button button-assertive button-small" on-tap="openChangeQuantity(1)" ng-hide="selectedItem.isServiceItem || hourService.allProduct && hourService.isUse && selectedItem.startTime"><i class="ion-minus-round"></i></button>
+                  <button class="button button-calm button-small" on-tap="openChangeQuantity(2)" ng-hide="selectedItem.isServiceItem || hourService.allProduct && hourService.isUse && selectedItem.startTime"><i class="ion-plus-round"></i></button>
+                  <button class="button button-positive button-small hidden-480" on-tap="openChangeQuantity(3)" ng-show="settings.saleSetting.allowPriceModified" on-tap="showChangePrice=true">SL mới</button>
+                  <button class="button button-balanced button-small" ng-show="settings.saleSetting.allowPriceModified" on-tap="showChangePrice=true"><i class="ion-social-usd"></i> Giá mới</button>
                 </div>
               </div>
             </div>
@@ -321,7 +322,7 @@
         <div class="right-content">
           <div class="menu-details-list left col" ng-show="!isInTable" ng-class="{'col-80':showCategories == true}">
             <ion-scroll delegate-handle="productItemList" class="right-content-height" id="buildHotKeyIndexInItemList">
-              <div class="product-items text-center col relative col-custom-x2" id="p2-{{item.itemId}}" ng-repeat="item in productItemList track by $index"  on-tap="pickProduct(item)">
+              <div class="product-items text-center col relative col-custom-x2" ng-repeat="item in productItemList track by $index" id="p2-{{item.itemId}}" on-tap="pickProduct(item)">
                 <img width="100" height="100" style="cursor: pointer;" ng-src="{{item.image.thumbnail?item.image.thumbnail+'/s':'https://pos.suno.vn/Content/themes/ace/img/no-image.png'}}" />
                 <h4 class="product-title">{{item.itemName | limitTo:30}}</h4>                
                 <p class="price">{{item.retailPrice | number}}</p>
@@ -346,7 +347,7 @@
           </div>
           <div class="table-list-details col left" ng-show="isInTable" ng-class="{'col-80':showCategories == true}">
             <ion-scroll delegate-handle="tables" class="right-content-height" id="buildHotKeyIndex" ng-class="appendedCSSClass">
-              <div class="product-items table text-center col relative col-custom-x" id="p1-{{t.tableUuid}}" ng-repeat="t in tables | filter:currentZone as filteredTable track by $index" on-tap="openTable(t, true)" ng-show="t.tableIdInZone >0">
+              <div class="product-items table text-center col relative col-custom-x" ng-repeat="t in tables | filter:currentZone as filteredTable track by $index" on-tap="openTable(t, true)" id="p1-{{t.tableUuid}}" ng-show="t.tableIdInZone >0">
                     <div class="w-table relative" ng-class="{'active' : t.tableStatus, 'bbt-color-1' : calcolor(t.tableZone.id+1) == 1,'bbt-color-2' : calcolor(t.tableZone.id+1) == 2,'bbt-color-3' : calcolor(t.tableZone.id+1) == 3,'bbt-color-4' : calcolor(t.tableZone.id+1) == 4,'bbt-color-5' : calcolor(t.tableZone.id+1) == 0}">
                         <p class="table-index">{{t.tableIdInZone}}</p>
                         <p class="start-time"></p>
@@ -1345,7 +1346,7 @@
                           <div class="col col-10 left">Giảm giá</div>
                           <div class="col col-20 left">Thành tiền</div>
                       </div>
-                      <div ng-repeat="d in r.details" class="row text-center border-top" style="margin-top: 0px; background-color:white;">
+                      <div ng-repeat="d in r.details track by $index" class="row text-center border-top" style="margin-top: 0px; background-color:white;">
                           <div class="col col-30 left">{{d.itemName}}</div>
                           <div class="col col-20 left">{{d.quantity}}</div>
                           <div class="col col-20 left">{{d.retailPrice | number}}</div>
