@@ -25,6 +25,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     var socket = null;
     var manager = null;
+    var sunoSaleOrder = null;
     var isSocketConnected = false;
     var isSocketInitialized = true;
 
@@ -718,14 +719,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 $scope.currentStore = $scope.storesList[0];
                 DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore) });
             }
-
+            
             $scope.isMultiplePrice = $scope.settings.saleSetting.applyCustomerPricingPolicy;
 
             $scope.showCategories = true;
 
             $scope.permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
-            $scope.userInfo = {};
-            angular.copy($scope.userSession, $scope.userInfo);
+            //$scope.userInfo = {};
+            //angular.copy($scope.userSession, $scope.userInfo);
+            $scope.userInfo = angular.copy($scope.userSession);
             delete $scope.userInfo.permissions;
         } else {
             $state.go('login', {}, {
@@ -734,130 +736,133 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             throw "Tài khoản này đã đăng xuất.";
         }
 
+        //Suno Prototype
+        sunoSaleOrder = new SunoSaleOrder($scope.currentStore.storeId);
+        sunoSaleOrder.initOrder();
 
-        //"selectedItem.unitPrice",
-        //"selectedItem.discountIsPercent",
-        //"selectedItem.discount",
-        //"selectedItem.discountInPercent",
-        // 5 -"tableIsSelected.tableOrder",
-        // 6 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent",
-        // 7 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.DiscountInPercent",
-        // 8 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.discount",
-        // 9 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].quantity",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].newOrderCount",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].discount",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.customer",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.subFee",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.SubFeeInPercent",
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsSubFeePercent"
-        $scope.$watchGroup(watchExpressions, function (newValue, oldValue) {
-            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+        ////"selectedItem.unitPrice",
+        ////"selectedItem.discountIsPercent",
+        ////"selectedItem.discount",
+        ////"selectedItem.discountInPercent",
+        //// 5 -"tableIsSelected.tableOrder",
+        //// 6 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsDiscountPercent",
+        //// 7 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.DiscountInPercent",
+        //// 8 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.discount",
+        //// 9 -"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].quantity",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].newOrderCount",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails[tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.lastInputedIndex].discount",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.customer",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.subFee",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.SubFeeInPercent",
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.IsSubFeePercent"
+        ////$scope.$watchGroup(watchExpressions, function (newValue, oldValue) {
+        //    if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
 
-                repricingOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder, $scope.isMultiplePrice);
-            }
+        //        repricingOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder, $scope.isMultiplePrice);
+        //    }
 
-            // Tính toán số tiền giảm giá mỗi khi thay đổi phương thức giảm giá cho item trong đơn hàng
-            if ($scope.selectedItem) {
-                // console.log($scope.selectedItem.discount,$scope.selectedItem.discountIsPercent,$scope.selectedItem.discountInPercent);
-                if ($scope.selectedItem.discountIsPercent) {
-                    if ($scope.selectedItem.discountInPercent > 100) $scope.selectedItem.discountInPercent = 100;
-                    $scope.selectedItem.discount = ($scope.selectedItem.unitPrice * $scope.selectedItem.discountInPercent) / 100;
-                }
-            }
-            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.IsSubFeePercent) {
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent = 0;
-                if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent > 100) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent = 100;
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.subFee = ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent * $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.subTotal) / 100;
+        //    // Tính toán số tiền giảm giá mỗi khi thay đổi phương thức giảm giá cho item trong đơn hàng
+        //    if ($scope.selectedItem) {
+        //        // console.log($scope.selectedItem.discount,$scope.selectedItem.discountIsPercent,$scope.selectedItem.discountInPercent);
+        //        if ($scope.selectedItem.discountIsPercent) {
+        //            if ($scope.selectedItem.discountInPercent > 100) $scope.selectedItem.discountInPercent = 100;
+        //            $scope.selectedItem.discount = ($scope.selectedItem.unitPrice * $scope.selectedItem.discountInPercent) / 100;
+        //        }
+        //    }
+        //    if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.IsSubFeePercent) {
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent = 0;
+        //        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent > 100) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent = 100;
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.subFee = ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.SubFeeInPercent * $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.subTotal) / 100;
 
-            }
-            if ($scope.selectedItem && !$scope.selectedItem.discountIsPercent) {
-                if ($scope.selectedItem.discount > $scope.selectedItem.unitPrice) $scope.selectedItem.discount = $scope.selectedItem.unitPrice;
-            }
-            // Tính giá bán cuối sau khi trừ giảm giá
-            if ($scope.selectedItem && $scope.selectedItem.discount > 0) {
-                $scope.selectedItem.sellPrice = $scope.selectedItem.unitPrice - $scope.selectedItem.discount;
-            }
-            if ($scope.selectedItem && $scope.selectedItem.discount == 0) $scope.selectedItem.sellPrice = $scope.selectedItem.unitPrice;
-
-
-            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.IsDiscountPercent) {
-                if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.DiscountInPercent > 100) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.DiscountInPercent = 100;
-            }
+        //    }
+        //    if ($scope.selectedItem && !$scope.selectedItem.discountIsPercent) {
+        //        if ($scope.selectedItem.discount > $scope.selectedItem.unitPrice) $scope.selectedItem.discount = $scope.selectedItem.unitPrice;
+        //    }
+        //    // Tính giá bán cuối sau khi trừ giảm giá
+        //    if ($scope.selectedItem && $scope.selectedItem.discount > 0) {
+        //        $scope.selectedItem.sellPrice = $scope.selectedItem.unitPrice - $scope.selectedItem.discount;
+        //    }
+        //    if ($scope.selectedItem && $scope.selectedItem.discount == 0) $scope.selectedItem.sellPrice = $scope.selectedItem.unitPrice;
 
 
+        //    if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.IsDiscountPercent) {
+        //        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.DiscountInPercent > 100) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.DiscountInPercent = 100;
+        //    }
 
-            // Tính toán lại đơn hàng hiện tại, bổ sung thông tin thu ngân, người bán hàng vào đơn hàng.
-            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
-                calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
 
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.cashier = $scope.userSession.userId;
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser = $scope.userInfo;
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy) {
-                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy = $scope.userSession.userId;
-                    var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', $scope.userSession.userId);
-                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
-                }
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid = uuid.v1();
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId = $scope.currentStore.storeID;
-            }
 
-            if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
-                //console.log('fired');
-                //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
-                utils.debounce(updateTableToDB, 300, false)();
-                //updateTableToDB();
-                ////LSFactory.set($scope.currentStore.storeID, {
-                ////    tables: $scope.tables,
-                ////    zone: $scope.tableMap
-                ////});
-            }
-        });
+        //    // Tính toán lại đơn hàng hiện tại, bổ sung thông tin thu ngân, người bán hàng vào đơn hàng.
+        //    if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
+        //        calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
 
-        $scope.watchCallback = function (newValue, oldValue) {
-            //console.log(newValue);
-            if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
-                calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
-            }
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.cashier = $scope.userSession.userId;
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser = $scope.userInfo;
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy) {
+        //            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy = $scope.userSession.userId;
+        //            var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', $scope.userSession.userId);
+        //            $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
+        //        }
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid = uuid.v1();
+        //        if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId = $scope.currentStore.storeID;
+        //    }
 
-            if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
-                //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
-                //console.log('fired');
-                utils.debounce(updateTableToDB, 300, false)();
-                ////LSFactory.set($scope.currentStore.storeID, {
-                ////    tables: $scope.tables,
-                ////    zone: $scope.tableMap
-                ////});
-            }
-        }
-        //"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails"
-        $scope.$watchCollection("tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails", $scope.watchCallback);
+        //    if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
+        //        //console.log('fired');
+        //        //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
+        //        utils.debounce(updateTableToDB, 300, false)();
+        //        //updateTableToDB();
+        //        ////LSFactory.set($scope.currentStore.storeID, {
+        //        ////    tables: $scope.tables,
+        //        ////    zone: $scope.tableMap
+        //        ////});
+        //    }
+        //});
 
-        $scope.$watch("offline", function (n) {
-            if (n)
-                if (n.action == "submit-order")
-                    toaster.pop('error', "", 'Kết nối internet không ổn định hoặc đã mất kết nối internet, vui lòng lưu đơn hàng sau khi có internet trở lại!');
-                else {
-                    toaster.pop('error', "", 'Kết nối internet không ổn định hoặc đã mất kết nối internet, thao tác hiện không thể thực hiện được, vui lòng thử lại sau!');
-                }
-            $scope.offline = null;
-        });
+        //$scope.watchCallback = function (newValue, oldValue) {
+        //    //console.log(newValue);
+        //    if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+        //        calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
+        //    }
 
-        $scope.$watchCollection("receiptVoucher", function (n) {
-            if ($scope.tableIsSelected && $scope.receiptVoucher.length > 0) {
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.receiptVoucher = $scope.receiptVoucher;
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].balance = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount;
-            }
-        });
+        //    if ($scope.tables && $scope.tables.length > 0 && $scope.currentStore.storeID) {
+        //        //Mỗi khi có thay đổi trên hóa đơn thì cập nhật lại bàn đó dưới DB Local
+        //        //console.log('fired');
+        //        utils.debounce(updateTableToDB, 300, false)();
+        //        ////LSFactory.set($scope.currentStore.storeID, {
+        //        ////    tables: $scope.tables,
+        //        ////    zone: $scope.tableMap
+        //        ////});
+        //    }
+        //}
+        ////"tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails"
+        //$scope.$watchCollection("tableIsSelected.tableOrder[orderIndexIsSelected].saleOrder.orderDetails", $scope.watchCallback);
 
-        $scope.$watch("receiptVoucher[0].amount", function (n) {
-            if ($scope.tableIsSelected && $scope.receiptVoucher.length > 0 && $scope.receiptVoucher[0].amount > ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.amountPaid)) {
-                $scope.receiptVoucher[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.amountPaid;
-            }
-        });
+        //$scope.$watch("offline", function (n) {
+        //    if (n)
+        //        if (n.action == "submit-order")
+        //            toaster.pop('error', "", 'Kết nối internet không ổn định hoặc đã mất kết nối internet, vui lòng lưu đơn hàng sau khi có internet trở lại!');
+        //        else {
+        //            toaster.pop('error', "", 'Kết nối internet không ổn định hoặc đã mất kết nối internet, thao tác hiện không thể thực hiện được, vui lòng thử lại sau!');
+        //        }
+        //    $scope.offline = null;
+        //});
+
+        //$scope.$watchCollection("receiptVoucher", function (n) {
+        //    if ($scope.tableIsSelected && $scope.receiptVoucher.length > 0) {
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.receiptVoucher = $scope.receiptVoucher;
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].balance = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount;
+        //    }
+        //});
+
+        //$scope.$watch("receiptVoucher[0].amount", function (n) {
+        //    if ($scope.tableIsSelected && $scope.receiptVoucher.length > 0 && $scope.receiptVoucher[0].amount > ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.amountPaid)) {
+        //        $scope.receiptVoucher[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total - $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.amountPaid;
+        //    }
+        //});
 
         // Bắt đầu load dữ liệu
         return Promise.all([$scope.getAllCategories(), $scope.getProductItems(''), $scope.getPrintTemplate(), $scope.getCompanyInfo(), $scope.getSettings(), { localCurrentStore: localCurrentStore }])
@@ -983,7 +988,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //console.log(manager);
             //socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
-            debugger;
             socket.on('initShift', function (msg) {
                 console.log('initShift', msg);
                 if (msg.storeId == $scope.currentStore.storeID) {
@@ -1710,9 +1714,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     //$scope.orderIndexIsSelected = 0;
                                     //$scope.cancelOrder();
                                 }
-                                if ($scope.tables[x].tableOrder.length == 0) {
-                                    $scope.tables[x].tableOrder.push({ saleOrder: angular.copy(saleOrder) });
-                                }
+                                //if ($scope.tables[x].tableOrder.length == 0) {
+                                //    $scope.tables[x].tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+                                //}
                                 ////Cập nhật lại trạng thái của bàn
                                 var tableStatus = tableIsActive($scope.tables[x]);
                                 $scope.tables[x].tableStatus = tableStatus ? 1 : 0;
@@ -2215,7 +2219,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //    }
             //}]
             //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[0].saleOrder)
-            $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+            //$scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+            //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+            sunoSaleOrder.createNewOrder()
+            $scope.tableIsSelected.tableOrder.push({ saleOrder: sunoSaleOrder.saleOrder });
+            $scope.tableIsSelected.tableOrder[0].saleOrder.logs = [];
+            $scope.tableIsSelected.tableOrder[0].saleOrder.revision = 1;
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith = [];
+            $scope.tableIsSelected.tableOrder[0].saleOrder.createdBy = $scope.userSession.userId;
+            var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', $scope.userSession.userId);
+            $scope.tableIsSelected.tableOrder[0].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
             $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
         };
 
@@ -2877,8 +2890,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return toaster.pop('warning', "", 'Hàng hóa này được tính giá theo giờ sử dụng và đã có trong đơn hàng!');
             }
         }
-
+        debugger;
         if ($scope.tableIsSelected.tableOrder.length == 0) {
+            console.log('run');
             //$scope.tableIsSelected.tableOrder = [{
             //    saleOrder: {}
             //}]
@@ -3415,7 +3429,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
 
     $scope.changeQuantity = function (num, item, $event) {
-        debugger;
         var qtyBeforeChange = item.quantity;
         var checkItem = angular.copy(item);
         // Kiểm tra quyền thao tác trên hóa đơn
@@ -4025,6 +4038,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
 
             var submitOrder = angular.copy($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+            
             if (submitOrder.hasOwnProperty('note')) {
                 submitOrder.createdByName = submitOrder.note;
             }
