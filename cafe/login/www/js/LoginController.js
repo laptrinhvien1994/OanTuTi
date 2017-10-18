@@ -20,6 +20,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         password: null
     };
     $scope.hasAccount = false;
+    $scope.displayName = null;
 
     $scope.isCancel = false;
     //Mới vào
@@ -41,6 +42,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
                 && data[4].docs.length > 0
                 && data[5].docs.length > 0) {
                 $scope.hasAccount = true;
+                $scope.displayName = data[4].docs[0].user.displayName;
                 //Chờ 3s rồi tự động login
                 $timeout(function () {
                     if (!$scope.isCancel) {
@@ -48,6 +50,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
                     }
                 }, 3000);
             } else { //Chưa đăng nhập
+                $scope.resetUser();
                 $scope.hasAccount = false;
             }
         })
@@ -69,7 +72,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         //localStorage.removeItem('user');
         $scope.isCancel = true;
         Promise.all([
-            $PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
+            //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
             $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
             $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
             $PouchDB.DBSettings.$removeDoc({ _id: 'store' }),
@@ -78,6 +81,8 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         ]).then(function (data) {
             //window.location.reload(true);
             $scope.hasAccount = false;
+        }).catch(function (e) {
+            console.log(e);
         });
     }
 

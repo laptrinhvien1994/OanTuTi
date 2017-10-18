@@ -669,22 +669,24 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     var buildHotKeyIndex = function () {
         //Build Index để dùng phím tắt cho sơ đồ bàn và thực đơn.
         $timeout(function () {
-            //Kiểm tra sơ đồ bàn để tránh trường hợp đăng nhập 2 tabs và logout 1 bên. bên kia refresh lại thì báo lỗi.
-            if ($scope.tables && $scope.tables[1]) {
-                //var id = 'p1-' + $scope.tables[1].tableUuid;
-                //var widthOfOneTable = document.getElementById(id).offsetWidth;
-                var widthOfOneTable = findFisrtElement($scope.tables, 1);
-                var widthOfOneRow = document.getElementById('buildHotKeyIndex').offsetWidth;
-                //console.log(widthOfOneTable);
-                //console.log(widthOfOneRow);
-                $scope.quantityTablePerRow = Math.floor(widthOfOneRow / widthOfOneTable);
-            }
-            if ($scope.productItemList && $scope.productItemList[0]) {
-                //var id = 'p2-' + $scope.productItemList[0].itemId;
-                //var widthOfOneItem = document.getElementById(id).offsetWidth;
-                var widthOfOneItem = findFisrtElement($scope.productItemList, 0);
-                var widthOfOneRowItem = document.getElementById('buildHotKeyIndexInItemList').offsetWidth;
-                $scope.quantityItemPerRow = Math.floor(widthOfOneRowItem / widthOfOneItem);
+            if (window.location.hash == '#/') {
+                //Kiểm tra sơ đồ bàn để tránh trường hợp đăng nhập 2 tabs và logout 1 bên. bên kia refresh lại thì báo lỗi.
+                if ($scope.tables && $scope.tables[1]) {
+                    //var id = 'p1-' + $scope.tables[1].tableUuid;
+                    //var widthOfOneTable = document.getElementById(id).offsetWidth;
+                    var widthOfOneTable = findFisrtElement($scope.tables, 1);
+                    var widthOfOneRow = document.getElementById('buildHotKeyIndex').offsetWidth;
+                    //console.log(widthOfOneTable);
+                    //console.log(widthOfOneRow);
+                    $scope.quantityTablePerRow = Math.floor(widthOfOneRow / widthOfOneTable);
+                }
+                if ($scope.productItemList && $scope.productItemList[0]) {
+                    //var id = 'p2-' + $scope.productItemList[0].itemId;
+                    //var widthOfOneItem = document.getElementById(id).offsetWidth;
+                    var widthOfOneItem = findFisrtElement($scope.productItemList, 0);
+                    var widthOfOneRowItem = document.getElementById('buildHotKeyIndexInItemList').offsetWidth;
+                    $scope.quantityItemPerRow = Math.floor(widthOfOneRowItem / widthOfOneItem);
+                }
             }
         }, 200);
     };
@@ -2219,7 +2221,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             }]
             angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[0].saleOrder)
-            $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+            //$scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
             $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
             //sunoSaleOrder.createNewOrder()
             //$scope.tableIsSelected.tableOrder.push({ saleOrder: sunoSaleOrder.saleOrder });
@@ -2238,7 +2240,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.switchLayout(isInMenu);
         //$scope.isInTable = false;
         $ionicScrollDelegate.$getByHandle('orders-details').scrollBottom();
-        console.log(JSON.stringify($scope.tables));
     }
 
     $scope.openTableTakeAway = function () {

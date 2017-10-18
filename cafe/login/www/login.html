@@ -20,9 +20,9 @@
       <div class="text-center"><button on-tap="openLink('https://auth.suno.vn/dang-ky/')" class="button button-clear button-light font14 colwhite">Đăng ký</button> <button on-tap="openLink('https://auth.suno.vn/Account/ForgotPwd')" class="button button-clear button-light font14 colwhite">Quên mật khẩu</button></div>
     </div>
     <div ng-show="hasAccount" class="width-320">
-      <div class="font14 text-center padding-top-60 colwhite">Đăng nhập tài khoản : {{loginData.username}}</div>
+      <div class="font14 text-center padding-top-60 colwhite">Đăng nhập tài khoản : <b>{{displayName}}</b></div>
       <button class="button button-block button-light font14" on-tap="doLogin()">Đăng nhập</button>
-      <button class="button button-block button-light button-clear font14" on-tap="resetUser()">hoặc nhập lại thông tin tài khoản</button>
+      <button class="button button-block button-light button-clear font14" on-tap="resetUser()">Đăng nhập bằng tài khoản khác</button>
     </div>
   </ion-content>
   <!-- align to the bottom of the page -->
