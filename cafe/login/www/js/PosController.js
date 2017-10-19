@@ -696,7 +696,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         //$scope.$apply();
     })
 
-    $q.when(Promise.all([Auth.getToken(), Auth.getUser(), Auth.getSetting(), Auth.getStoreList(), DBSettings.$getDocByID({ _id: 'currentStore' }), Auth.getBootloader(), Auth.getSessionId()]))
+    //$q.when(Promise.all([Auth.getToken(), Auth.getUser(), Auth.getSetting(), Auth.getStoreList(), DBSettings.$getDocByID({ _id: 'currentStore' }), Auth.getBootloader(), Auth.getSessionId()]))
+    $q.when(Promise.all([DBSettings.$getDocByID({ _id: 'SunoGlobal' }), DBSettings.$getDocByID({ _id: 'currentStore' })]))
     .then(function (data) {
         if (data[0].docs.length > 0 && data[1].docs.length > 0 && data[2].docs.length > 0 && data[3].docs.length > 0) {
             $scope.token = data[0].docs[0].token;

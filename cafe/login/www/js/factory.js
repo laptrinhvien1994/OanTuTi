@@ -402,6 +402,22 @@ angular.module('sunoPos.factory', [])
                     return data;
                 });
         },
+        setSunoGlobal: function (global) {
+            return DB.$getDocByID({ _id: 'SunoGlobal' }).then(function (data) {
+                if (data.docs.length > 0) {
+                    return DB.$addDoc({ _id: 'SunoGlobal', SunoGlobal: global, _rev: data.docs[0]._rev });
+                }
+                else {
+                    return DB.$addDoc({ _id: 'SunoGlobal', SunoGlobal: global });
+                }
+            });
+        },
+        getSunoGlobal: function () {
+            return DB.$getDocByID({ _id: 'SunoGlobal' })
+                .then(function (data) {
+                    return data;
+                });
+        },
         deleteAuth: function () {
             return Promise.all([
                 DB.$removeDoc({ _id: userID }),

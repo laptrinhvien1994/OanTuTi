@@ -38,16 +38,16 @@ var SunoGlobal = {
         data: null
     },
     authService: {
-        //domain: 'http://localhost:6985',
-        domain: 'https://auth.suno.vn',
+        domain: 'http://localhost:6985',
+        //domain: 'https://auth.suno.vn',
         loginUrl: '/api/auth/hugate',
         isAuthenticatedUrl: '/api/provider/isauthenticated',
         getUserSessionUrl: '/api/provider/getUserSession',
         refreshTokenUrl: '/api/provider/refreshToken'
     },
     sunoService: {
-        //domain: 'http://localhost:14952',
-        domain: 'https://api.suno.vn',
+        domain: 'http://localhost:14952',
+        //domain: 'https://api.suno.vn',
         category: {
             getCategoriesUrl: '/api/categories'
         },
@@ -138,5 +138,5 @@ var SunoGlobal = {
         var milliseconds = parseInt(dateSlice);
         var date = new Date(milliseconds);
         return date;
-    },
+    }
 };

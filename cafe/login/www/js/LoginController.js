@@ -19,42 +19,68 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         username: null,
         password: null
     };
+    $scope.token = null;
     $scope.hasAccount = false;
     $scope.displayName = null;
 
     $scope.isCancel = false;
     //Mới vào
-    Promise.all([
-        AuthFactory.getSessionId(),
-        AuthFactory.getStoreList(),
-        AuthFactory.getBootloader(),
-        AuthFactory.getSetting(),
-        AuthFactory.getUser(),
-        AuthFactory.getToken()
-    ])
+    //Promise.all([
+    //    AuthFactory.getSessionId(),
+    //    AuthFactory.getStoreList(),
+    //    AuthFactory.getBootloader(),
+    //    AuthFactory.getSetting(),
+    //    AuthFactory.getUser(),
+    //    AuthFactory.getToken()
+    //])
+    AuthFactory.getSunoGlobal()
         .then(function (data) {
-            debugger;
             //Đã đăng nhập
-            if (data[0].docs.length > 0
-                && data[1].docs.length > 0
-                && data[2].docs.length > 0
-                && data[3].docs.length > 0
-                && data[4].docs.length > 0
-                && data[5].docs.length > 0) {
+            if (
+                //data[0].docs.length > 0
+                //&& data[1].docs.length > 0
+                //&& data[2].docs.length > 0
+                //&& data[3].docs.length > 0
+                //&& data[4].docs.length > 0
+                //&& data[5].docs.length > 0
+                data.docs.length > 0
+            ) {
                 $scope.hasAccount = true;
-                $scope.displayName = data[4].docs[0].user.displayName;
-                //Chờ 3s rồi tự động login
+                //$scope.displayName = data[4].docs[0].user.displayName;
+                $scope.$apply();
+                //Chờ 3s rồi tự động đăng nhập nếu không nhấn "Đăng nhập"
                 $timeout(function () {
                     if (!$scope.isCancel) {
+                        ////Gán lại cho SunoGlobal các giá trị dưới DB Local.
+                        //SunoGlobal.userProfile.sessionId = data[4].docs[0].user.sesssionId;
+                        //SunoGlobal.userProfile.userName = data[4].docs[0].user.email;
+                        ////UserProfile
+                        //SunoGlobal.userProfile.authSessionId = data[4].docs[0].user.authSessionId;
+                        //SunoGlobal.userProfile.userId = data[4].docs[0].user.userId;
+                        //SunoGlobal.userProfile.fullName = data[4].docs[0].user.displayName;
+                        //SunoGlobal.userProfile.email = data[4].docs[0].user.email;
+                        //SunoGlobal.userProfile.isAdmin = data[4].docs[0].user.isAdmin;
+                        ////Token info
+                        //SunoGlobal.token.accessToken = data[5].docs[0].token.token;
+                        //SunoGlobal.token.refreshToken = data[5].docs[0].token.refreshToken;
+                        ////Company Info
+                        //SunoGlobal.companyInfo.companyId = data[4].docs[0].user.companyId;
+                        //SunoGlobal.companyInfo.companyName = data[4].docs[0].user.companyName;
+                        ////Permission
+                        //SunoGlobal.permissions = data[4].docs[0].user.permissions;
+                        //Gán lại cho SunoGlobal các giá trị dưới DB Local.
+                        for (var prop in data.docs[0].SunoGlobal) {
+                            SunoGlobal[prop] = data.docs[0].SunoGlobal[prop];
+                        }
                         $state.go('pos');
                     }
-                }, 3000);
+                }, 10000000);
             } else { //Chưa đăng nhập
                 $scope.resetUser();
                 $scope.hasAccount = false;
+                $scope.$apply();
             }
         })
-
 
     $scope.$watch('$root.w_logout', function () {
         if ($rootScope.w_logout == false) {
@@ -72,12 +98,13 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         //localStorage.removeItem('user');
         $scope.isCancel = true;
         Promise.all([
-            //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
-            $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
-            $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
-            $PouchDB.DBSettings.$removeDoc({ _id: 'store' }),
-            $PouchDB.DBSettings.$removeDoc({ _id: 'token' }),
-            $PouchDB.DBSettings.$removeDoc({ _id: 'user' })
+            $PouchDB.DBSettings.$removeDoc({ _id: 'SunoGlobal' })
+        //    //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
+        //    $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
+        //    $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
+        //    $PouchDB.DBSettings.$removeDoc({ _id: 'store' }),
+        //    $PouchDB.DBSettings.$removeDoc({ _id: 'token' }),
+        //    $PouchDB.DBSettings.$removeDoc({ _id: 'user' })
         ]).then(function (data) {
             //window.location.reload(true);
             $scope.hasAccount = false;
@@ -85,15 +112,6 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             console.log(e);
         });
     }
-
-    // $scope.$on('w_logout', function(event, args) {
-    //   var status = args.status;
-    //   console.log(args);
-    //   if(status == 1){
-    //     $scope.hasAccount = false;
-    //     console.log('logout current hasAccount ' + $scope.hasAccount);
-    //   }
-    // });
 
     $scope.openLink = function (url) {
         if (window.cordova) {
@@ -115,7 +133,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             deferred.reject("Có lỗi xảy ra!");
             return $ionicPopup.alert({
                 title: 'Thông báo',
-                template: 'Có sự cố khi đăng nhập, vui lòng thử lại!'
+                template: '<p style="text-align:center;">Có sự cố khi đăng nhập</p> <p style="text-align:center;">Vui lòng thử lại!</p>'
             });
         }, true, 'getAuthBootloader');
         return deferred.promise;
@@ -144,7 +162,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             deferred.reject("Có lỗi xảy ra!");
             return $ionicPopup.alert({
                 title: 'Thông báo',
-                template: 'Có sự cố khi đăng nhập, vui lòng thử lại!'
+                template: '<p style="text-align:center;">Có sự cố khi đăng nhập</p> <p style="text-align:center;">Vui lòng thử lại!</p>'
             });
         }, true, 'getStoreList');
         return deferred.promise;
@@ -163,7 +181,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             deferred.reject("Có lỗi xảy ra!");
             return $ionicPopup.alert({
                 title: 'Thông báo',
-                template: 'Có sự cố khi đăng nhập, vui lòng thử lại!'
+                template: '<p style="text-align:center;">Có sự cố khi đăng nhập</p> <p style="text-align:center;">Vui lòng thử lại!</p>'
             });
         }, true, 'getBootloader');
         return deferred.promise;
@@ -203,38 +221,57 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             deferred.reject("Có lỗi xảy ra!");
             return $ionicPopup.alert({
                 title: 'Thông báo',
-                template: 'Thông tin đăng nhập không đúng!'
+                template: '<p style="text-align:center;">Thông tin đăng nhập không đúng!</p>'
             });
         }, true, 'getSession');
         return deferred.promise;
     }
 
-    var sessionID = null;
     var login = function () {
         var deferred = $q.defer();
         sunoAuth.login($scope.loginData.username, $scope.loginData.password)
-            .then(function (body) {
-                sessionID = body.sessionId;
-                AuthFactory.setSessionId(body.sessionId)
-                    .then(function (data) {
-                        deferred.resolve(data);
-                    });
+        .then(function (body) {
+            //Gán cho SunoGlobal
+            SunoGlobal.userProfile.sessionId = body.sessionId;
+            SunoGlobal.userProfile.userName = body.userName;
+            sunoAuth.getUserInfo(SunoGlobal.userProfile.sessionId)
+            .then(function (data) {
+                //UserProfile
+                SunoGlobal.userProfile.authSessionId = data.userSession.authSessionId;
+                SunoGlobal.userProfile.userId = data.userSession.userId;
+                SunoGlobal.userProfile.fullName = data.userSession.displayName;
+                SunoGlobal.userProfile.email = data.userSession.email;
+                SunoGlobal.userProfile.isAdmin = data.userSession.isAdmin;
+                //Token info
+                SunoGlobal.token.accessToken = data.userSession.accessToken;
+                SunoGlobal.token.refreshToken = data.userSession.refreshToken;
+                //Company Info
+                SunoGlobal.companyInfo.companyId = data.userSession.companyId;
+                SunoGlobal.companyInfo.companyName = data.userSession.companyName;
+                //Permission
+                SunoGlobal.permissions = data.userSession.permissions;
+                $scope.token = data.userSession.accessToken;
+                deferred.resolve(data);
             })
-            .catch(function (e) {
-                deferred.reject('Có lỗi xảy ra!');
-                if (e == null) {
-                    return $ionicPopup.alert({
-                        title: 'Thông báo',
-                        template: 'Vui lòng kiểm tra kết nối internet của bạn'
-                    });
-                }
-                else {
-                    $ionicPopup.alert({
-                        title: 'Thông báo',
-                        template: 'Thông tin đăng nhập không đúng'
-                    });
-                }
+            .catch(function (error) {
+                console.log('getUserInfo', error);
             });
+        })
+        .catch(function (e) {
+            deferred.reject('Có lỗi xảy ra!');
+            if (e == null) {
+                return $ionicPopup.alert({
+                    title: 'Thông báo',
+                    template: '<p style="text-align:center;">Vui lòng kiểm tra kết nối internet của bạn</p>'
+                });
+            }
+            else {
+                $ionicPopup.alert({
+                    title: 'Thông báo',
+                    template: '<p style="text-align:center;">Thông tin đăng nhập không đúng</p>'
+                });
+            }
+        });
         return deferred.promise;
         //url = Api.login + 'username=' + $scope.loginData.username + '&password=' + $scope.loginData.password;
         //asynRequest($state, $http, 'GET', url, false, 'json', null, function (data, status) {
@@ -278,7 +315,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         if ($scope.loginData.username == '' || $scope.loginData.password == '') {
             return $ionicPopup.alert({
                 title: 'Thông báo',
-                template: 'Vui lòng nhập thông tin tài khoản!'
+                template: '<p style="text-align:center;">Vui lòng nhập thông tin tài khoản!</p>'
             });
         }
 
@@ -291,11 +328,21 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             $scope.offline = null;
         });
 
-        login().then(function (data) {
-            return getSession(sessionID);
-        }).then(function (data) {
+        login()
+        //.then(function (data) {
+        //    return Promise.all([
+        //        AuthFactory.setSessionId(SunoGlobal.userProfile.sessionId),
+        //        getSession(SunoGlobal.userProfile.sessionId)
+        //    ]);
+        //})
+        .then(function (data) {
             return Promise.all([getBootloader(), getStoreList(), getAuthBootloader()]);
-        }).then(function (data) {
+            }).then(function (data) {
+                //Thêm vào SunoGlobal sau đó lưu xuống DB.
+                console.log(SunoGlobal);
+                var SunoGlobalWithoutFn = JSON.parse(JSON.stringify(SunoGlobal));
+                AuthFactory.setSunoGlobal(SunoGlobalWithoutFn)
+                console.log(data);
             $state.go('pos');
         }).catch(function (error) {
             toaster.pop('error', "", 'Đăng nhập không thành công, xin thử lại!');

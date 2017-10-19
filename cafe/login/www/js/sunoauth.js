@@ -7,7 +7,7 @@ function SunoAuth() {
     */
     SunoAuth.prototype.login = function (username, password) {
         var self = this;
-        var data = { userName: username, password: password, format: 'json' };
+        var data = { username: username, password: password, format: 'json' };
         return self.request.makeJsonRequest(SunoGlobal.authService.domain + SunoGlobal.authService.loginUrl, 'GET', data);
     }
 

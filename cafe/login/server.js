@@ -82,7 +82,7 @@ var port = 8181;
 var DEBUG = true;
 var CACHE_TIME_OUT = 104400000;
 var AUTH_URL = 'localhost:6985';
-var https = require('https');
+var https = require('http');
 var querystring = require('querystring');
 var cache = require('memory-cache');
 var _ = require('underscore');
@@ -99,7 +99,7 @@ var url = 'mongodb://127.0.0.1:27017/sunocafe?maxPoolSize=100';
 // Use connect method to connect to the Server 
 
 //Nhớ sửa dưới kia chỗ port và ở http
-AUTH_URL = 'auth.suno.vn';
+//AUTH_URL = 'auth.suno.vn';
 
 MongoClient.connect(url, function (err, database) {
     if (err) console.log(err);
@@ -1585,8 +1585,8 @@ MongoClient.connect(url, function (err, database) {
                 };
             }
             var options = {
-                host: host,
-                //port: 6985,
+                //host: host,
+                port: 6985,
                 path: endpoint,
                 method: method,
                 headers: headers
