@@ -78,7 +78,6 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
             } else { //Chưa đăng nhập
                 $scope.resetUser();
                 $scope.hasAccount = false;
-                $scope.$apply();
             }
         })
 
@@ -99,15 +98,16 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         $scope.isCancel = true;
         Promise.all([
             $PouchDB.DBSettings.$removeDoc({ _id: 'SunoGlobal' })
-        //    //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
-        //    $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
-        //    $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
-        //    $PouchDB.DBSettings.$removeDoc({ _id: 'store' }),
-        //    $PouchDB.DBSettings.$removeDoc({ _id: 'token' }),
-        //    $PouchDB.DBSettings.$removeDoc({ _id: 'user' })
+            //    //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
+            //    $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
+            //    $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
+            //    $PouchDB.DBSettings.$removeDoc({ _id: 'store' }),
+            //    $PouchDB.DBSettings.$removeDoc({ _id: 'token' }),
+            //    $PouchDB.DBSettings.$removeDoc({ _id: 'user' })
         ]).then(function (data) {
             //window.location.reload(true);
             $scope.hasAccount = false;
+            $scope.$apply();
         }).catch(function (e) {
             console.log(e);
         });
@@ -119,7 +119,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         }
     }
 
-    getAuthBootloader = function () {
+    var getAuthBootloader = function () {
         var deferred = $q.defer();
         var url = Api.authBootloader;
         asynRequest($state, $http, 'POST', url, $scope.token, 'json', null, function (data, status) {
@@ -230,48 +230,48 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
     var login = function () {
         var deferred = $q.defer();
         sunoAuth.login($scope.loginData.username, $scope.loginData.password)
-        .then(function (body) {
-            //Gán cho SunoGlobal
-            SunoGlobal.userProfile.sessionId = body.sessionId;
-            SunoGlobal.userProfile.userName = body.userName;
-            sunoAuth.getUserInfo(SunoGlobal.userProfile.sessionId)
-            .then(function (data) {
-                //UserProfile
-                SunoGlobal.userProfile.authSessionId = data.userSession.authSessionId;
-                SunoGlobal.userProfile.userId = data.userSession.userId;
-                SunoGlobal.userProfile.fullName = data.userSession.displayName;
-                SunoGlobal.userProfile.email = data.userSession.email;
-                SunoGlobal.userProfile.isAdmin = data.userSession.isAdmin;
-                //Token info
-                SunoGlobal.token.accessToken = data.userSession.accessToken;
-                SunoGlobal.token.refreshToken = data.userSession.refreshToken;
-                //Company Info
-                SunoGlobal.companyInfo.companyId = data.userSession.companyId;
-                SunoGlobal.companyInfo.companyName = data.userSession.companyName;
-                //Permission
-                SunoGlobal.permissions = data.userSession.permissions;
-                $scope.token = data.userSession.accessToken;
-                deferred.resolve(data);
+            .then(function (body) {
+                //Gán cho SunoGlobal
+                SunoGlobal.userProfile.sessionId = body.sessionId;
+                SunoGlobal.userProfile.userName = body.userName;
+                sunoAuth.getUserInfo(SunoGlobal.userProfile.sessionId)
+                    .then(function (data) {
+                        //UserProfile
+                        SunoGlobal.userProfile.authSessionId = data.userSession.authSessionId;
+                        SunoGlobal.userProfile.userId = data.userSession.userId;
+                        SunoGlobal.userProfile.fullName = data.userSession.displayName;
+                        SunoGlobal.userProfile.email = data.userSession.email;
+                        SunoGlobal.userProfile.isAdmin = data.userSession.isAdmin;
+                        //Token info
+                        SunoGlobal.token.accessToken = data.userSession.accessToken;
+                        SunoGlobal.token.refreshToken = data.userSession.refreshToken;
+                        //Company Info
+                        SunoGlobal.companyInfo.companyId = data.userSession.companyId;
+                        SunoGlobal.companyInfo.companyName = data.userSession.companyName;
+                        //Permission
+                        SunoGlobal.permissions = data.userSession.permissions;
+                        $scope.token = data.userSession.accessToken;
+                        deferred.resolve(data);
+                    })
+                    .catch(function (error) {
+                        console.log('getUserInfo', error);
+                    });
             })
-            .catch(function (error) {
-                console.log('getUserInfo', error);
+            .catch(function (e) {
+                deferred.reject('Có lỗi xảy ra!');
+                if (e == null) {
+                    return $ionicPopup.alert({
+                        title: 'Thông báo',
+                        template: '<p style="text-align:center;">Vui lòng kiểm tra kết nối internet của bạn</p>'
+                    });
+                }
+                else {
+                    $ionicPopup.alert({
+                        title: 'Thông báo',
+                        template: '<p style="text-align:center;">Thông tin đăng nhập không đúng</p>'
+                    });
+                }
             });
-        })
-        .catch(function (e) {
-            deferred.reject('Có lỗi xảy ra!');
-            if (e == null) {
-                return $ionicPopup.alert({
-                    title: 'Thông báo',
-                    template: '<p style="text-align:center;">Vui lòng kiểm tra kết nối internet của bạn</p>'
-                });
-            }
-            else {
-                $ionicPopup.alert({
-                    title: 'Thông báo',
-                    template: '<p style="text-align:center;">Thông tin đăng nhập không đúng</p>'
-                });
-            }
-        });
         return deferred.promise;
         //url = Api.login + 'username=' + $scope.loginData.username + '&password=' + $scope.loginData.password;
         //asynRequest($state, $http, 'GET', url, false, 'json', null, function (data, status) {
@@ -329,23 +329,63 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         });
 
         login()
-        //.then(function (data) {
-        //    return Promise.all([
-        //        AuthFactory.setSessionId(SunoGlobal.userProfile.sessionId),
-        //        getSession(SunoGlobal.userProfile.sessionId)
-        //    ]);
-        //})
-        .then(function (data) {
-            return Promise.all([getBootloader(), getStoreList(), getAuthBootloader()]);
+            //.then(function (data) {
+            //    return Promise.all([
+            //        AuthFactory.setSessionId(SunoGlobal.userProfile.sessionId),
+            //        getSession(SunoGlobal.userProfile.sessionId)
+            //    ]);
+            //})
+            .then(function (data) {
+                //return Promise.all([getBootloader(), getStoreList(), getAuthBootloader()]);
+                return Promise.all([getBootloader(), getAuthBootloader()]);
             }).then(function (data) {
                 //Thêm vào SunoGlobal sau đó lưu xuống DB.
-                console.log(SunoGlobal);
+                //console.log(data);
+                //console.log(SunoGlobal);
                 var SunoGlobalWithoutFn = JSON.parse(JSON.stringify(SunoGlobal));
-                AuthFactory.setSunoGlobal(SunoGlobalWithoutFn)
-                console.log(data);
-            $state.go('pos');
-        }).catch(function (error) {
-            toaster.pop('error', "", 'Đăng nhập không thành công, xin thử lại!');
-        });
+                SunoGlobalWithoutFn.stores = data[0].allStores;
+                SunoGlobalWithoutFn.featureActivations = data[0].featureActivations;
+                SunoGlobalWithoutFn.companyInfo.companyCode = data[1].companyCode;
+                SunoGlobalWithoutFn.companyInfo.companyPhone = data[1].companyPhone;
+                SunoGlobalWithoutFn.companyInfo.industry = data[1].industry;
+                SunoGlobalWithoutFn.storeIdsGranted = data[1].storeIdsGranted;
+                SunoGlobalWithoutFn.usageInfo = data[1].usageInfo;
+                SunoGlobalWithoutFn.rolesGranted = data[1].rolesGranted;
+                SunoGlobalWithoutFn.users = data[1].users.userProfiles;
+
+                SunoGlobalWithoutFn.saleSetting.cogsCalculationMethod = data[0].saleSetting.cogsCalculationMethod;
+                SunoGlobalWithoutFn.saleSetting.isAllowDebtPayment = data[0].saleSetting.allowDebtPayment;
+                SunoGlobalWithoutFn.saleSetting.isAllowPriceModified = data[0].saleSetting.allowPriceModified;
+                SunoGlobalWithoutFn.saleSetting.isAllowQuantityAsDecimal = data[0].saleSetting.allowQuantityAsDecimal;
+                SunoGlobalWithoutFn.saleSetting.isApplyCustomerPricingPolicy = data[0].saleSetting.applyCustomerPricingPolicy;
+                SunoGlobalWithoutFn.saleSetting.isApplyEarningPoint = data[0].saleSetting.applyEarningPoint;
+                SunoGlobalWithoutFn.saleSetting.isApplyPromotion = data[0].saleSetting.applyPromotion;
+                SunoGlobalWithoutFn.saleSetting.isPrintMaterials = data[0].saleSetting.isPrintMaterials;
+                SunoGlobalWithoutFn.saleSetting.isProductReturnDay = data[0].saleSetting.allowProductReturnDay;
+                SunoGlobalWithoutFn.saleSetting.productReturnDay = data[0].saleSetting.productReturnDay;
+                SunoGlobalWithoutFn.saleSetting.saleReportSetting = data[0].saleSetting.saleReportSetting;
+                SunoGlobalWithoutFn.saleSetting.allowOfflineCache = data[0].saleSetting.allowOfflineCache;
+                SunoGlobalWithoutFn.saleSetting.allowTaxModified = data[0].saleSetting.allowTaxModified;
+                SunoGlobalWithoutFn.saleSetting.applyCustomerCare = data[0].saleSetting.applyCustomerCare;
+                SunoGlobalWithoutFn.saleSetting.bankTransferPaymentMethod = data[0].saleSetting.bankTransferPaymentMethod;
+                SunoGlobalWithoutFn.saleSetting.cardPaymentMethod = data[0].saleSetting.cardPaymentMethod;
+                SunoGlobalWithoutFn.saleSetting.cashPaymentMethod = data[0].saleSetting.cashPaymentMethod;
+                SunoGlobalWithoutFn.saleSetting.currencyNote = data[0].saleSetting.currencyNote;
+                SunoGlobalWithoutFn.saleSetting.customerEmailConfiguration = data[0].saleSetting.customerEmailConfiguration;
+                SunoGlobalWithoutFn.saleSetting.isHasSampleData = data[0].saleSetting.isHasSampleData;
+                SunoGlobalWithoutFn.saleSetting.longtimeInventories = data[0].saleSetting.longtimeInventories;
+                SunoGlobalWithoutFn.saleSetting.receiptVoucherMethod = data[0].saleSetting.receiptVoucherMethod;
+                SunoGlobalWithoutFn.saleSetting.showInventoryTotal = data[0].saleSetting.showInventoryTotal;
+                SunoGlobalWithoutFn.saleSetting.storeChangeAutoApproval = data[0].saleSetting.storeChangeAutoApproval;
+                SunoGlobalWithoutFn.saleSetting.weeklyReportEmail = data[0].saleSetting.weeklyReportEmail;
+
+                return AuthFactory.setSunoGlobal(SunoGlobalWithoutFn)
+
+            })
+            .then(function (d) {
+                $state.go('pos');
+            }).catch(function (error) {
+                toaster.pop('error', "", 'Đăng nhập không thành công, xin thử lại!');
+            });
     };
 }

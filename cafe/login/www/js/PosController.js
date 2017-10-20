@@ -25,7 +25,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     var socket = null;
     var manager = null;
-    var sunoSaleOrder = null;
+    var $SunoSaleOrder = null;
+    var $SunoRequest = new SunoRequest();
     var isSocketConnected = false;
     var isSocketInitialized = true;
 
@@ -51,16 +52,33 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //suggestItems
     $scope.suggestproducts = [];
     $scope.key = null;
-    $scope.getSearchResult = function (key) {
+
+    //$scope.getSearchResult = function (key) {
+    //    if (!key) {
+    //        return;
+    //    }
+    //    var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        $scope.suggestproducts = angular.copy(data.items);
+    //        $scope.ItemSearchIsSelected = null;
+    //    }, function (status) { console.log(status) }, true, 'SearchProductItem');
+    //}
+    var getSearchResult = function (key) {
         if (!key) {
             return;
         }
         var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            $scope.suggestproducts = angular.copy(data.items);
-            $scope.ItemSearchIsSelected = null;
-        }, function (status) { console.log(status) }, true, 'SearchProductItem');
+        var method = 'GET';
+        var data = null;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
+                $scope.suggestproducts = angular.copy(data.items);
+                $scope.ItemSearchIsSelected = null;
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
 
     var DBSettings = $PouchDB.DBSettings;
@@ -76,41 +94,32 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $ionicSideMenuDelegate.canDragContent(false);
 
-    //var utils = {
-    //    debounce: function(execution, wait, immediate)
-    //    {
-    //        wait = 200;
-    //        if(!window.timeout) window.timeout = null;
-    //        return function () {
-    //            var later = function () {
-    //                window.timeout = null;
-    //                if (!immediate) {
-    //                    execution();
-    //                }
-    //            };
-    //            var callNow = immediate && !window.timeout;
-    //            clearTimeout(window.timeout);
-    //            window.timeout = setTimeout(later, wait || 200);
-    //            if (callNow) {
-    //                execution();
-    //            }
-    //        };
-    //    }
-    //};
 
     //Hàm kiểm tra kết nối internet.
     var checkingInternetConnection = function () {
-        return new Promise(function (resolve, reject) {
-            var url = Api.ping;
-            var data = { extConfig: { db: DBSettings, token: $scope.token } };
-            asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+        //return new Promise(function (resolve, reject) {
+        //    var url = Api.ping;
+        //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+        //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+        //        $scope.isOnline = true;
+        //        resolve(true);
+        //    }, function (status) {
+        //        $scope.isOnline = false;
+        //        reject(false);
+        //    }, true, 'Ping', false);
+        //});
+        var url = Api.ping;
+        var method = 'GET';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.isOnline = true;
-                resolve(true);
-            }, function (status) {
+                return true;
+            })
+            .catch(function (e) {
                 $scope.isOnline = false;
-                reject(false);
-            }, true, 'Ping', false);
-        });
+                return false;
+            });
     }
 
     var notiPopupInstance = null;
@@ -136,7 +145,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var stackNoti = $ionicPopup.alert({
             title: title,
             template, content
-            });
+        });
         stackNoti.then(function (response) {
             if (callback !== null && typeof callback === 'function') {
                 callback();
@@ -167,31 +176,49 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
     });
 
-    function audit(actionId, shortContent, embededContent) {
-        var log = {
+    //function audit(actionId, shortContent, embededContent) {
+    //    var log = {
+    //        "auditTrailModel":
+    //          {
+    //              "userId": $scope.userSession.userId,
+    //              "featureId": 23,
+    //              "actionId": actionId,
+    //              "shortContent": shortContent,
+    //              "embededContent": embededContent,
+    //              "storeId": $scope.currentStore.storeID,
+    //              "companyId": $scope.userSession.companyId,
+    //          },
+    //        "extConfig": {
+    //            db: DBSettings,
+    //            token: $scope.token
+    //        }
+    //    }
+    //    var url = Api.auditTrailRecord;
+    //    asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', log, function (data, status) {
+    //        if (data) {
+    //            // console.log(data);
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'auditTrailRecord');
+    //}
+
+    var audit = function (actionId, shortContent, embededContent) {
+        var data = {
             "auditTrailModel":
-              {
-                  "userId": $scope.userSession.userId,
-                  "featureId": 23,
-                  "actionId": actionId,
-                  "shortContent": shortContent,
-                  "embededContent": embededContent,
-                  "storeId": $scope.currentStore.storeID,
-                  "companyId": $scope.userSession.companyId,
-              },
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
+            {
+                "userId": $scope.userSession.userId,
+                "featureId": 23,
+                "actionId": actionId,
+                "shortContent": shortContent,
+                "embededContent": embededContent,
+                "storeId": $scope.currentStore.storeID,
+                "companyId": $scope.userSession.companyId,
             }
         }
         var url = Api.auditTrailRecord;
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', log, function (data, status) {
-            if (data) {
-                // console.log(data);
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'auditTrailRecord');
+        var method = 'POST';
+        $SunoRequest.makeRestful(url, method, data);
     }
 
     $scope.openLink = function (url) {
@@ -200,61 +227,130 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
     }
 
-    $scope.getSyncSetting = function () {
-        var deferred = $q.defer();
-        var url = Api.getKeyValue + 'isSync';
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
-            if (data) {
-                if (data.value != "") {
-                    var rs = JSON.parse(data.value);
-                }
-                $scope.isSync = rs;
-                console.log('isSync:', rs);
-                deferred.resolve();
-            }
-        }, function (error) {
-            console.log(error);
-            error.where = "getSyncSetting";
-            deferred.reject(error);
-        }, true, 'isSync');
-        return deferred.promise;
-    }
+    //$scope.getSyncSetting = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.getKeyValue + 'isSync';
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
+    //        if (data) {
+    //            if (data.value != "") {
+    //                var rs = JSON.parse(data.value);
+    //            }
+    //            $scope.isSync = rs;
+    //            console.log('isSync:', rs);
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        console.log(error);
+    //        error.where = "getSyncSetting";
+    //        deferred.reject(error);
+    //    }, true, 'isSync');
+    //    return deferred.promise;
+    //}
 
-    $scope.getCompanyInfo = function () {
-        var deferred = $q.defer();
+    //$scope.getCompanyInfo = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.getCompanyInfo;
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
+    //        if (data) {
+    //            $scope.companyInfo = data;
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        console.log(error);
+    //        error.where = "getCompanyInfo";
+    //        deferred.reject(error);
+    //    }, true, 'getCompanyInfo');
+    //    return deferred.promise;
+    //}
+
+    var getCompanyInfo = function () {
         var url = Api.getCompanyInfo;
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.companyInfo = data;
-                deferred.resolve();
-            }
-        }, function (error) {
-            console.log(error);
-            error.where = "getCompanyInfo";
-            deferred.reject(error);
-        }, true, 'getCompanyInfo');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                console.log(e);
+                return e;
+            });
+    }
+    var getBootLoader = function () {
+        var url = Api.bootloader;
+        var method = 'POST';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data);
     }
 
-    // Lấy mẫu in đã lưu
-    $scope.getPrintTemplate = function () {
-        var deferred = $q.defer();
+    var getAuthBootLoader = function () {
+        var url = Api.authBootloader;
+        var method = 'POST';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data);
+    }
+
+    //// Lấy mẫu in đã lưu
+    //$scope.getPrintTemplate = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.printTemplate;
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
+    //        if (data) {
+    //            printer.initializeTemplates(data);
+    //            deferred.resolve();
+    //        }
+    //    }, function (e) {
+    //        e.where = "getPrintTemplate"
+    //        deferred.reject(e);
+    //        printer.initializeTemplates();
+    //        console.log(e);
+    //    }, true, 'getPrintTemplates');
+    //    return deferred.promise;
+    //}
+    var getPrintTemplate = function () {
         var url = Api.printTemplate;
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 printer.initializeTemplates(data);
-                deferred.resolve();
-            }
-        }, function (e) {
-            e.where = "getPrintTemplate"
-            deferred.reject(e);
-            printer.initializeTemplates();
-            console.log(e);
-        }, true, 'getPrintTemplates');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                console.log(e);
+                printer.initializeTemplates();
+                return e;
+            });
     }
 
-    $scope.getProductItems = function (cid, categoryName) {
+    //$scope.getProductItems = function (cid, categoryName) {
+    //    if (categoryName && categoryName != '') {
+    //        $scope.selectedCategory = ' thuộc nhóm ' + categoryName.toUpperCase();
+    //    }
+    //    else {
+    //        $scope.selectedCategory = '';
+    //    }
+    //    $scope.buttonProductListStatus = 0;
+    //    $scope.currentCategory = cid;
+    //    var deferred = $q.defer();
+    //    $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
+    //    var limit = 1000;
+    //    var pageIndex = 1;
+    //    var url = Api.productitems + 'categoryId=' + cid + '&limit=' + limit + '&pageIndex=' + pageIndex + '&storeId=' + $scope.currentStore.storeID;
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
+    //        if (data) {
+    //            $scope.productItemList = data.items;
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //        error.where = "getProductItems";
+    //        deferred.reject(error);
+    //    }, true, 'getProductItems');
+    //    return deferred.promise;
+    //}
+    var getProductItems = function (cid, categoryName) {
         if (categoryName && categoryName != '') {
             $scope.selectedCategory = ' thuộc nhóm ' + categoryName.toUpperCase();
         }
@@ -263,82 +359,152 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
         $scope.buttonProductListStatus = 0;
         $scope.currentCategory = cid;
-        var deferred = $q.defer();
         $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
         var limit = 1000;
         var pageIndex = 1;
         var url = Api.productitems + 'categoryId=' + cid + '&limit=' + limit + '&pageIndex=' + pageIndex + '&storeId=' + $scope.currentStore.storeID;
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.productItemList = data.items;
-                deferred.resolve();
-            }
-        }, function (error) {
-            console.log(error)
-            error.where = "getProductItems";
-            deferred.reject(error);
-        }, true, 'getProductItems');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                console.log(e);
+                return e;
+            });
     }
+
+    //$scope.getNewProductItems = function () {
+    //    $scope.buttonProductListStatus = 1;
+    //    $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
+    //    var url = Api.getNewProduct + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            $scope.productItemList = data.items;
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'getNewProductItems');
+    //}
+
     $scope.getNewProductItems = function () {
         $scope.buttonProductListStatus = 1;
         $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
         var url = Api.getNewProduct + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.productItemList = data.items;
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'getNewProductItems');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
+
+    //$scope.getBestSellingProductItems = function () {
+    //    $scope.buttonProductListStatus = 2;
+    //    $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
+    //    var url = Api.getBestSelling + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            $scope.productItemList = data.items;
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'getBestSellingProductItem');
+    //}
+
     $scope.getBestSellingProductItems = function () {
         $scope.buttonProductListStatus = 2;
         $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
         var url = Api.getBestSelling + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.productItemList = data.items;
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'getBestSellingProductItem');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
-    // Lấy danh sách categories
-    $scope.getAllCategories = function () {
-        var deferred = $q.defer();
+
+
+    //// Lấy danh sách categories
+    //$scope.getAllCategories = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.categories;
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
+    //        if (data) {
+    //            $scope.categories = data.categories;
+    //            $scope.categories = buildTree($scope.categories);
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        console.log(error);
+    //        error.where = "getAllCategories"
+    //        deferred.reject(error);
+    //    }, true, 'getAllCategories');
+    //    return deferred.promise;
+    //}
+
+    var getAllCategories = function () {
         var url = Api.categories;
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', null, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var data = null;
+        return $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.categories = data.categories;
                 $scope.categories = buildTree($scope.categories);
-                deferred.resolve();
-            }
-        }, function (error) {
-            console.log(error);
-            error.where = "getAllCategories"
-            deferred.reject(error);
-        }, true, 'getAllCategories');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                console.log(e);
+                return e;
+            });
     }
+
 
     // Tìm sản phẩm
     $scope.suglist = false;
+    //$scope.get_search_rs = function (key) {
+    //    if (!key) {
+    //        $scope.suglist = false;
+    //        return;
+    //    }
+    //    var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        $scope.searchList = data.items;
+    //        $scope.suglist = true;
+    //        $scope.ItemSearchIsSelected = null;
+    //        $ionicScrollDelegate.$getByHandle('search-product-result').scrollTop();
+    //    }, function (status) { console.log(status) }, true, 'SearchProductItem');
+    //}
+
     $scope.get_search_rs = function (key) {
         if (!key) {
             $scope.suglist = false;
             return;
         }
         var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            $scope.searchList = data.items;
-            $scope.suglist = true;
-            $scope.ItemSearchIsSelected = null;
-            $ionicScrollDelegate.$getByHandle('search-product-result').scrollTop();
-        }, function (status) { console.log(status) }, true, 'SearchProductItem');
+        var method = 'GET';
+        var data = null;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
+                $scope.searchList = data.items;
+                $scope.suglist = true;
+                $scope.ItemSearchIsSelected = null;
+                $ionicScrollDelegate.$getByHandle('search-product-result').scrollTop();
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
 
     $scope.openCreateTablesModal = function () {
@@ -428,29 +594,45 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             zone: $scope.tableMap
         });
 
-        //for (var x = 0; x < $scope.tablesSetting.length; x++) {
-        //    for (var y = 0; y < $scope.tablesSetting[x].tables.length; y++) {
-        //        for (var z = 0; z < $scope.tablesSetting[x].tables[y].tableOrder.length; z++) {
-        //            $scope.tablesSetting[x].tables[y].tableOrder[z].saleOrder.revision = 0;
-        //        }
+        //var data = {
+        //    "key": "tableSetting",
+        //    "value": JSON.stringify($scope.tablesSetting),
+        //    "extConfig": {
+        //        db: DBSettings,
+        //        token: $scope.token
         //    }
         //}
 
+        //var url = Api.postKeyValue;
+        //console.log(data.value);
+        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+        //    if (data) {
+        //        ////debugger;
+        //        //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
+        //        $scope.tableIsSelected = $scope.tables[0];
+        //        $scope.orderIndexIsSelected = 0;
+        //        $scope.modalCreateTables.hide();
+
+        //        if (!$scope.isSync) {
+        //            $scope.updateSyncSetting(true);
+        //        } else {
+        //            $scope.endSession();
+        //        }
+
+        //        toaster.pop('success', "", 'Đã lưu sơ đồ bàn thành công!');
+        //    }
+        //}, function (error) {
+        //    console.log(error)
+        //}, true, 'setKeyValue');
+        var url = Api.postKeyValue;
+        var method = 'POST';
         var data = {
             "key": "tableSetting",
             "value": JSON.stringify($scope.tablesSetting),
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
-        }
+        };
 
-        var url = Api.postKeyValue;
-        console.log(data.value);
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
-                ////debugger;
-                //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 $scope.tableIsSelected = $scope.tables[0];
                 $scope.orderIndexIsSelected = 0;
                 $scope.modalCreateTables.hide();
@@ -460,12 +642,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 } else {
                     $scope.endSession();
                 }
-
                 toaster.pop('success', "", 'Đã lưu sơ đồ bàn thành công!');
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'setKeyValue');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
 
     $scope.showEditTable = false;
@@ -512,127 +693,127 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
     }
 
-    $scope.getSettings = function () {
-        var deferred = $q.defer();
-        var url = Api.getMultiKeyValue;
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', { 'keys': ['isSync', 'tableSetting', 'removeItemSetting', 'hourServiceSetting', 'BarItemSetting', 'printSetting'] }, function (data, status) {
-            if (data) {
-                var isSyncSetting = data.values.find(function (s) { return s.name == 'isSync' });
-                if (!isSyncSetting) isSyncSetting = { value: "" };
-                if (isSyncSetting) {
-                    if (isSyncSetting.value != "") {
-                        var ss = JSON.parse(isSyncSetting.value);
-                    }
-                    $scope.isSync = ss;
-                    //console.log('isSync:', rs);
-                }
+    //$scope.getSettings = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.getMultiKeyValue;
+    //    asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', { 'keys': ['isSync', 'tableSetting', 'removeItemSetting', 'hourServiceSetting', 'BarItemSetting', 'printSetting'] }, function (data, status) {
+    //        if (data) {
+    //            var isSyncSetting = data.values.find(function (s) { return s.name == 'isSync' });
+    //            if (!isSyncSetting) isSyncSetting = { value: "" };
+    //            if (isSyncSetting) {
+    //                if (isSyncSetting.value != "") {
+    //                    var ss = JSON.parse(isSyncSetting.value);
+    //                }
+    //                $scope.isSync = ss;
+    //                //console.log('isSync:', rs);
+    //            }
 
-                var tableSetting = data.values.find(function (s) { return s.name == 'tableSetting' });
-                if (tableSetting) {
-                    if (tableSetting.value != "") {
-                        var ts = JSON.parse(tableSetting.value);
-                        //console.log(ts);
-                    }
-                    $scope.tablesSetting = ts;
-                }
+    //            var tableSetting = data.values.find(function (s) { return s.name == 'tableSetting' });
+    //            if (tableSetting) {
+    //                if (tableSetting.value != "") {
+    //                    var ts = JSON.parse(tableSetting.value);
+    //                    //console.log(ts);
+    //                }
+    //                $scope.tablesSetting = ts;
+    //            }
 
-                var removeItemSetting = data.values.find(function (s) { return s.name == 'removeItemSetting' });
-                if (removeItemSetting) {
-                    if (removeItemSetting.value) {
-                        var rs = JSON.parse(removeItemSetting.value);
-                    } else {
-                        var rs = 2;
-                    }
-                    $scope.removeSetting = rs;
-                    //console.log('removeItemSetting:', rs);
-                }
-                else {
-                    $scope.removeSetting = 2;
-                }
+    //            var removeItemSetting = data.values.find(function (s) { return s.name == 'removeItemSetting' });
+    //            if (removeItemSetting) {
+    //                if (removeItemSetting.value) {
+    //                    var rs = JSON.parse(removeItemSetting.value);
+    //                } else {
+    //                    var rs = 2;
+    //                }
+    //                $scope.removeSetting = rs;
+    //                //console.log('removeItemSetting:', rs);
+    //            }
+    //            else {
+    //                $scope.removeSetting = 2;
+    //            }
 
-                var hourServiceSetting = data.values.find(function (s) { return s.name == 'hourServiceSetting' });
-                if (!hourServiceSetting) hourServiceSetting = { value: "" };
-                if (hourServiceSetting) {
-                    if (hourServiceSetting.value) {
-                        var hss = JSON.parse(hourServiceSetting.value);
-                    } else {
-                        var hss = null;
-                    }
-                    if (hss != null) {
-                        $scope.hourService = hss;
-                    } else {
-                        $scope.hourService = {
-                            isUse: false,
-                            optionSelected: "1"
-                        }
-                    }
+    //            var hourServiceSetting = data.values.find(function (s) { return s.name == 'hourServiceSetting' });
+    //            if (!hourServiceSetting) hourServiceSetting = { value: "" };
+    //            if (hourServiceSetting) {
+    //                if (hourServiceSetting.value) {
+    //                    var hss = JSON.parse(hourServiceSetting.value);
+    //                } else {
+    //                    var hss = null;
+    //                }
+    //                if (hss != null) {
+    //                    $scope.hourService = hss;
+    //                } else {
+    //                    $scope.hourService = {
+    //                        isUse: false,
+    //                        optionSelected: "1"
+    //                    }
+    //                }
 
-                    if ($scope.hourService && $scope.hourService.isUse) {
-                        switch ($scope.hourService.optionSelected) {
-                            case "1":
-                                $scope.blockCounter = 15;
-                                break;
-                            case "2":
-                                $scope.blockCounter = 30;
-                                break;
-                            case "3":
-                                $scope.blockCounter = 60;
-                                break;
-                            case "0":
-                                $scope.blockCounter = $scope.hourService.customOption;
-                                break;
-                        }
-                    }
-                    //console.log('hourServiceSetting:', rs);
-                }
+    //                if ($scope.hourService && $scope.hourService.isUse) {
+    //                    switch ($scope.hourService.optionSelected) {
+    //                        case "1":
+    //                            $scope.blockCounter = 15;
+    //                            break;
+    //                        case "2":
+    //                            $scope.blockCounter = 30;
+    //                            break;
+    //                        case "3":
+    //                            $scope.blockCounter = 60;
+    //                            break;
+    //                        case "0":
+    //                            $scope.blockCounter = $scope.hourService.customOption;
+    //                            break;
+    //                    }
+    //                }
+    //                //console.log('hourServiceSetting:', rs);
+    //            }
 
-                var BarItemSetting = data.values.find(function (s) { return s.name == 'BarItemSetting' });
-                if (!BarItemSetting) BarItemSetting = { value: "" };
-                if (BarItemSetting) {
-                    if (BarItemSetting.value) {
-                        $scope.BarItemSetting = JSON.parse(BarItemSetting.value);
-                    } else {
-                        $scope.BarItemSetting = null;
-                    }
-                    //console.log('BarItemSetting:', data);
-                }
+    //            var BarItemSetting = data.values.find(function (s) { return s.name == 'BarItemSetting' });
+    //            if (!BarItemSetting) BarItemSetting = { value: "" };
+    //            if (BarItemSetting) {
+    //                if (BarItemSetting.value) {
+    //                    $scope.BarItemSetting = JSON.parse(BarItemSetting.value);
+    //                } else {
+    //                    $scope.BarItemSetting = null;
+    //                }
+    //                //console.log('BarItemSetting:', data);
+    //            }
 
-                var printSetting = data.values.find(function (s) { return s.name == 'printSetting' });
-                if (printSetting) {
-                    if (printSetting.value != "") {
-                        var ps = JSON.parse(printSetting.value);
-                        $scope.printSetting = ps;
-                        $scope.isUngroupItem = $scope.printSetting.unGroupItem;
-                    } //else {
-                    //    $scope.printSetting = {
-                    //        'printSubmitOrder': false,
-                    //        'printNoticeKitchen': false,
-                    //        'prePrint': false,
-                    //        'unGroupItem': false,
-                    //        'noticeByStamps': false
-                    //    };
-                    //}
-                    //console.log('printSetting:', rs);
-                }
-                else {
-                    $scope.printSetting = {
-                        'printSubmitOrder': false,
-                        'printNoticeKitchen': false,
-                        'prePrint': false,
-                        'unGroupItem': false,
-                        'noticeByStamps': false
-                    };
-                }
-                deferred.resolve(data);
-            }
-        }, function (error) {
-            console.log(error);
-            error.where = "getSettings";
-            deferred.reject(error);
-        }, true, 'getSettings');
+    //            var printSetting = data.values.find(function (s) { return s.name == 'printSetting' });
+    //            if (printSetting) {
+    //                if (printSetting.value != "") {
+    //                    var ps = JSON.parse(printSetting.value);
+    //                    $scope.printSetting = ps;
+    //                    $scope.isUngroupItem = $scope.printSetting.unGroupItem;
+    //                } //else {
+    //                //    $scope.printSetting = {
+    //                //        'printSubmitOrder': false,
+    //                //        'printNoticeKitchen': false,
+    //                //        'prePrint': false,
+    //                //        'unGroupItem': false,
+    //                //        'noticeByStamps': false
+    //                //    };
+    //                //}
+    //                //console.log('printSetting:', rs);
+    //            }
+    //            else {
+    //                $scope.printSetting = {
+    //                    'printSubmitOrder': false,
+    //                    'printNoticeKitchen': false,
+    //                    'prePrint': false,
+    //                    'unGroupItem': false,
+    //                    'noticeByStamps': false
+    //                };
+    //            }
+    //            deferred.resolve(data);
+    //        }
+    //    }, function (error) {
+    //        console.log(error);
+    //        error.where = "getSettings";
+    //        deferred.reject(error);
+    //    }, true, 'getSettings');
 
-        return deferred.promise;
-    }
+    //    return deferred.promise;
+    //}
 
     var template = '<ion-popover-view><ion-header-bar> <h1 class="title">My Popover Title</h1> </ion-header-bar> <ion-content> <p ng-repeat="i in tables">{{tableName}}</p> </ion-content></ion-popover-view>';
 
@@ -697,46 +878,105 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     })
 
     //$q.when(Promise.all([Auth.getToken(), Auth.getUser(), Auth.getSetting(), Auth.getStoreList(), DBSettings.$getDocByID({ _id: 'currentStore' }), Auth.getBootloader(), Auth.getSessionId()]))
-    $q.when(Promise.all([DBSettings.$getDocByID({ _id: 'SunoGlobal' }), DBSettings.$getDocByID({ _id: 'currentStore' })]))
-    .then(function (data) {
-        if (data[0].docs.length > 0 && data[1].docs.length > 0 && data[2].docs.length > 0 && data[3].docs.length > 0) {
-            $scope.token = data[0].docs[0].token;
-            $scope.userSession = data[1].docs[0].user;
-            $scope.settings = data[2].docs[0].setting;
-            $scope.storesList = data[3].docs[0].store;
-            $scope.authBootloader = data[5].docs[0].bootloader;
-            $scope.clientId = data[6].docs[0].session;
-            $scope.saleList = $scope.authBootloader.users.userProfiles;
-            if (data[4].docs.length > 0) {
-                var localCurrentStore = data[4].docs[0].currentStore;
-                var storeIndex = findIndex($scope.storesList, 'storeID', localCurrentStore.storeID);
-                if (storeIndex != null) {
-                    $scope.currentStore = data[4].docs[0].currentStore;
-                }
-                else {
-                    $scope.currentStore = $scope.storesList[0];
-                    DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore), _rev: data[4].docs[0]._rev });
+    $q.when(Auth.getSunoGlobal())
+        .then(function (data) {
+        //Nếu check dưới DB Local chưa có SunoGlobal mà đã vào route pos thì đẩy ra màn hình đăng nhập.
+        if (data.docs.length > 0) {
+            //Gán lại accessToken cho SunoGlobal trường hợp vào luôn route pos thì SunoGlobal ko có accessToken để lấy BootLoader và AuthBootloader.
+            //Nếu mà vào từ route Login thì SunoGlobal đã được gán lại ở route Login.
+            if (SunoGlobal.token.accessToken == '' && SunoGlobal.token.refreshToken == '') {
+                for (var prop in data.docs[0].SunoGlobal) {
+                    SunoGlobal[prop] = data.docs[0].SunoGlobal[prop];
                 }
             }
-            else {
-                $scope.currentStore = $scope.storesList[0];
-                DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore) });
-            }
-            
-            $scope.isMultiplePrice = $scope.settings.saleSetting.applyCustomerPricingPolicy;
-
-            $scope.showCategories = true;
-
-            $scope.permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
-            //$scope.userInfo = {};
-            //angular.copy($scope.userSession, $scope.userInfo);
-            $scope.userInfo = angular.copy($scope.userSession);
-            delete $scope.userInfo.permissions;
-        } else {
+            return Promise.all([getBootLoader(), getAuthBootLoader(), DBSettings.$getDocByID({ _id: 'currentStore' })]);
+        }
+        else {
             $state.go('login', {}, {
                 reload: true
             });
-            throw "Tài khoản này đã đăng xuất.";
+            throw { errorCode: 1, errorMsg: "Chưa đăng nhập." };
+        }
+    })
+    .then(function (data) {
+        //Chỗ này để validate response khi get BootLoader và AuthBootLoader.
+        //Nếu có lỗi xảy ra thì thông báo lên cho người dùng biết để refresh lại.
+        if (data[0] && data[1]) {
+            //$scope.token = data[0].docs[0].token;
+            //$scope.userSession = data[1].docs[0].user; 
+            //$scope.settings = data[2].docs[0].setting;
+            //$scope.storesList = data[3].docs[0].store;
+            //$scope.authBootloader = data[5].docs[0].bootloader;
+            //$scope.clientId = data[6].docs[0].session;
+            //$scope.saleList = $scope.authBootloader.users.userProfiles;
+            //Gán lại giá trị từ API response cho SunoGlobal
+            SunoGlobal.stores = data[0].allStores;
+            SunoGlobal.featureActivations = data[0].featureActivations;
+            SunoGlobal.companyInfo.companyCode = data[1].companyCode;
+            SunoGlobal.companyInfo.companyPhone = data[1].companyPhone;
+            SunoGlobal.companyInfo.companyAddress = data[1].companyAddress;
+            SunoGlobal.companyInfo.companyTaxCode = data[1].companyTaxCode;
+            SunoGlobal.companyInfo.industry = data[1].industry;
+            SunoGlobal.storeIdsGranted = data[1].storeIdsGranted;
+            SunoGlobal.usageInfo = data[1].usageInfo;
+            SunoGlobal.rolesGranted = data[1].rolesGranted;
+            SunoGlobal.users = data[1].users.userProfiles;
+
+            SunoGlobal.saleSetting.cogsCalculationMethod = data[0].saleSetting.cogsCalculationMethod;
+            SunoGlobal.saleSetting.isAllowDebtPayment = data[0].saleSetting.allowDebtPayment;
+            SunoGlobal.saleSetting.isAllowPriceModified = data[0].saleSetting.allowPriceModified;
+            SunoGlobal.saleSetting.isAllowQuantityAsDecimal = data[0].saleSetting.allowQuantityAsDecimal;
+            SunoGlobal.saleSetting.isApplyCustomerPricingPolicy = data[0].saleSetting.applyCustomerPricingPolicy;
+            SunoGlobal.saleSetting.isApplyEarningPoint = data[0].saleSetting.applyEarningPoint;
+            SunoGlobal.saleSetting.isApplyPromotion = data[0].saleSetting.applyPromotion;
+            SunoGlobal.saleSetting.isPrintMaterials = data[0].saleSetting.isPrintMaterials;
+            SunoGlobal.saleSetting.isProductReturnDay = data[0].saleSetting.allowProductReturnDay;
+            SunoGlobal.saleSetting.productReturnDay = data[0].saleSetting.productReturnDay;
+            SunoGlobal.saleSetting.saleReportSetting = data[0].saleSetting.saleReportSetting;
+            SunoGlobal.saleSetting.allowOfflineCache = data[0].saleSetting.allowOfflineCache;
+            SunoGlobal.saleSetting.allowTaxModified = data[0].saleSetting.allowTaxModified;
+            SunoGlobal.saleSetting.applyCustomerCare = data[0].saleSetting.applyCustomerCare;
+            SunoGlobal.saleSetting.bankTransferPaymentMethod = data[0].saleSetting.bankTransferPaymentMethod;
+            SunoGlobal.saleSetting.cardPaymentMethod = data[0].saleSetting.cardPaymentMethod;
+            SunoGlobal.saleSetting.cashPaymentMethod = data[0].saleSetting.cashPaymentMethod;
+            SunoGlobal.saleSetting.currencyNote = data[0].saleSetting.currencyNote;
+            SunoGlobal.saleSetting.customerEmailConfiguration = data[0].saleSetting.customerEmailConfiguration;
+            SunoGlobal.saleSetting.isHasSampleData = data[0].saleSetting.isHasSampleData;
+            SunoGlobal.saleSetting.longtimeInventories = data[0].saleSetting.longtimeInventories;
+            SunoGlobal.saleSetting.receiptVoucherMethod = data[0].saleSetting.receiptVoucherMethod;
+            SunoGlobal.saleSetting.showInventoryTotal = data[0].saleSetting.showInventoryTotal;
+            SunoGlobal.saleSetting.storeChangeAutoApproval = data[0].saleSetting.storeChangeAutoApproval;
+            SunoGlobal.saleSetting.weeklyReportEmail = data[0].saleSetting.weeklyReportEmail;
+            if (data[2].docs.length > 0) {
+                var localCurrentStore = data[2].docs[0].currentStore;
+                //var storeIndex = findIndex($scope.storesList, 'storeID', localCurrentStore.storeID);
+                var storeIndex = SunoGlobal.stores.findIndex(function (s) { return s.storeID == localCurrentStore.storeID });
+                if (storeIndex != -1) {
+                    $scope.currentStore = data[2].docs[0].currentStore;
+                }
+                else {
+                    $scope.currentStore = SunoGlobal.stores[0];
+                    DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore), _rev: data[2].docs[0]._rev });
+                }
+            }
+            else {
+                $scope.currentStore = SunoGlobal.stores[0];
+                DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore) });
+            }
+            
+            //$scope.isMultiplePrice = $scope.settings.saleSetting.applyCustomerPricingPolicy;
+            $scope.isMultiplePrice = SunoGlobal.saleSetting.isApplyCustomerPricingPolicy;
+
+            $scope.showCategories = true;
+            //debugger;
+            //$scope.permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
+            $scope.permissionIndex = SunoGlobal.permissions.indexOf("POSIM_Manage");
+            //$scope.userInfo = {};
+            //angular.copy($scope.userSession, $scope.userInfo);
+            //$scope.userInfo = angular.copy($scope.userSession);
+            //delete $scope.userInfo.permissions;
+        } else {
+            throw { errorCode: 2, errorMsg: "Get Bootloader và AuthBootLoader không thành công." };
         }
 
         //Suno Prototype
@@ -868,7 +1108,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         });
 
         // Bắt đầu load dữ liệu
-        return Promise.all([$scope.getAllCategories(), $scope.getProductItems(''), $scope.getPrintTemplate(), $scope.getCompanyInfo(), $scope.getSettings(), { localCurrentStore: localCurrentStore }])
+        return Promise.all([getAllCategories(), getProductItems(''), getPrintTemplate(), getCompanyInfo(), getSettings(), { localCurrentStore: localCurrentStore }])
     })
     .then(function (loadedData) {
         $scope.tables = [];
@@ -3680,17 +3920,37 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
                                             return false;
                                         } else {
-                                            d = {
+                                            //d = {
+                                            //    "username": $scope.staff.username,
+                                            //    "password": $scope.staff.password,
+                                            //    "extConfig": {
+                                            //        db: DBSettings,
+                                            //        token: $scope.token
+                                            //    }
+                                            //}
+                                            //url = Api.getMemberPermission;
+                                            //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+                                            //    if (data) {
+                                            //        var permissionList = data.permissions;
+                                            //        var permission = permissionList.indexOf("POSIM_Manage");
+                                            //        if (permission != -1) {
+                                            //            $scope.changeQuantity(num, item);
+                                            //            toaster.pop('success', "", 'Giảm ' + num + ' [' + item.itemName + '] trong hoá đơn');
+                                            //        } else {
+                                            //            toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
+                                            //        }
+                                            //    }
+                                            //}, function (e) {
+                                            //    toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
+                                            //}, true, 'check-login');
+                                            var url = Api.getMemberPermission;
+                                            var method = 'POST';
+                                            var d = {
                                                 "username": $scope.staff.username,
-                                                "password": $scope.staff.password,
-                                                "extConfig": {
-                                                    db: DBSettings,
-                                                    token: $scope.token
-                                                }
-                                            }
-                                            url = Api.getMemberPermission;
-                                            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-                                                if (data) {
+                                                "password": $scope.staff.password
+                                            };
+                                            $SunoRequest.makeRestful(url, method, d)
+                                                .then(function (data) {
                                                     var permissionList = data.permissions;
                                                     var permission = permissionList.indexOf("POSIM_Manage");
                                                     if (permission != -1) {
@@ -3699,10 +3959,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                     } else {
                                                         toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
                                                     }
-                                                }
-                                            }, function (e) {
-                                                toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
-                                            }, true, 'check-login');
+                                                })
+                                                .catch(function (e) {
+                                                    toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
+                                                });
                                         }
                                     }
                                 }]
@@ -3747,29 +4007,50 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
                                         return false;
                                     } else {
-                                        d = {
+                                        //d = {
+                                        //    "username": $scope.staff.username,
+                                        //    "password": $scope.staff.password,
+                                        //    "extConfig": {
+                                        //        db: DBSettings,
+                                        //        token: $scope.token
+                                        //    }
+                                        //}
+                                        //url = Api.getMemberPermission;
+                                        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+                                        //    if (data) {
+                                        //        var permissionList = data.permissions;
+                                        //        var permission = permissionList.indexOf("POSIM_Manage");
+                                        //        if (permission != -1) {
+                                        //            $scope.changeQuantity(num, item);
+                                        //            toaster.pop('success', "", 'Giảm ' + num + ' [' + item.itemName + '] trong hoá đơn');
+                                        //        } else {
+                                        //            toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
+                                        //        }
+                                        //    }
+                                        //}, function (e) {
+                                        //    toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
+                                        //    }, true, 'check-login');
+
+                                        var url = Api.getMemberPermission;
+                                        var method = 'POST';
+                                        var d = {
                                             "username": $scope.staff.username,
-                                            "password": $scope.staff.password,
-                                            "extConfig": {
-                                                db: DBSettings,
-                                                token: $scope.token
-                                            }
-                                        }
-                                        url = Api.getMemberPermission;
-                                        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-                                            if (data) {
-                                                var permissionList = data.permissions;
-                                                var permission = permissionList.indexOf("POSIM_Manage");
-                                                if (permission != -1) {
-                                                    $scope.changeQuantity(num, item);
-                                                    toaster.pop('success', "", 'Giảm ' + num + ' [' + item.itemName + '] trong hoá đơn');
-                                                } else {
-                                                    toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
-                                                }
-                                            }
-                                        }, function (e) {
-                                            toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
-                                        }, true, 'check-login');
+                                            "password": $scope.staff.password
+                                        };
+                                        $SunoRequest.makeRestful(url, method, d)
+                                        .then(function (data) {
+                                            var permissionList = data.permissions;
+                                            var permission = permissionList.indexOf("POSIM_Manage");
+                                            if (permission != -1) {
+                                                $scope.changeQuantity(num, item);
+                                                toaster.pop('success', "", 'Giảm ' + num + ' [' + item.itemName + '] trong hoá đơn');
+                                            } else {
+                                                toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
+                                            }  
+                                        })
+                                        .catch(function (e) {
+                                            toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
+                                        });
                                     }
                                 }
                             }]
@@ -3812,17 +4093,38 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
                                         return false;
                                     } else {
-                                        d = {
+                                        //d = {
+                                        //    "username": $scope.staff.username,
+                                        //    "password": $scope.staff.password,
+                                        //    "extConfig": {
+                                        //        db: DBSettings,
+                                        //        token: $scope.token
+                                        //    }
+                                        //}
+                                        //url = Api.getMemberPermission;
+                                        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+                                        //    if (data) {
+                                        //        var permissionList = data.permissions;
+                                        //        var permission = permissionList.indexOf("POSIM_Price_ReadBuyPrice");
+                                        //        if (permission != -1) {
+                                        //            $scope.changeQuantity(num, item);
+                                        //            toaster.pop('success', "", 'Giảm ' + num + ' [' + item.itemName + '] trong hoá đơn');
+                                        //        } else {
+                                        //            toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
+                                        //        }
+                                        //    }
+                                        //}, function (e) {
+                                        //    toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
+                                        //    }, true, 'check-login');
+
+                                        var url = Api.getMemberPermission;
+                                        var method = 'POST';
+                                        var d = {
                                             "username": $scope.staff.username,
-                                            "password": $scope.staff.password,
-                                            "extConfig": {
-                                                db: DBSettings,
-                                                token: $scope.token
-                                            }
-                                        }
-                                        url = Api.getMemberPermission;
-                                        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-                                            if (data) {
+                                            "password": $scope.staff.password
+                                        };
+                                        $SunoRequest.makeRestful(url, method, d)
+                                            .then(function (data) {
                                                 var permissionList = data.permissions;
                                                 var permission = permissionList.indexOf("POSIM_Price_ReadBuyPrice");
                                                 if (permission != -1) {
@@ -3831,10 +4133,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 } else {
                                                     toaster.pop('error', "", 'Tài khoản này không có quyền huỷ món!');
                                                 }
-                                            }
-                                        }, function (e) {
-                                            toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
-                                        }, true, 'check-login');
+                                            })
+                                            .catch(function (e) {
+                                                toaster.pop('error', "", 'Vui lòng kiểm tra thông tin tài khoản!');
+                                            });
                                     }
                                 }
                             }]
@@ -3948,14 +4250,25 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.sugUserList = false;
             return;
         }
+        //var url = Api.customers + $scope.customerS.key;
+        //var data = { extConfig: { db: DBSettings, token: $scope.token } };
+        //asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+        //    $scope.searchUserList = data.customers;
+        //}, function (error) {
+        //    // console.log(error);
+        //    toaster.pop('error', "", error.responseStatus.message);
+        //    }, true, 'search-user');
         var url = Api.customers + $scope.customerS.key;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            $scope.searchUserList = data.customers;
-        }, function (error) {
-            // console.log(error);
-            toaster.pop('error', "", error.responseStatus.message);
-        }, true, 'search-user');
+        var method = 'GET';
+        var data = null;
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
+                $scope.searchUserList = data.customers;
+            })
+            .catch(function (e) {
+                console.log(e);
+                toaster.pop('error', "", error.responseStatus.message);
+            });
         $scope.sugUserList = true;
     }
 
@@ -3990,27 +4303,43 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.saveCustomer = function (c) {
-        var url = Api.addCustomer;
-        var d = {
-            customer: c,
-            extConfig: {
-                db: DBSettings,
-                token: $scope.token
-            }
-        }
+        //var url = Api.addCustomer;
+        //var d = {
+        //    customer: c,
+        //    extConfig: {
+        //        db: DBSettings,
+        //        token: $scope.token
+        //    }
+        //}
 
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-            if (data && data.customerId) {
+        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+        //    if (data && data.customerId) {
+        //        c.customerId = data.customerId;
+        //        c.code = data.code;
+        //        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.customer = c;
+        //        toaster.pop('success', "", 'Đã thêm khách hàng mới thành công.');
+        //        $scope.modalCreateCustomer.hide();
+        //    }
+        //}, function (error) {
+        //    toaster.pop('error', "", error.responseStatus.message);
+        //    }, true, 'save-customer');
+
+        var url = Api.addCustomer;
+        var method = 'GET';
+        var d = {
+            customer: c
+        }
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 c.customerId = data.customerId;
                 c.code = data.code;
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.customer = c;
                 toaster.pop('success', "", 'Đã thêm khách hàng mới thành công.');
                 $scope.modalCreateCustomer.hide();
-            }
-        }, function (error) {
-            toaster.pop('error', "", error.responseStatus.message);
-        }, true, 'save-customer');
-
+            })
+            .catch(function (e) {
+                toaster.pop('error', "", error.responseStatus.message);
+            });
     }
 
     $scope.submitOrder = function (isPrint) {
@@ -4052,36 +4381,34 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     item.discount = item.discountInPercent;
                 }
             }
+
+            var url = Api.submitOrder;
+            var method = 'POST';
             var d = {
                 saleOrder: submitOrder,
                 currentStore: $scope.currentStore,
-                user: $scope.userSession,
-                extConfig: {
-                    db: DBSettings,
-                    token: $scope.token
-                }
+                user: $scope.userSession
             };
-
-            var url = Api.submitOrder;
-            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-                if (data) {
+            $SunoRequest.makeRestful(url, method, d)
+                .then(function (data) {
                     $scope.showOrderDetails = false;
                     //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
                     if ($scope.receiptVoucher.length > 0 && $scope.receiptVoucher[0].amount > 0) {
                         var url = Api.receipt;
-                        var d = {
+                        var method = 'POST';
+                        var d1 = {
                             "saleOrderId": data.saleOrderId,
                             "storeId": $scope.currentStore.storeID,
                             "isUpdateAmountPaid": false,
-                            "receiptVoucher": $scope.receiptVoucher[0],
-                            "extConfig": {
-                                db: DBSettings,
-                                token: $scope.token
-                            }
-                        }
-                        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
-                            $scope.receiptVoucher = [];
-                        }, function (e) { console.log(e) }, true, 'createReceipt');
+                            "receiptVoucher": $scope.receiptVoucher[0]
+                        };
+                        $SunoRequest.makeRestful(url, method, d1)
+                            .then(function (data) {
+                                $scope.receiptVoucher = [];
+                            })
+                            .catch(function (e) {
+                                console.log(e);
+                            });
                     }
                     // console.log('z = ' + isPrint);
                     if (isPrint == 1) {
@@ -4142,61 +4469,61 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             }
                         }
                         DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-                        .then(function (data) {
-                            //debugger;
-                            var shiftId = null;
-                            if (data.docs.length > 0) {
-                                shiftId = data.docs[0].shiftId;
-                            }
-
-                            completeOrder.shiftId = shiftId;
-
-                            //debugger;
-                            console.log('completeOrderData', completeOrder);
-                            completeOrder = angular.toJson(completeOrder);
-                            completeOrder = JSON.parse(completeOrder);
-                            if (isSocketConnected) {
-                                socket.emit('completeOrder', completeOrder);
-                            }
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        })
-
-                        if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
-                            // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
-
-                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
                             .then(function (data) {
+                                //debugger;
                                 var shiftId = null;
                                 if (data.docs.length > 0) {
                                     shiftId = data.docs[0].shiftId;
                                 }
-                                var printHelperData = {
-                                    "companyId": $scope.userSession.companyId,
-                                    "storeId": $scope.currentStore.storeID,
-                                    "clientId": $scope.clientId,
-                                    "shiftId": shiftId, //LSFactory.get('shiftId'),
-                                    "printOrder": printOrder,
-                                    "printSetting": setting,
-                                    "orderType": "cashier",
-                                    "info": {
-                                        action: "print",
-                                        deviceID: deviceID,
-                                        timestamp: genTimestamp(),
-                                        author: $scope.userSession.userId
-                                    }
-                                }
 
-                                printHelperData = angular.toJson(printHelperData);
-                                printHelperData = JSON.parse(printHelperData);
+                                completeOrder.shiftId = shiftId;
+
+                                //debugger;
+                                console.log('completeOrderData', completeOrder);
+                                completeOrder = angular.toJson(completeOrder);
+                                completeOrder = JSON.parse(completeOrder);
                                 if (isSocketConnected) {
-                                    socket.emit('printHelper', printHelperData);
+                                    socket.emit('completeOrder', completeOrder);
                                 }
                             })
                             .catch(function (error) {
                                 console.log(error);
                             })
+
+                        if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
+                            // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
+
+                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                .then(function (data) {
+                                    var shiftId = null;
+                                    if (data.docs.length > 0) {
+                                        shiftId = data.docs[0].shiftId;
+                                    }
+                                    var printHelperData = {
+                                        "companyId": $scope.userSession.companyId,
+                                        "storeId": $scope.currentStore.storeID,
+                                        "clientId": $scope.clientId,
+                                        "shiftId": shiftId, //LSFactory.get('shiftId'),
+                                        "printOrder": printOrder,
+                                        "printSetting": setting,
+                                        "orderType": "cashier",
+                                        "info": {
+                                            action: "print",
+                                            deviceID: deviceID,
+                                            timestamp: genTimestamp(),
+                                            author: $scope.userSession.userId
+                                        }
+                                    }
+
+                                    printHelperData = angular.toJson(printHelperData);
+                                    printHelperData = JSON.parse(printHelperData);
+                                    if (isSocketConnected) {
+                                        socket.emit('printHelper', printHelperData);
+                                    }
+                                })
+                                .catch(function (error) {
+                                    console.log(error);
+                                })
                         }
                     }
                     angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
@@ -4206,10 +4533,169 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         // $scope.tableIsSelected.startTime = null;
                     }
                     $scope.cancelOrder();
-                }
-            }, function (e) {
-                toaster.pop('error', "", e.responseStatus.message);
-            }, true, 'submit-order');
+                })
+                .catch(function (e) {
+                    toaster.pop('error', "", e.responseStatus.message);
+                });
+
+            //var d = {
+            //    saleOrder: submitOrder,
+            //    currentStore: $scope.currentStore,
+            //    user: $scope.userSession,
+            //    extConfig: {
+            //        db: DBSettings,
+            //        token: $scope.token
+            //    }
+            //};
+
+            //var url = Api.submitOrder;
+            //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+            //    if (data) {
+            //        $scope.showOrderDetails = false;
+            //        //($scope.tables.length > 1) ? $scope.leftviewStatus = false : $scope.leftviewStatus = true;
+            //        if ($scope.receiptVoucher.length > 0 && $scope.receiptVoucher[0].amount > 0) {
+            //            var url = Api.receipt;
+            //            var d = {
+            //                "saleOrderId": data.saleOrderId,
+            //                "storeId": $scope.currentStore.storeID,
+            //                "isUpdateAmountPaid": false,
+            //                "receiptVoucher": $scope.receiptVoucher[0],
+            //                "extConfig": {
+            //                    db: DBSettings,
+            //                    token: $scope.token
+            //                }
+            //            }
+            //            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', d, function (data, status) {
+            //                $scope.receiptVoucher = [];
+            //            }, function (e) { console.log(e) }, true, 'createReceipt');
+            //        }
+            //        // console.log('z = ' + isPrint);
+            //        if (isPrint == 1) {
+            //            // console.log('z2');
+            //            var printOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder;
+            //            printOrder.saleOrderCode = data.saleOrderCode;
+            //            var setting = {
+            //                companyInfo: $scope.companyInfo.companyInfo,
+            //                allUsers: $scope.authBootloader.users,
+            //                store: $scope.currentStore
+            //            }
+
+            //            if ($scope.isWebView) {
+            //                var rs = printOrderInBrowser(printer, printOrder, 1, setting);
+            //                if (rs) {
+            //                    toaster.pop('success', "", 'Đã lưu & in hoá đơn thành công.');
+            //                } else {
+            //                    toaster.pop('error', "", 'Đã lưu hóa đơn nhưng không in được, vui lòng kiểm tra lại mẫu in.');
+            //                }
+            //            } else if ($scope.isIOS && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status) {
+            //                // console.log('in bep truc tiep tren IOS');
+            //                // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
+
+            //                printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+            //                toaster.pop('success', "", 'Đã lưu & in hoá đơn thành công.');
+            //            } else if ($scope.isAndroid && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status) {
+            //                // console.log('in bep Android');
+            //                printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+            //                toaster.pop('success', "", 'Đã lưu hoá đơn thành công.');
+            //            }
+
+            //        }
+
+            //        if ($scope.isSync) {
+            //            //debugger;
+            //            var currentTable = {};
+            //            angular.copy($scope.tableIsSelected, currentTable);
+
+            //            var currentTableOrder = [];
+            //            currentTableOrder.push(currentTable);
+            //            currentTableOrder[0].tableOrder = [];
+            //            currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
+            //            var completeOrder = {
+            //                "companyId": $scope.userSession.companyId,
+            //                "storeId": $scope.currentStore.storeID,
+            //                "clientId": $scope.clientId,
+            //                "shiftId": null,//LSFactory.get('shiftId'),
+            //                "startDate": "",
+            //                "finishDate": "",
+            //                "tables": angular.copy(currentTableOrder),
+            //                "zone": $scope.tableMap,
+            //                "info": {
+            //                    action: "done",
+            //                    deviceID: deviceID,
+            //                    timestamp: genTimestamp(),
+            //                    author: $scope.userSession.userId,
+            //                    isUngroupItem: $scope.isUngroupItem
+            //                }
+            //            }
+            //            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            //            .then(function (data) {
+            //                //debugger;
+            //                var shiftId = null;
+            //                if (data.docs.length > 0) {
+            //                    shiftId = data.docs[0].shiftId;
+            //                }
+
+            //                completeOrder.shiftId = shiftId;
+
+            //                //debugger;
+            //                console.log('completeOrderData', completeOrder);
+            //                completeOrder = angular.toJson(completeOrder);
+            //                completeOrder = JSON.parse(completeOrder);
+            //                if (isSocketConnected) {
+            //                    socket.emit('completeOrder', completeOrder);
+            //                }
+            //            })
+            //            .catch(function (error) {
+            //                console.log(error);
+            //            })
+
+            //            if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
+            //                // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
+
+            //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            //                .then(function (data) {
+            //                    var shiftId = null;
+            //                    if (data.docs.length > 0) {
+            //                        shiftId = data.docs[0].shiftId;
+            //                    }
+            //                    var printHelperData = {
+            //                        "companyId": $scope.userSession.companyId,
+            //                        "storeId": $scope.currentStore.storeID,
+            //                        "clientId": $scope.clientId,
+            //                        "shiftId": shiftId, //LSFactory.get('shiftId'),
+            //                        "printOrder": printOrder,
+            //                        "printSetting": setting,
+            //                        "orderType": "cashier",
+            //                        "info": {
+            //                            action: "print",
+            //                            deviceID: deviceID,
+            //                            timestamp: genTimestamp(),
+            //                            author: $scope.userSession.userId
+            //                        }
+            //                    }
+
+            //                    printHelperData = angular.toJson(printHelperData);
+            //                    printHelperData = JSON.parse(printHelperData);
+            //                    if (isSocketConnected) {
+            //                        socket.emit('printHelper', printHelperData);
+            //                    }
+            //                })
+            //                .catch(function (error) {
+            //                    console.log(error);
+            //                })
+            //            }
+            //        }
+            //        angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+            //        var tableStatus = tableIsActive($scope.tableIsSelected);
+            //        if (tableStatus == false) {
+            //            $scope.tableIsSelected.tableStatus = 0;
+            //            // $scope.tableIsSelected.startTime = null;
+            //        }
+            //        $scope.cancelOrder();
+            //    }
+            //}, function (e) {
+            //    toaster.pop('error', "", e.responseStatus.message);
+            //}, true, 'submit-order');
         }
     }
 
@@ -4481,26 +4967,41 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 });
             }
 
-            // console.log($scope.newTablesSetting);
+            //// console.log($scope.newTablesSetting);
+            //var data = {
+            //    "key": "tableSetting",
+            //    "value": JSON.stringify($scope.newTablesSetting),
+            //    "extConfig": {
+            //        db: DBSettings,
+            //        token: $scope.token
+            //    }
+            //}
+            //console.log(data);
+            //var url = Api.postKeyValue;
+
+            //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+            //    if (data) {
+            //        toaster.pop('success', "Đã lưu sơ đồ bàn thành công!", 'Sơ đồ bàn sẽ được cập nhật sau khi bạn thực hiện kết ca cuối ngày.');
+            //        $scope.endSession();
+            //    }
+            //}, function (error) {
+            //    console.log(error)
+            //    }, true, 'tableSetting');
+
+            var url = Api.postKeyValue;
+            var method = 'POST';
             var data = {
                 "key": "tableSetting",
-                "value": JSON.stringify($scope.newTablesSetting),
-                "extConfig": {
-                    db: DBSettings,
-                    token: $scope.token
-                }
-            }
-            console.log(data);
-            var url = Api.postKeyValue;
-
-            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-                if (data) {
+                "value": JSON.stringify($scope.newTablesSetting)
+            };
+            $SunoRequest.makeRestful(url, method, data)
+                .then(function (data) {
                     toaster.pop('success', "Đã lưu sơ đồ bàn thành công!", 'Sơ đồ bàn sẽ được cập nhật sau khi bạn thực hiện kết ca cuối ngày.');
                     $scope.endSession();
-                }
-            }, function (error) {
-                console.log(error)
-            }, true, 'tableSetting');
+                })
+                .catch(function (e) {
+                    console.log(e);
+                });
 
             if ($scope.modalEditTables) $scope.modalEditTables.hide();
 
@@ -4519,28 +5020,42 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.deleteTable = function () {
-        var data = {
-            "key": "tableSetting",
-            "value": "",
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
-        }
+        //var data = {
+        //    "key": "tableSetting",
+        //    "value": "",
+        //    "extConfig": {
+        //        db: DBSettings,
+        //        token: $scope.token
+        //    }
+        //}
+
+        //var url = Api.postKeyValue;
+
+        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+        //    if (data) {
+        //        toaster.pop('success', "Đã lưu sơ đồ bàn thành công!", 'Sơ đồ bàn sẽ được cập nhật sau khi bạn thực hiện kết ca cuối ngày.');
+        //        if ($scope.modalEditTables) $scope.modalEditTables.hide();
+        //        $scope.endSession();
+        //    }
+        //}, function (error) {
+        //    console.log(error)
+        //}, true, 'tableSetting');
 
         var url = Api.postKeyValue;
-
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'POST';
+        var data = {
+            "key": "tableSetting",
+            "value": ""
+        };
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 toaster.pop('success', "Đã lưu sơ đồ bàn thành công!", 'Sơ đồ bàn sẽ được cập nhật sau khi bạn thực hiện kết ca cuối ngày.');
                 if ($scope.modalEditTables) $scope.modalEditTables.hide();
                 $scope.endSession();
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'tableSetting');
-
-
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
 
     $scope.showSyncSetting = function () {
@@ -4629,25 +5144,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 'noticeByStamps': setting && setting.noticeByStamps ? setting.noticeByStamps : false
                             };
 
-                            var data = {
-                                "key": "printSetting",
-                                "value": JSON.stringify(s),
-                                "extConfig": {
-                                    db: DBSettings,
-                                    token: $scope.token
-                                }
-                            }
-
                             var url = Api.postKeyValue;
-
-                            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-                                if (data) {
-                                    //if ($scope.isUngroupItem == $scope.printSetting.unGroupItem) {
-                                    //    toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
-                                    //}
-                                    //else {
-                                    //    $ionicPopup.alert({ title: 'Thông báo', template: '<p style="text-align: center;">Đã lưu thiết lập in cho cửa hàng, vui lòng thực hiện việc <b>Kết ca</b> và khởi động lại ứng dụng để áp dụng cấu hình mới!</p>' });
-                                    //}
+                            var method = 'POST';
+                            var d = {
+                                "key": "printSetting",
+                                "value": JSON.stringify(s)
+                            }
+                            $SunoRequest.makeRestful(url, method, d)
+                                .then(function (data) {
                                     Promise.all([
                                         DBTables.$queryDoc({
                                             selector: {
@@ -4710,10 +5214,95 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             console.log(error);
                                         });
                                     $scope.modalPrintSetting.hide();
-                                }
-                            }, function (error) {
-                                console.log(error)
-                            }, true, 'savePrintSetting');
+                                })
+                                .catch(function (e) {
+                                    console.log(e);
+                                });
+                            //var data = {
+                            //    "key": "printSetting",
+                            //    "value": JSON.stringify(s),
+                            //    "extConfig": {
+                            //        db: DBSettings,
+                            //        token: $scope.token
+                            //    }
+                            //}
+
+                            //var url = Api.postKeyValue;
+
+                            //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+                            //    if (data) {
+                            //        //if ($scope.isUngroupItem == $scope.printSetting.unGroupItem) {
+                            //        //    toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
+                            //        //}
+                            //        //else {
+                            //        //    $ionicPopup.alert({ title: 'Thông báo', template: '<p style="text-align: center;">Đã lưu thiết lập in cho cửa hàng, vui lòng thực hiện việc <b>Kết ca</b> và khởi động lại ứng dụng để áp dụng cấu hình mới!</p>' });
+                            //        //}
+                            //        Promise.all([
+                            //            DBTables.$queryDoc({
+                            //                selector: {
+                            //                    'store': { $eq: $scope.currentStore.storeID }
+                            //                },
+                            //            }),
+                            //            DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //        ])
+                            //            .then(function (data) {
+                            //                data[0].docs.forEach(function (d) { d._deleted = true; });
+                            //                return DBTables.$manipulateBatchDoc(data[0].docs);
+                            //            })
+                            //            .then(function (data) {
+                            //                ////debugger;
+                            //                $scope.updateBalance(0);
+                            //                audit(5, 'Kết ca cuối ngày', '');
+                            //                if ($scope.modalStoreReport) $scope.modalStoreReport.hide();
+
+                            //                // $state.reload();
+                            //                toaster.pop('success', "", 'Đã hoàn thành kết ca cuối ngày!');
+                            //                if (!$scope.isSync) {
+                            //                    window.location.reload(true);
+                            //                }
+                            //                else {
+                            //                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //                        .then(function (data) {
+                            //                            ////debugger;
+                            //                            var shiftId = null;
+                            //                            if (data.docs.length > 0) {
+                            //                                shiftId = data.docs[0].shiftId;
+                            //                                //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //                                //.then(function (data) {
+                            //                                //    //console.log(data)
+                            //                                //    //log for debugging.
+                            //                                //})
+                            //                                ////.catch(function (error) { throw error }); //throw error to outer catch 
+                            //                            }
+                            //                            var completeShift = {
+                            //                                "companyId": $scope.userSession.companyId,
+                            //                                "storeId": $scope.currentStore.storeID,
+                            //                                "clientId": $scope.clientId,
+                            //                                "shiftId": shiftId, //LSFactory.get('shiftId')
+                            //                                "info": {
+                            //                                    action: "completeShift",
+                            //                                    deviceID: deviceID,
+                            //                                    timestamp: genTimestamp(),
+                            //                                    author: $scope.userSession.userId,
+                            //                                    isUngroupItem: $scope.isUngroupItem
+                            //                                }
+                            //                            }
+
+                            //                            completeShift = angular.toJson(completeShift);
+                            //                            completeShift = JSON.parse(completeShift);
+                            //                            console.log('dataCompleteShift', completeShift);
+                            //                            socket.emit('completeShift', completeShift);
+                            //                        });
+                            //                }
+                            //            })
+                            //            .catch(function (error) {
+                            //                console.log(error);
+                            //            });
+                            //        $scope.modalPrintSetting.hide();
+                            //    }
+                            //}, function (error) {
+                            //    console.log(error)
+                            //}, true, 'savePrintSetting');
                         } else {
                             toaster.pop('success', "", 'Đã lưu thiết lập in cho cửa hàng!');
                             return $scope.modalPrintSetting.hide();
@@ -4743,24 +5332,38 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.saveRemoveItemSetting = function (choice) {
-        var data = {
-            "key": "removeItemSetting",
-            "value": JSON.stringify(choice),
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
-        }
+        //var data = {
+        //    "key": "removeItemSetting",
+        //    "value": JSON.stringify(choice),
+        //    "extConfig": {
+        //        db: DBSettings,
+        //        token: $scope.token
+        //    }
+        //}
+
+        //var url = Api.postKeyValue;
+
+        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+        //    if (data) {
+        //        toaster.pop('success', "", 'Đã lưu thiết lập điều kiện huỷ món thành công!');
+        //    }
+        //}, function (error) {
+        //    console.log(error)
+        //}, true, 'setKeyValue');
 
         var url = Api.postKeyValue;
-
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
-                toaster.pop('success', "", 'Đã lưu thiết lập điều kiện huỷ món thành công!');
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'setKeyValue');
+        var method = 'POST';
+        var d = {
+            "key": "removeItemSetting",
+            "value": JSON.stringify(choice)
+        };
+        $SunoRequest.makeRestful(url, method, d)
+        .then(function (data) {
+            toaster.pop('success', "", 'Đã lưu thiết lập điều kiện huỷ món thành công!');
+        })
+        .catch(function (e) {
+            console.log(e);
+        });
 
         $scope.closeSetting();
     }
@@ -4800,16 +5403,27 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //Open
             order.isCollapse = false;
             if (order.details.length == 0) {
-                //Call API to get Details Of Order
+                ////Call API to get Details Of Order
+                //var url = ApiUrl + 'sale/order?saleOrderId=' + order.id;
+                //var data = { extConfig: { db: DBSettings, token: $scope.token } };
+                //asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data) {
+                //    if (data) {
+                //        order.details = data.saleOrder.orderDetails;
+                //    }
+                //}, function (error) {
+                //    toaster.pop('error', "", 'Lấy thông tin về chi tiết đơn hàng không thành công! Vui lòng thử lại');
+                //    });
+
                 var url = ApiUrl + 'sale/order?saleOrderId=' + order.id;
-                var data = { extConfig: { db: DBSettings, token: $scope.token } };
-                asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data) {
-                    if (data) {
+                var method = 'GET';
+                var d = null;
+                $SunoRequest.makeRestful(url, method, data)
+                    .then(function (data) {
                         order.details = data.saleOrder.orderDetails;
-                    }
-                }, function (error) {
-                    toaster.pop('error', "", 'Lấy thông tin về chi tiết đơn hàng không thành công! Vui lòng thử lại');
-                });
+                    })
+                    .catch(function (e) {
+                        toaster.pop('error', "", 'Lấy thông tin về chi tiết đơn hàng không thành công! Vui lòng thử lại');
+                    });
             }
         }
         else {
@@ -4818,21 +5432,57 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
     };
 
+    //$scope.getStoreReport = function (from, to) {
+    //    $scope.currentUserReport = null;
+    //    if ($scope.popoverStaffList) $scope.popoverStaffList.hide();
+    //    if (typeof from == 'undefined') from = null;
+    //    if (typeof to == 'undefined') to = null;
+
+    //    var deferred = $q.defer();
+    //    var curr = new Date();
+    //    var fromDate = from ? from.toJSON() : new Date(curr.getFullYear(), curr.getMonth(), curr.getDate(), 0, 0, 0, 0).toJSON();
+    //    var toDate = to ? to.toJSON() : new Date(curr.getFullYear(), curr.getMonth(), curr.getDate(), 23, 59, 59, 0).toJSON();
+    //    var url = Api.storeReport + 'limit=10000&fromDate=' + fromDate + '&toDate=' + toDate;
+    //    //$scope.token.token = '123123123123';
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            $scope.reports = data;
+    //            for (var x = 0; x < data.storeSales.length; x++) {
+    //                var item = $scope.reports.storeSales[x];
+    //                item.isCollapse = true;
+    //                item.details = [];
+    //            };
+    //            // console.log(data.storeSales,$scope.currentStore.storeID,$filter('filter')($scope.reports.storeSales,{'storeId' : $scope.currentStore.storeID}));
+    //            $scope.reports.storeSales = $filter('filter')($scope.reports.storeSales, { 'storeId': $scope.currentStore.storeID });
+    //            $scope.reports.storeExpenses = $filter('filter')($scope.reports.storeExpenses, { 'storeId': $scope.currentStore.storeID });
+    //            $scope.reports.storePaidDebts = $filter('filter')($scope.reports.storePaidDebts, { 'storeId': $scope.currentStore.storeID });
+
+    //            filterReportByStore($scope.reports);
+    //            if ($scope.permissionIndex < 0) $scope.filterBySale($scope.userSession);
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        //console.log(error);
+    //        deferred.reject(error);
+    //    }, true, 'storeReport');
+    //    return deferred.promise;
+    //}
+
     $scope.getStoreReport = function (from, to) {
         $scope.currentUserReport = null;
         if ($scope.popoverStaffList) $scope.popoverStaffList.hide();
         if (typeof from == 'undefined') from = null;
         if (typeof to == 'undefined') to = null;
 
-        var deferred = $q.defer();
         var curr = new Date();
         var fromDate = from ? from.toJSON() : new Date(curr.getFullYear(), curr.getMonth(), curr.getDate(), 0, 0, 0, 0).toJSON();
         var toDate = to ? to.toJSON() : new Date(curr.getFullYear(), curr.getMonth(), curr.getDate(), 23, 59, 59, 0).toJSON();
         var url = Api.storeReport + 'limit=10000&fromDate=' + fromDate + '&toDate=' + toDate;
-        //$scope.token.token = '123123123123';
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var d = null;
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 $scope.reports = data;
                 for (var x = 0; x < data.storeSales.length; x++) {
                     var item = $scope.reports.storeSales[x];
@@ -4846,21 +5496,42 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                 filterReportByStore($scope.reports);
                 if ($scope.permissionIndex < 0) $scope.filterBySale($scope.userSession);
-                deferred.resolve();
-            }
-        }, function (error) {
-            //console.log(error);
-            deferred.reject(error);
-        }, true, 'storeReport');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                return e;
+            });
     }
 
+    //$scope.getBalance = function () {
+    //    var deferred = $q.defer();
+    //    var url = Api.getKeyValue + 'getBalance=' + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            if (data.value != "") {
+    //                var rs = JSON.parse(data.value);
+    //                $scope.balance = rs;
+    //                // console.log(rs);
+    //            } else {
+    //                $scope.balance = 0;
+    //            }
+    //            deferred.resolve();
+    //        }
+    //    }, function (error) {
+    //        console.log(error);
+    //        error.where = "getBalance";
+    //        deferred.reject(error);
+    //    }, true, 'getBalance');
+    //    return deferred.promise;
+    //}
+
     $scope.getBalance = function () {
-        var deferred = $q.defer();
         var url = Api.getKeyValue + 'getBalance=' + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var d = null;
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 if (data.value != "") {
                     var rs = JSON.parse(data.value);
                     $scope.balance = rs;
@@ -4868,15 +5539,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 } else {
                     $scope.balance = 0;
                 }
-                deferred.resolve();
-            }
-        }, function (error) {
-            console.log(error);
-            error.where = "getBalance";
-            deferred.reject(error);
-        }, true, 'getBalance');
-        return deferred.promise;
+                return null;
+            })
+            .catch(function (e) {
+                return e;
+            });
     }
+
+
 
     $scope.openStoreReport = function () {
         $scope.popoverSettings.hide();
@@ -4929,31 +5599,63 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.viewChangeBalance = true;
     }
 
+    //$scope.updateBalance = function (balance) {
+    //    $scope.viewChangeBalance = false;
+
+    //    var data = {
+    //        "key": "getBalance=" + $scope.currentStore.storeID,
+    //        "value": JSON.stringify(balance),
+    //        "extConfig": {
+    //            db: DBSettings,
+    //            token: $scope.token
+    //        }
+    //    }
+
+    //    var url = Api.postKeyValue;
+
+    //    asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            if ($scope.modalStoreReport) {
+    //                $scope.modalStoreReport.hide();
+    //            }
+    //            toaster.pop('success', "", 'Đã cập nhật tồn quỹ đầu ca!');
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'setBalance');
+    //}
+
     $scope.updateBalance = function (balance) {
         $scope.viewChangeBalance = false;
 
-        var data = {
-            "key": "getBalance=" + $scope.currentStore.storeID,
-            "value": JSON.stringify(balance),
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
-        }
-
         var url = Api.postKeyValue;
-
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'POST';
+        var d = {
+            "key": "getBalance=" + $scope.currentStore.storeID,
+            "value": JSON.stringify(balance)
+        }
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 if ($scope.modalStoreReport) {
                     $scope.modalStoreReport.hide();
                 }
                 toaster.pop('success', "", 'Đã cập nhật tồn quỹ đầu ca!');
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'setBalance');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
+        //asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+        //    if (data) {
+        //        if ($scope.modalStoreReport) {
+        //            $scope.modalStoreReport.hide();
+        //        }
+        //        toaster.pop('success', "", 'Đã cập nhật tồn quỹ đầu ca!');
+        //    }
+        //}, function (error) {
+        //    console.log(error)
+        //}, true, 'setBalance');
     }
+
 
     $scope.openPopOverStaffList = function (e) {
         $ionicPopover.fromTemplateUrl('staff-list.html', {
@@ -5169,20 +5871,105 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         })
     }
 
+    //$scope.updateSyncSetting = function (isSync) {
+    //    var data = {
+    //        "key": "isSync",
+    //        "value": JSON.stringify(isSync),
+    //        "extConfig": {
+    //            db: DBSettings,
+    //            token: $scope.token
+    //        }
+    //    }
+
+    //    var url = Api.postKeyValue;
+
+    //    asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            var notification = isSync ? 'bật' : 'tắt';
+    //            toaster.pop('success', "", 'Đã ' + notification + ' thiết lập đồng bộ.');
+
+    //            if (isSync) {
+    //                // Nếu bật đồng bộ, đi kiểm tra tableUuid 
+    //                var count = 0;
+
+    //                for (var i = 0; i < $scope.tables.length; i++) {
+    //                    if (!$scope.tables[i].tableUuid) {
+    //                        count++;
+    //                    }
+    //                }
+    //                if (count > 0) {
+    //                    $scope.newTableMap = [];
+    //                    angular.copy($scope.tableMap, $scope.newTableMap);
+    //                    $scope.updateTable();
+    //                }
+
+    //            } else {
+    //                // Nếu tắt đồng bộ
+    //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+    //                .then(function (data) {
+    //                    var shiftId = null;
+    //                    if (data.docs.length > 0) {
+    //                        shiftId = data.docs[0].shiftId;
+    //                    }
+    //                    var completeShift = {
+    //                        "companyId": $scope.userSession.companyId,
+    //                        "storeId": $scope.currentStore.storeID,
+    //                        "clientId": $scope.clientId,
+    //                        "shiftId": shiftId, //LSFactory.get('shiftId')
+    //                        "info": {
+    //                            action: "completeShift",
+    //                            deviceID: deviceID,
+    //                            timestamp: genTimestamp(),
+    //                            author: $scope.userSession.userId
+    //                        }
+    //                    }
+
+    //                    completeShift = angular.toJson(completeShift);
+    //                    completeShift = JSON.parse(completeShift);
+    //                    console.log('completeShift', completeShift);
+    //                    socket.emit('completeShift', completeShift);
+    //                })
+    //                .catch(function (error) {
+    //                    console.log(error);
+    //                });
+
+    //                Promise.all([
+    //                    DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+    //                    DBTables.$queryDoc({
+    //                        selector: {
+    //                            'store': { $eq: $scope.currentStore.storeID }
+    //                        },
+    //                    })
+    //                ])
+    //                .then(function (data) {
+    //                    data[1].docs.forEach(function (d) { d._deleted = true; });
+    //                    returnDBTables.$manipulateBatchDoc(data[1].docs);
+    //                })
+    //                .catch(function (error) {
+    //                    console.log(error);
+    //                });
+    //                //window.localStorage.removeItem($scope.currentStore.storeID);
+    //                //window.localStorage.removeItem('shiftId');
+
+    //            }
+    //            if ($scope.modalSyncSetting) $scope.modalSyncSetting.hide();
+    //            window.location.reload(true);
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'isSync');
+    //}
+
     $scope.updateSyncSetting = function (isSync) {
-        var data = {
+        var url = Api.postKeyValue;
+        var method = 'POST';
+        var d = {
             "key": "isSync",
-            "value": JSON.stringify(isSync),
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
+            "value": JSON.stringify(isSync)
         }
 
-        var url = Api.postKeyValue;
-
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 var notification = isSync ? 'bật' : 'tắt';
                 toaster.pop('success', "", 'Đã ' + notification + ' thiết lập đồng bộ.');
 
@@ -5204,32 +5991,32 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 } else {
                     // Nếu tắt đồng bộ
                     DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
-                    .then(function (data) {
-                        var shiftId = null;
-                        if (data.docs.length > 0) {
-                            shiftId = data.docs[0].shiftId;
-                        }
-                        var completeShift = {
-                            "companyId": $scope.userSession.companyId,
-                            "storeId": $scope.currentStore.storeID,
-                            "clientId": $scope.clientId,
-                            "shiftId": shiftId, //LSFactory.get('shiftId')
-                            "info": {
-                                action: "completeShift",
-                                deviceID: deviceID,
-                                timestamp: genTimestamp(),
-                                author: $scope.userSession.userId
+                        .then(function (data) {
+                            var shiftId = null;
+                            if (data.docs.length > 0) {
+                                shiftId = data.docs[0].shiftId;
                             }
-                        }
+                            var completeShift = {
+                                "companyId": $scope.userSession.companyId,
+                                "storeId": $scope.currentStore.storeID,
+                                "clientId": $scope.clientId,
+                                "shiftId": shiftId, //LSFactory.get('shiftId')
+                                "info": {
+                                    action: "completeShift",
+                                    deviceID: deviceID,
+                                    timestamp: genTimestamp(),
+                                    author: $scope.userSession.userId
+                                }
+                            }
 
-                        completeShift = angular.toJson(completeShift);
-                        completeShift = JSON.parse(completeShift);
-                        console.log('completeShift', completeShift);
-                        socket.emit('completeShift', completeShift);
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
+                            completeShift = angular.toJson(completeShift);
+                            completeShift = JSON.parse(completeShift);
+                            console.log('completeShift', completeShift);
+                            socket.emit('completeShift', completeShift);
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
 
                     Promise.all([
                         DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
@@ -5239,24 +6026,25 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             },
                         })
                     ])
-                    .then(function (data) {
-                        data[1].docs.forEach(function (d) { d._deleted = true; });
-                        returnDBTables.$manipulateBatchDoc(data[1].docs);
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    });
+                        .then(function (data) {
+                            data[1].docs.forEach(function (d) { d._deleted = true; });
+                            returnDBTables.$manipulateBatchDoc(data[1].docs);
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
                     //window.localStorage.removeItem($scope.currentStore.storeID);
                     //window.localStorage.removeItem('shiftId');
 
                 }
                 if ($scope.modalSyncSetting) $scope.modalSyncSetting.hide();
                 window.location.reload(true);
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'isSync');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
+
 
     $scope.stopCounter = function (item, $event) {
 
@@ -5364,13 +6152,26 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         }
     };
 
+    //$scope.search_product = function (key) {
+    //    var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        $scope.searchProductList = data.items;
+
+    //    }, function (status) { console.log(status) }, true, 'SearchProductItem');
+    //}
+
     $scope.search_product = function (key) {
         var url = Api.search + key + '&storeId=' + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            $scope.searchProductList = data.items;
-
-        }, function (status) { console.log(status) }, true, 'SearchProductItem');
+        var method = 'GET';
+        var d = null;
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
+                $scope.searchProductList = data.items;
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
 
     $scope.change_search = function (key) {
@@ -5420,11 +6221,31 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         $scope.showCategoriesItem = false;
     }
 
+    //$scope.selectCategory = function (i) {
+    //    var url = Api.productitems + 'categoryId=' + i.categoryID + '&limit=' + 1000 + '&pageIndex=' + 1 + '&storeId=' + $scope.currentStore.storeID;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            if (!$scope.BarItemSetting) $scope.BarItemSetting = [];
+    //            for (var j = 0; j < data.items.length; j++) {
+    //                var indexItem = findIndex($scope.BarItemSetting, 'itemId', data.items[j].itemId);
+    //                if (indexItem != null) { } else {
+    //                    $scope.BarItemSetting.push(data.items[j]);
+    //                }
+    //            }
+    //        }
+    //        $scope.closeCategories();
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'getProductItems');
+    //}
+
     $scope.selectCategory = function (i) {
         var url = Api.productitems + 'categoryId=' + i.categoryID + '&limit=' + 1000 + '&pageIndex=' + 1 + '&storeId=' + $scope.currentStore.storeID;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        var method = 'GET';
+        var d = null;
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
                 if (!$scope.BarItemSetting) $scope.BarItemSetting = [];
                 for (var j = 0; j < data.items.length; j++) {
                     var indexItem = findIndex($scope.BarItemSetting, 'itemId', data.items[j].itemId);
@@ -5432,50 +6253,101 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         $scope.BarItemSetting.push(data.items[j]);
                     }
                 }
-            }
-            $scope.closeCategories();
-        }, function (error) {
-            console.log(error)
-        }, true, 'getProductItems');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
+
+    //$scope.saveBarItem = function () {
+    //    var data = {
+    //        "key": "BarItemSetting",
+    //        "value": JSON.stringify($scope.BarItemSetting),
+    //        "extConfig": {
+    //            db: DBSettings,
+    //            token: $scope.token
+    //        }
+    //    };
+
+    //    var url = Api.postKeyValue;
+
+    //    asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+    //        if (data) {
+    //            toaster.pop('success', "", 'Đã lưu thiết lập in bar!');
+
+    //        }
+    //    }, function (error) {
+    //        console.log(error)
+    //    }, true, 'saveHourServiceSetting');
+    //}
 
     $scope.saveBarItem = function () {
+        var url = Api.postKeyValue;
+        var method = 'POST';
         var data = {
             "key": "BarItemSetting",
-            "value": JSON.stringify($scope.BarItemSetting),
-            "extConfig": {
-                db: DBSettings,
-                token: $scope.token
-            }
+            "value": JSON.stringify($scope.BarItemSetting)
         };
-
-        var url = Api.postKeyValue;
-
-        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-            if (data) {
+        $SunoRequest.makeRestful(url, method, data)
+            .then(function (data) {
                 toaster.pop('success', "", 'Đã lưu thiết lập in bar!');
-
-            }
-        }, function (error) {
-            console.log(error)
-        }, true, 'saveHourServiceSetting');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
+
+    //$scope.saveServiceSetting = function (o) {
+    //    if (o) {
+    //        var data = {
+    //            "key": "hourServiceSetting",
+    //            "value": JSON.stringify(o),
+    //            "extConfig": {
+    //                db: DBSettings,
+    //                token: $scope.token
+    //            }
+    //        }
+
+    //        var url = Api.postKeyValue;
+
+    //        asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
+    //            if (data) {
+    //                $scope.hourService = o;
+    //                if ($scope.hourService && $scope.hourService.isUse) {
+    //                    switch ($scope.hourService.optionSelected) {
+    //                        case "1":
+    //                            $scope.blockCounter = 15;
+    //                            break;
+    //                        case "2":
+    //                            $scope.blockCounter = 30;
+    //                            break;
+    //                        case "3":
+    //                            $scope.blockCounter = 60;
+    //                            break;
+    //                        case "0":
+    //                            $scope.blockCounter = $scope.hourService.customOption;
+    //                            break;
+    //                    }
+    //                }
+    //                toaster.pop('success', "", 'Đã lưu thiết lập dịch vụ tính giờ!');
+    //                return $scope.closeSyncSetting();
+    //            }
+    //        }, function (error) {
+    //            console.log(error)
+    //        }, true, 'saveHourServiceSetting');
+    //    }
+    //}
 
     $scope.saveServiceSetting = function (o) {
         if (o) {
-            var data = {
-                "key": "hourServiceSetting",
-                "value": JSON.stringify(o),
-                "extConfig": {
-                    db: DBSettings,
-                    token: $scope.token
-                }
-            }
-
             var url = Api.postKeyValue;
-
-            asynRequest($state, $http, 'POST', url, $scope.token.token, 'json', data, function (data, status) {
-                if (data) {
+            var method = 'POST';
+            var d = {
+                "key": "hourServiceSetting",
+                "value": JSON.stringify(o)
+            }
+            $SunoRequest.makeRestful(url, method, d)
+                .then(function (data) {
                     $scope.hourService = o;
                     if ($scope.hourService && $scope.hourService.isUse) {
                         switch ($scope.hourService.optionSelected) {
@@ -5495,44 +6367,82 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                     toaster.pop('success', "", 'Đã lưu thiết lập dịch vụ tính giờ!');
                     return $scope.closeSyncSetting();
-                }
-            }, function (error) {
-                console.log(error)
-            }, true, 'saveHourServiceSetting');
+                })
+                .catch(function (e) {
+                    console.log(e);
+                });
         }
     }
 
+    //$scope.rePrintOrder = function (o) {
+    //    var url = Api.getOrderInfo + o.id;
+    //    var data = { extConfig: { db: DBSettings, token: $scope.token } };
+    //    asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
+    //        var printOrder = data.saleOrder;
+    //        var setting = {
+    //            companyInfo: $scope.companyInfo.companyInfo,
+    //            allUsers: $scope.authBootloader.users,
+    //            store: $scope.currentStore
+    //        }
+    //        if ($scope.isWebView) {
+    //            var rs = printOrderInBrowser(printer, printOrder, 1, setting);
+    //            if (rs) {
+    //                toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+    //            } else {
+    //                toaster.pop('error', "", 'Vui lòng kiểm tra lại mẫu in.');
+    //            }
+    //        } else if ($scope.isIOS && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
+    //            // console.log('in bep truc tiep tren IOS');
+    //            printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+    //            // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
+    //            toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+    //        } else if ($scope.isAndroid && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
+    //            // console.log('in bep Android');
+    //            printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+    //            // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
+    //            toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+    //        }
+    //        audit(5, 'In lại hóa đơn ' + printOrder.saleOrderCode + ', giá trị đơn hàng: ' + $filter('number')(printOrder.total, 0), '');
+    //    }, function (status) { console.log(status) }, true, 'getOrderInfo');
+    //}
+
     $scope.rePrintOrder = function (o) {
         var url = Api.getOrderInfo + o.id;
-        var data = { extConfig: { db: DBSettings, token: $scope.token } };
-        asynRequest($state, $http, 'GET', url, $scope.token.token, 'json', data, function (data, status) {
-            var printOrder = data.saleOrder;
-            var setting = {
-                companyInfo: $scope.companyInfo.companyInfo,
-                allUsers: $scope.authBootloader.users,
-                store: $scope.currentStore
-            }
-            if ($scope.isWebView) {
-                var rs = printOrderInBrowser(printer, printOrder, 1, setting);
-                if (rs) {
-                    toaster.pop('success', "", 'Đã in hoá đơn thành công.');
-                } else {
-                    toaster.pop('error', "", 'Vui lòng kiểm tra lại mẫu in.');
+        var method = 'GET';
+        var d = null;
+        $SunoRequest.makeRestful(url, method, d)
+            .then(function (data) {
+                var printOrder = data.saleOrder;
+                var setting = {
+                    companyInfo: $scope.companyInfo.companyInfo,
+                    allUsers: $scope.authBootloader.users,
+                    store: $scope.currentStore
                 }
-            } else if ($scope.isIOS && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
-                // console.log('in bep truc tiep tren IOS');
-                printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
-                // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
-                toaster.pop('success', "", 'Đã in hoá đơn thành công.');
-            } else if ($scope.isAndroid && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
-                // console.log('in bep Android');
-                printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
-                // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
-                toaster.pop('success', "", 'Đã in hoá đơn thành công.');
-            }
-            audit(5, 'In lại hóa đơn ' + printOrder.saleOrderCode + ', giá trị đơn hàng: ' + $filter('number')(printOrder.total, 0), '');
-        }, function (status) { console.log(status) }, true, 'getOrderInfo');
+                if ($scope.isWebView) {
+                    var rs = printOrderInBrowser(printer, printOrder, 1, setting);
+                    if (rs) {
+                        toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+                    } else {
+                        toaster.pop('error', "", 'Vui lòng kiểm tra lại mẫu in.');
+                    }
+                } else if ($scope.isIOS && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
+                    // console.log('in bep truc tiep tren IOS');
+                    printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+                    // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
+                    toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+                } else if ($scope.isAndroid && $scope.printDevice && $scope.printDevice.cashierPrinter && $scope.printDevice.cashierPrinter.status && angular.isDefined(window.Suno)) {
+                    // console.log('in bep Android');
+                    printOrderInMobile($scope.printDevice.cashierPrinter, printOrder, "TT", setting);
+                    // printOrderInMobile($scope.printDevice.cashierPrinter.ip,printOrder,"TT",setting);
+                    toaster.pop('success', "", 'Đã in hoá đơn thành công.');
+                }
+                audit(5, 'In lại hóa đơn ' + printOrder.saleOrderCode + ', giá trị đơn hàng: ' + $filter('number')(printOrder.total, 0), '');
+            })
+            .catch(function (e) {
+                console.log(e);
+            });
     }
+
 
     $scope.totalCash = function (method) {
         if (method == "0") {
