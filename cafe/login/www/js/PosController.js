@@ -180,13 +180,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //    var log = {
     //        "auditTrailModel":
     //          {
-    //              "userId": $scope.userSession.userId,
+    //              "userId": SunoGlobal.userProfile.userId,
     //              "featureId": 23,
     //              "actionId": actionId,
     //              "shortContent": shortContent,
     //              "embededContent": embededContent,
     //              "storeId": $scope.currentStore.storeID,
-    //              "companyId": $scope.userSession.companyId,
+    //              "companyId": SunoGlobal.companyInfo.companyId,
     //          },
     //        "extConfig": {
     //            db: DBSettings,
@@ -207,13 +207,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var data = {
             "auditTrailModel":
             {
-                "userId": $scope.userSession.userId,
+                "userId": SunoGlobal.userProfile.userId,
                 "featureId": 23,
                 "actionId": actionId,
                 "shortContent": shortContent,
                 "embededContent": embededContent,
                 "storeId": $scope.currentStore.storeID,
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
             }
         }
         var url = Api.auditTrailRecord;
@@ -669,8 +669,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.checkInitTable = function () {
-        var permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
-        if (permissionIndex > 0) {
+        //var permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
+        var isManager = SunoGlobal.permissions.indexOf("POSIM_Manage") > -1;
+        if (isManager) {
             $scope.openCreateTablesModal();
         } else {
             var tableTAW = {
@@ -815,6 +816,115 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //    return deferred.promise;
     //}
 
+    var getSettings = function () {
+        var isSyncSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'isSync' });
+        if (!isSyncSetting) isSyncSetting = { value: "" };
+        if (isSyncSetting) {
+            if (isSyncSetting.value != "") {
+                var ss = JSON.parse(isSyncSetting.value);
+            }
+            $scope.isSync = ss;
+            //console.log('isSync:', rs);
+        }
+
+        var tableSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'tableSetting' });
+        if (tableSetting) {
+            if (tableSetting.value != "") {
+                var ts = JSON.parse(tableSetting.value);
+                //console.log(ts);
+            }
+            $scope.tablesSetting = ts;
+        }
+
+        var removeItemSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'removeItemSetting' });
+        if (removeItemSetting) {
+            if (removeItemSetting.value) {
+                var rs = JSON.parse(removeItemSetting.value);
+            } else {
+                var rs = 2;
+            }
+            $scope.removeSetting = rs;
+            //console.log('removeItemSetting:', rs);
+        }
+        else {
+            $scope.removeSetting = 2;
+        }
+
+        var hourServiceSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'hourServiceSetting' });
+        if (!hourServiceSetting) hourServiceSetting = { value: "" };
+        if (hourServiceSetting) {
+            if (hourServiceSetting.value) {
+                var hss = JSON.parse(hourServiceSetting.value);
+            } else {
+                var hss = null;
+            }
+            if (hss != null) {
+                $scope.hourService = hss;
+            } else {
+                $scope.hourService = {
+                    isUse: false,
+                    optionSelected: "1"
+                }
+            }
+
+            if ($scope.hourService && $scope.hourService.isUse) {
+                switch ($scope.hourService.optionSelected) {
+                    case "1":
+                        $scope.blockCounter = 15;
+                        break;
+                    case "2":
+                        $scope.blockCounter = 30;
+                        break;
+                    case "3":
+                        $scope.blockCounter = 60;
+                        break;
+                    case "0":
+                        $scope.blockCounter = $scope.hourService.customOption;
+                        break;
+                }
+            }
+            //console.log('hourServiceSetting:', rs);
+        }
+
+        var BarItemSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'BarItemSetting' });
+        if (!BarItemSetting) BarItemSetting = { value: "" };
+        if (BarItemSetting) {
+            if (BarItemSetting.value) {
+                $scope.BarItemSetting = JSON.parse(BarItemSetting.value);
+            } else {
+                $scope.BarItemSetting = null;
+            }
+            //console.log('BarItemSetting:', data);
+        }
+
+        var printSetting = SunoGlobal.featureActivations.find(function (s) { return s.name == 'printSetting' });
+        if (printSetting) {
+            if (printSetting.value != "") {
+                var ps = JSON.parse(printSetting.value);
+                $scope.printSetting = ps;
+                $scope.isUngroupItem = $scope.printSetting.unGroupItem;
+            } //else {
+            //    $scope.printSetting = {
+            //        'printSubmitOrder': false,
+            //        'printNoticeKitchen': false,
+            //        'prePrint': false,
+            //        'unGroupItem': false,
+            //        'noticeByStamps': false
+            //    };
+            //}
+            //console.log('printSetting:', rs);
+        }
+        else {
+            $scope.printSetting = {
+                'printSubmitOrder': false,
+                'printNoticeKitchen': false,
+                'prePrint': false,
+                'unGroupItem': false,
+                'noticeByStamps': false
+            };
+        }
+    }
+
     var template = '<ion-popover-view><ion-header-bar> <h1 class="title">My Popover Title</h1> </ion-header-bar> <ion-content> <p ng-repeat="i in tables">{{tableName}}</p> </ion-content></ion-popover-view>';
 
     $scope.modelToSearch = null;
@@ -833,6 +943,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.quantityTablePerRow = null;
     $scope.quantityItemPerRow = null;
+
+    var validateUsagePackage = function (SunoGlobal) {
+        var dateTxt = SunoGlobal.usageInfo.overallExpiryDateText;
+        var dateArr = dateTxt.split('/');
+        var expiredDateNum = new Date(dateArr[2], dateArr[1] - 1, dateArr[0]).getTime();
+        var nowDateNum = new Date().getTime();
+        if (expiredDateNum > nowDateNum) return true;
+        return false;   
+    }
 
     var findFisrtElement = function (array, startIndex) {
         var prefix = startIndex == 0 ? 'p2-' : 'p1-';
@@ -902,13 +1021,27 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         //Chỗ này để validate response khi get BootLoader và AuthBootLoader.
         //Nếu có lỗi xảy ra thì thông báo lên cho người dùng biết để refresh lại.
         if (data[0] && data[1]) {
+            //Validate thời hạn sử dụng
+            if (!validateUsagePackage(data[1])) {
+                var popUp = $ionicPopup.alert({
+                    title: 'Thông báo',
+                    template: '<p style="text-align:center;">Tài khoản của bạn đã hết hạn.</p>'
+                });
+                popUp.then(function () {
+                    $state.go('login', {}, {
+                        reload: true
+                    });
+                });
+                throw { errorCode: 2, errorMsg: "Hết hạn sử dụng" };
+            }
             //$scope.token = data[0].docs[0].token;
             //$scope.userSession = data[1].docs[0].user; 
             //$scope.settings = data[2].docs[0].setting;
             //$scope.storesList = data[3].docs[0].store;
             //$scope.authBootloader = data[5].docs[0].bootloader;
-            //$scope.clientId = data[6].docs[0].session;
+            //SunoGlobal.userProfile.sessionId = data[6].docs[0].session;
             //$scope.saleList = $scope.authBootloader.users.userProfiles;
+            //console.log(data);
             //Gán lại giá trị từ API response cho SunoGlobal
             SunoGlobal.stores = data[0].allStores;
             SunoGlobal.featureActivations = data[0].featureActivations;
@@ -947,20 +1080,40 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             SunoGlobal.saleSetting.showInventoryTotal = data[0].saleSetting.showInventoryTotal;
             SunoGlobal.saleSetting.storeChangeAutoApproval = data[0].saleSetting.storeChangeAutoApproval;
             SunoGlobal.saleSetting.weeklyReportEmail = data[0].saleSetting.weeklyReportEmail;
+
+            //Gán lại giá trị cho các biến.
+            $scope.storesList = data[0].allStores;
+            $scope.userSession = {
+                companyId: SunoGlobal.companyInfo.companyId,
+                companyName: SunoGlobal.companyInfo.companyName,
+                email: SunoGlobal.userProfile.email,
+                userId: SunoGlobal.userProfile.userId,
+                displayName: SunoGlobal.userProfile.fullName,
+                permissions: SunoGlobal.permissions,
+                isAdmin: SunoGlobal.userProfile.isAdmin,
+                sesssionId: SunoGlobal.userProfile.sessionId,
+                authSessionId: SunoGlobal.userProfile.authSessionId
+            };
+            $scope.authBootloader = {
+                rolesGranted: data[1].rolesGranted,
+                users: data[1].users
+            };
             if (data[2].docs.length > 0) {
-                var localCurrentStore = data[2].docs[0].currentStore;
+
+                //Nếu Store dưới DB Local vẫn còn ds stores của cửa hàng thì gán lại cho currentStore, nếu ko còn thì gán lại store đầu tiên
                 //var storeIndex = findIndex($scope.storesList, 'storeID', localCurrentStore.storeID);
-                var storeIndex = SunoGlobal.stores.findIndex(function (s) { return s.storeID == localCurrentStore.storeID });
+                var storeIndex = SunoGlobal.stores.findIndex(function (s) { return s.storeID == data[2].docs[0].currentStore.storeID });
                 if (storeIndex != -1) {
                     $scope.currentStore = data[2].docs[0].currentStore;
                 }
                 else {
-                    $scope.currentStore = SunoGlobal.stores[0];
+                    //Gán lại phần tử cuối cùng do mảng allStores bị ngược.
+                    $scope.currentStore = SunoGlobal.stores[SunoGlobal.stores.length - 1];
                     DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore), _rev: data[2].docs[0]._rev });
                 }
             }
             else {
-                $scope.currentStore = SunoGlobal.stores[0];
+                $scope.currentStore = SunoGlobal.stores[SunoGlobal.stores.length - 1];
                 DBSettings.$addDoc({ _id: 'currentStore', currentStore: angular.copy($scope.currentStore) });
             }
             
@@ -971,12 +1124,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //debugger;
             //$scope.permissionIndex = $scope.userSession.permissions.indexOf("POSIM_Manage");
             $scope.permissionIndex = SunoGlobal.permissions.indexOf("POSIM_Manage");
+            $scope.isManager = SunoGlobal.permissions.indexOf("POSIM_Manage") > -1;
             //$scope.userInfo = {};
             //angular.copy($scope.userSession, $scope.userInfo);
             //$scope.userInfo = angular.copy($scope.userSession);
             //delete $scope.userInfo.permissions;
         } else {
-            throw { errorCode: 2, errorMsg: "Get Bootloader và AuthBootLoader không thành công." };
+            throw { errorCode: 3, errorMsg: "Get Bootloader và AuthBootLoader không thành công." };
         }
 
         //Suno Prototype
@@ -1040,12 +1194,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
 
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
-                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.cashier = $scope.userSession.userId;
+                $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.cashier = SunoGlobal.userProfile.userId;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser = $scope.userInfo;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy) {
-                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy = $scope.userSession.userId;
-                    var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', $scope.userSession.userId);
+                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy = SunoGlobal.userProfile.userId;
+                    var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', SunoGlobal.userProfile.userId);
                     $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
                 }
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid = uuid.v1();
@@ -1107,8 +1261,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
         });
 
-        // Bắt đầu load dữ liệu
-        return Promise.all([getAllCategories(), getProductItems(''), getPrintTemplate(), getCompanyInfo(), getSettings(), { localCurrentStore: localCurrentStore }])
+        // Load dữ liệu về categories, product items, print template, thông tin công ty, các cấu hình đồng bộ, hàng hóa theo giờ,...
+        return Promise.all([getAllCategories(), getProductItems(''), getPrintTemplate(), getCompanyInfo(), getSettings(), { localCurrentStore: $scope.currentStore }])
     })
     .then(function (loadedData) {
         $scope.tables = [];
@@ -1126,7 +1280,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 sort: [{ tableId: 'asc' }]
                 //fields: ['_id', 'table']
             }),
-            DBSettings.$getDocByID({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+            //DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
+            DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
             loadedData[5],
         ]);
     })
@@ -1154,10 +1309,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 Promise.all([
                     DBTables.$manipulateBatchDoc(array),
                     //Trường hợp này sửa lỗi lúc kết ca thì chưa xóa zones ở các máy đc server broadcast về.
-                    DBSettings.$getDocByID({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) })
+                    DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) })
                 ])
                 .then(function (data) {
-                    var zones = { _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) };
+                    var zones = { _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) };
                     if (data[1].docs.length > 0) {
                         zones._rev = data[1].docs[0]._rev;
                     }
@@ -1222,14 +1377,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 reconnectiondelay: 1000,
                 autoconnect: false,
                 query: {
-                    room: $scope.userSession.companyId + '_' + $scope.currentStore.storeID,
+                    room: SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID,
                     transport: ['websocket']
                 }
             });
             socket = manager.socket('/');
             socket.connect();
             //console.log(manager);
-            //socket = io.connect(socketUrl, { query: 'room=' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID });
+            //socket = io.connect(socketUrl, { query: 'room=' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID });
             // socket.heartbeatTimeout = 2000; 
             socket.on('initShift', function (msg) {
                 console.log('initShift', msg);
@@ -1238,7 +1393,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     // console.log('-- Đã nhận tín hiệu từ socket --');
                     // console.log(msg.tables);
                     //Kiểm tra xem DB Local đã lưu shiftId hay chưa?
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
                         $scope.shiftId = null;
                         if (data.docs.length > 0) {
@@ -1253,7 +1408,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 return DBSettings.$addDoc(angular.copy(data.docs[0]));
                             }
                             else {
-                                return DBSettings.$addDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID, shiftId: msg.shiftId });
+                                return DBSettings.$addDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, shiftId: msg.shiftId });
                             }
                             //.catch(function (error) { console.log(error); });
                             //LSFactory.set('shiftId', msg.shiftId);
@@ -1291,19 +1446,19 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                     //Client liên quan là client cùng tài khoản với client thực hiện action
                                                     //hoặc client đã tham gia vào hoạt động chỉnh sửa, thay đổi trên đơn hàng đó (Trường hợp này chỉ xảy ra đối với các tài khoản có quyền quản lý và chủ cửa hàng)
                                                     case 1: {//Gửi cho tất cả client liên quan
-                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == SunoGlobal.userProfile.userId; }) >= 0) {
                                                             alteredOrder.push(orderLog.tableName);
                                                         }
                                                         break;
                                                     }
                                                     case 2: {//Chỉ gửi cho client đã thực hiện action
-                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0 && msg.msg.deviceID == deviceID) {
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == SunoGlobal.userProfile.userId; }) >= 0 && msg.msg.deviceID == deviceID) {
                                                             alteredOrder.push(orderLog.tableName);
                                                         }
                                                         break;
                                                     }
                                                     case 3: {//Chỉ gửi các client liên quan khác ngoại trừ client thực hiện action.
-                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0 && msg.msg.deviceID != deviceID) {
+                                                        if (order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == SunoGlobal.userProfile.userId; }) >= 0 && msg.msg.deviceID != deviceID) {
                                                             alteredOrder.push(orderLog.tableName);
                                                         }
                                                         break;
@@ -1322,7 +1477,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         t.tableOrder.forEach(function (order) {
                                             var orderLog = msg.msg.lostOrder.find(function (log) { return log.orderID == order.saleOrder.saleOrderUuid });
                                             //Thông báo về cho chỉ client đã thực hiện Init.
-                                            if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == $scope.userSession.userId; }) >= 0) {
+                                            if (orderLog && msg.msg.deviceID == deviceID && order.saleOrder.sharedWith.findIndex(function (p) { return p.userID == SunoGlobal.userProfile.userId; }) >= 0) {
                                                 lostOrder.push({ fromTable: orderLog.tableName, toTable: orderLog.orderPlaceNow ? orderLog.orderPlaceNow.tableName : null, action: orderLog.action });
                                             }
                                         });
@@ -1420,7 +1575,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                         if (!$scope.tables) {
                             Promise.all([
-                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
                                 DBTables.$queryDoc({
                                     selector: {
                                         'store': { $eq: $scope.currentStore.storeID }
@@ -1469,9 +1624,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 //data = angular.copy(unsyncOrder);
                                 //unsyncOrder = filterInitOrder(data);
                                 var initData = {
-                                    "companyId": $scope.userSession.companyId,
+                                    "companyId": SunoGlobal.companyInfo.companyId,
                                     "storeId": $scope.currentStore.storeID,
-                                    "clientId": $scope.clientId,
+                                    "clientId": SunoGlobal.userProfile.sessionId,
                                     "shiftId": null, //LSFactory.get('shiftId'),
                                     "startDate": "",
                                     "finishDate": "",
@@ -1481,12 +1636,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                         action: "reconnect",
                                         deviceID: deviceID,
                                         timestamp: genTimestamp(),
-                                        author: $scope.userSession.userId,
+                                        author: SunoGlobal.userProfile.userId,
                                         isUngroupItem: $scope.isUngroupItem
                                     }
                                 };
 
-                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                 .then(function (data) {
                                     debugger;
                                     var shiftId = null;
@@ -1990,7 +2145,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                                 //Thông báo cho client về hóa đơn được thanh toán ở thiết bị khác.
                                 if (msg.msg) {
-                                    if (($scope.userSession.userId == msg.msg.author) //|| $scope.tables[x].tableOrder[orderIndex].saleOrder.sharedWith.find(function (p) { return p.userID == $scope.userSession.userId; }) > 0)
+                                    if ((SunoGlobal.userProfile.userId == msg.msg.author) //|| $scope.tables[x].tableOrder[orderIndex].saleOrder.sharedWith.find(function (p) { return p.userID == SunoGlobal.userProfile.userId; }) > 0)
                                         && deviceID != msg.msg.deviceID) {
                                         var msgContent = '<p style="text-align: center;">Đơn hàng của bạn tại bàn <b>' + $scope.tables[x].tableName + '</b> đã được thanh toán ở một thiết bị khác.</p>';
                                         showStackNotification('Thông báo', msgContent, null);
@@ -2096,7 +2251,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (msg.storeId == $scope.currentStore.storeID) {
                     //Xóa shift, xóa tables, xóa zones. Sau đó reload lại để cập nhật thông tin shift và data mới nhất từ Server.
                     Promise.all([
-                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
                         DBTables.$queryDoc({
                             selector: {
                                 'store': { $eq: $scope.currentStore.storeID }
@@ -2104,7 +2259,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             },
                             //sort: [{ tableId: 'asc' }]
                         }),
-                        DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                        DBSettings.$removeDoc({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     ])
                     .then(function (data) {
                         //debugger;
@@ -2142,7 +2297,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if (msg.data.storeId == $scope.currentStore.storeID) {
                     //Nếu bị lỗi shiftId không khớp thì xóa shiftId hiện tại ở DB Local và reload lại để cập nhật lại shiftId và data mới nhất từ Server.
                     if (msg.errorCode && msg.errorCode == 'invalidShift') {
-                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                         .then(function (data) {
                             debugger;
                             if (notiPopupInstance) {
@@ -2166,13 +2321,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     if (msg.errorCode && msg.errorCode == 'badRequest') {
                         Promise.all([
-                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+                                DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
                                 DBTables.$queryDoc({
                                     selector: {
                                         'store': { $eq: $scope.currentStore.storeID }
                                     },
                                 }),
-                                DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                DBSettings.$removeDoc({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                         ])
                         .then(function (data) {
                             //debugger;
@@ -2199,7 +2354,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 var data = {
                     info: {
                         action: "getVersion",
-                        author: $scope.userSession.userId,
+                        author: SunoGlobal.userProfile.userId,
                         deviceID: deviceID,
                         timestamp: genTimestamp(),
                     },
@@ -2237,10 +2392,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             var unsyncOrder = filterOrderWithUnsyncLogs($scope.tables);
             data = angular.copy(unsyncOrder);
             unsyncOrder = filterInitOrder(data);
+            console.log(SunoGlobal)
             var initData = {
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
                 "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
+                "clientId": SunoGlobal.userProfile.sessionId,
                 "shiftId": null, //LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
@@ -2248,14 +2404,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "zone": $scope.tableMap,
                 "info": {
                     action: "init",
-                    author: $scope.userSession.userId,
+                    author: SunoGlobal.userProfile.userId,
                     deviceID: deviceID,
                     timestamp: genTimestamp(),
                     isUngroupItem: $scope.isUngroupItem
                 }
             };
 
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
                 ////debugger;
                 var shiftId = null;
@@ -2299,32 +2455,42 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     .catch(function (e) {
         //debugger;
         console.log(e);
-        if (e.error == 'invalid_token' && e.error_description == 'expired') {
-            //Lấy lại access Token mới
-            //debugger; //Reload 2 lần lúc chạy.
-            refreshToken()
-            .then(function (data) {
-                //debugger;
-                $scope.token.token = data.accessToken;
-                $scope.token.refreshToken = data.refreshToken;
-                return DBSettings.$getDocByID({ _id: 'token' })
-            })
-            .then(function (data) {
-                data.docs[0].token.token = $scope.token.token;
-                data.docs[0].token.refreshToken = $scope.token.refreshToken;
-                //Lưu vào DB Local
-                return DBSettings.$addDoc(data.docs[0]);
-            })
-            .then(function (data) {
-                //debugger;
-                //Reload để cập nhật lại.
-                console.log(data);
+        if (e.constructor.name == 'ProgressEvent') {
+            var popUp = $ionicPopup.alert({
+                title: 'Thông báo',
+                template: '<p style="text-align:center;">Quá trình tải thông tin hệ thống không thành công.</p><p style="text-align:center;">Vui lòng kiểm tra kết nối Internet và thử lại</p>'
+            });
+
+            popUp.then(function (data) {
                 window.location.reload(true);
-            })
-            .catch(function (e) {
-                console.log(e);
-            })
+            });
         }
+        //if (e.error == 'invalid_token' && e.error_description == 'expired') {
+        //    //Lấy lại access Token mới
+        //    //debugger; //Reload 2 lần lúc chạy.
+        //    refreshToken()
+        //    .then(function (data) {
+        //        //debugger;
+        //        $scope.token.token = data.accessToken;
+        //        $scope.token.refreshToken = data.refreshToken;
+        //        return DBSettings.$getDocByID({ _id: 'token' })
+        //    })
+        //    .then(function (data) {
+        //        data.docs[0].token.token = $scope.token.token;
+        //        data.docs[0].token.refreshToken = $scope.token.refreshToken;
+        //        //Lưu vào DB Local
+        //        return DBSettings.$addDoc(data.docs[0]);
+        //    })
+        //    .then(function (data) {
+        //        //debugger;
+        //        //Reload để cập nhật lại.
+        //        console.log(data);
+        //        window.location.reload(true);
+        //    })
+        //    .catch(function (e) {
+        //        console.log(e);
+        //    })
+        //}
         //$state.go('login');
     });
 
@@ -2334,7 +2500,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var array = [];
         tables.forEach(function (t) {
             var table = JSON.parse(JSON.stringify(t));
-            table._id = t.tableId.toString() + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID;
+            table._id = t.tableId.toString() + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID;
             table.store = $scope.currentStore.storeID;
             array.push(table);
         });
@@ -2463,16 +2629,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }]
             angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[0].saleOrder)
             //$scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
-            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
             //sunoSaleOrder.createNewOrder()
             //$scope.tableIsSelected.tableOrder.push({ saleOrder: sunoSaleOrder.saleOrder });
             //$scope.tableIsSelected.tableOrder[0].saleOrder.logs = [];
             //$scope.tableIsSelected.tableOrder[0].saleOrder.revision = 1;
             //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith = [];
-            //$scope.tableIsSelected.tableOrder[0].saleOrder.createdBy = $scope.userSession.userId;
-            //var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', $scope.userSession.userId);
+            //$scope.tableIsSelected.tableOrder[0].saleOrder.createdBy = SunoGlobal.userProfile.userId;
+            //var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', SunoGlobal.userProfile.userId);
             //$scope.tableIsSelected.tableOrder[0].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
-            //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+            //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
         };
 
         $scope.orderIndexIsSelected = 0;
@@ -2494,7 +2660,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //}];
             //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
             $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
-            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
         }
         $scope.switchLayout(true);
     }
@@ -2525,7 +2691,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     // Doi ban  
     $scope.openModalSwitchTable = function () {
-        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
         var isExistingUnnoticedItem = false;
@@ -2621,9 +2787,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             var updateData = {
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
                 "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
+                "clientId": SunoGlobal.userProfile.sessionId,
                 "shiftId": null, //LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
@@ -2632,7 +2798,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
                 "info": {
-                    author: $scope.userSession.userId,
+                    author: SunoGlobal.userProfile.userId,
                     timestamp: timestamp,
                     deviceID: deviceID,
                     action: "CB",
@@ -2640,7 +2806,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             };
 
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -2678,7 +2844,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if (cantPrint == false) {
             return toaster.pop('warning', "", 'Vui lòng hoàn tất gọi món (Thông báo cho bếp) trước khi thực hiện ghép hoá đơn!');
         }
-        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
 
@@ -2772,9 +2938,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTables[0].tableOrder = [];
             currentTables[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             var updateData = {
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
                 "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
+                "clientId": SunoGlobal.userProfile.sessionId,
                 "shiftId": null,//LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
@@ -2783,14 +2949,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "tables": angular.copy(currentTables),
                 "zone": $scope.tableMap,
                 "info": {
-                    author: $scope.userSession.userId,
+                    author: SunoGlobal.userProfile.userId,
                     timestamp: timestamp,
                     deviceID: deviceID,
                     action: "G",
                     isUngroupItem: $scope.isUngroupItem
                 }
             }
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -2817,7 +2983,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if (cantPrint == false) {
             return toaster.pop('warning', "", 'Vui lòng hoàn tất gọi món (Thông báo cho bếp) trước khi thực hiện tách hoá đơn!');
         }
-        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
         if (cantPrint == true && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
@@ -2857,7 +3023,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 saleOrder: angular.copy(saleOrder)
             };
             if (!$scope.splitOrder.saleOrder.saleOrderUuid) $scope.splitOrder.saleOrder.saleOrderUuid = uuid.v1();
-            if (!$scope.splitOrder.saleOrder.createdBy) $scope.splitOrder.saleOrder.createdBy = $scope.userSession.userId;
+            if (!$scope.splitOrder.saleOrder.createdBy) $scope.splitOrder.saleOrder.createdBy = SunoGlobal.userProfile.userId;
             if (!$scope.splitOrder.saleOrder.storeId) $scope.splitOrder.saleOrder.storeId = $scope.currentStore.storeID;
         }
         var itemIndex = findIndex($scope.splitOrder.saleOrder.orderDetails, 'itemId', t.itemId);
@@ -3023,25 +3189,25 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if ($scope.isSync && isSocketConnected) {
             var currentTableOrder = [];
             currentTableOrder.push($scope.tableIsSelected);
-            // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
+            // var ownerOrder = filterOwnerOrder(currentTableOrder,SunoGlobal.userProfile.userId);
             var updateData = {
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
                 "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
+                "clientId": SunoGlobal.userProfile.sessionId,
                 "shiftId": null, //LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
                 "info": {
-                    author: $scope.userSession.userId,
+                    author: SunoGlobal.userProfile.userId,
                     deviceID: deviceID,
                     action: "splitOrder",
                     timestamp: timestamp,
                     isUngroupItem: $scope.isUngroupItem
                 }
             }
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -3072,7 +3238,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         var temp = {
             saleOrder: angular.copy(saleOrder)
         };
-        temp.saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+        temp.saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
         $scope.tableIsSelected.tableOrder.push(temp);
         $scope.changeOrder($scope.tableIsSelected.tableOrder.length - 1);
         // LSFactory.set('last-update', $scope.tables);
@@ -3111,7 +3277,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         if (!item || !item.itemId) return;
         if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]
           && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != null
-          && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId
+          && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId
           && $scope.permissionIndex == -1
           ) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
@@ -3163,7 +3329,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         item.subTotal = item.retailPrice;
         //Chính sách giá
 
-        if ($scope.isMultiplePrice && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.customer) {
+        if (SunoGlobal.saleSetting.isApplyCustomerPricingPolicy && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected] && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.customer) {
             if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.customer.type === 1) { //Giá sỉ
                 item.unitPrice = item.wholeSalePrice;
                 item.sellPrice = item.wholeSalePrice;
@@ -3175,10 +3341,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
         }
 
-        //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
-        var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == $scope.userSession.userId });
+        //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
+        var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == SunoGlobal.userProfile.userId });
         if (sWIndex < 0) {
-            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+            $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
         }
 
         if ($scope.isUngroupItem) {
@@ -3330,7 +3496,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
         if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
             if ($scope.tableIsSelected
-              && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId
+              && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId
               && $scope.permissionIndex == -1
               ) {
                 return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
@@ -3451,7 +3617,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 if ($scope.isSync) {
                     // var currentTableOrder = [];
                     // currentTableOrder.push($scope.tableIsSelected);
-                    // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
+                    // var ownerOrder = filterOwnerOrder(currentTableOrder,SunoGlobal.userProfile.userId);
                     //var currentTable = {};
                     var currentTable = angular.copy($scope.tableIsSelected);
                     var currentTableOrder = [];
@@ -3478,23 +3644,23 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     //}
                     //console.log($scope.tables);
                     var updateData = {
-                        "companyId": $scope.userSession.companyId,
+                        "companyId": SunoGlobal.companyInfo.companyId,
                         "storeId": $scope.currentStore.storeID,
-                        "clientId": $scope.clientId,
+                        "clientId": SunoGlobal.userProfile.sessionId,
                         "shiftId": null,//LSFactory.get('shiftId'),
                         "startDate": "",
                         "finishDate": "",
                         "tables": angular.copy(currentTableOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            author: $scope.userSession.userId,
+                            author: SunoGlobal.userProfile.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
                             action: 'BB',
                             isUngroupItem: $scope.isUngroupItem
                         }
                     }
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -3514,16 +3680,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                     if ($scope.printSetting.printNoticeKitchen == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.kitchenPrinter.status)) {
                         // nếu không phải trên trình duyệt + cho phép in bếp + cho phép in hộ thì mới gửi lệnh in hộ lên socket
-                        DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                        DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                         .then(function (data) {
                             var shiftId = null;
                             if (data.docs.length > 0) {
                                 shiftId = data.docs[0].shiftId;
                             }
                             var printHelperData = {
-                                "companyId": $scope.userSession.companyId,
+                                "companyId": SunoGlobal.companyInfo.companyId,
                                 "storeId": $scope.currentStore.storeID,
-                                "clientId": $scope.clientId,
+                                "clientId": SunoGlobal.userProfile.sessionId,
                                 "shiftId": shiftId,//LSFactory.get('shiftId'),
                                 "printOrder": printOrder.saleOrder,
                                 "printSetting": setting,
@@ -3677,14 +3843,14 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         // Kiểm tra quyền thao tác trên hóa đơn
         // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
         var saleOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder;
-        if (saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if (saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
 
         if (num) {
-            var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == $scope.userSession.userId });
+            var sWIndex = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.sharedWith.findIndex(function (log) { return log.deviceID == deviceID && log.userID == SunoGlobal.userProfile.userId });
             if (sWIndex < 0) {
-                $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: $scope.userSession.userId });
+                $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
             }
             if (num > 0) {
                 $scope.pinItem = null;
@@ -3740,7 +3906,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if (num < 0 && $scope.isSync) {
                 // var currentTableOrder = [];
                 // currentTableOrder.push($scope.tableIsSelected);
-                // var ownerOrder = filterOwnerOrder(currentTableOrder,$scope.userSession.userId);
+                // var ownerOrder = filterOwnerOrder(currentTableOrder,SunoGlobal.userProfile.userId);
                 if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length == 0 && $scope.isSync) {
                     var currentTable = {};
                     angular.copy($scope.tableIsSelected, currentTable);
@@ -3764,9 +3930,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
 
                     var completeOrder = {
-                        "companyId": $scope.userSession.companyId,
+                        "companyId": SunoGlobal.companyInfo.companyId,
                         "storeId": $scope.currentStore.storeID,
-                        "clientId": $scope.clientId,
+                        "clientId": SunoGlobal.userProfile.sessionId,
                         "shiftId": null, //LSFactory.get('shiftId'),
                         "startDate": "",
                         "finishDate": "",
@@ -3776,11 +3942,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             action: "clearItem",
                             deviceID: deviceID,
                             timestamp: timestamp,
-                            author: $scope.userSession.userId,
+                            author: SunoGlobal.userProfile.userId,
                             isUngroupItem: $scope.isUngroupItem
                         }
                     };
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -3823,23 +3989,23 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         });
                     }
                     var updateData = {
-                        "companyId": $scope.userSession.companyId,
+                        "companyId": SunoGlobal.companyInfo.companyId,
                         "storeId": $scope.currentStore.storeID,
-                        "clientId": $scope.clientId,
+                        "clientId": SunoGlobal.userProfile.sessionId,
                         "shiftId": null,//LSFactory.get('shiftId'),
                         "startDate": "",
                         "finishDate": "",
                         "tables": angular.copy(currentTableOrder),
                         "zone": $scope.tableMap,
                         "info": {
-                            author: $scope.userSession.userId,
+                            author: SunoGlobal.userProfile.userId,
                             deviceID: deviceID,
                             timestamp: timestamp,
                             action: "H",
                             isUngroupItem: $scope.isUngroupItem
                         }
                     }
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     .then(function (data) {
                         var shiftId = null;
                         if (data.docs.length > 0) {
@@ -3871,7 +4037,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.checkRemoveItem = function (num, item) {
         var saleOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder;
         // var removeSetting = $scope.removeSetting;
-        if (saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if (saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         } else {
             switch ($scope.removeSetting) {
@@ -4344,7 +4510,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.submitOrder = function (isPrint) {
         // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);exit;
-        if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId && $scope.permissionIndex == -1) {
+        if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId && $scope.permissionIndex == -1) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
         }
 
@@ -4359,7 +4525,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice = false;
             prepareOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
 
-            if ($scope.settings.saleSetting.allowDebtPayment == false) {
+            if (!SunoGlobal.saleSetting.isAllowDebtPayment) {
                 if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.amountPaid < $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total)
                     return toaster.pop('warning', "", 'Hệ thống được thiết lập không cho phép bán nợ! Vui lòng thiết lập cho phép bán nợ để có thể xử lý đơn hàng này!');
             }
@@ -4452,9 +4618,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         currentTableOrder[0].tableOrder = [];
                         currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                         var completeOrder = {
-                            "companyId": $scope.userSession.companyId,
+                            "companyId": SunoGlobal.companyInfo.companyId,
                             "storeId": $scope.currentStore.storeID,
-                            "clientId": $scope.clientId,
+                            "clientId": SunoGlobal.userProfile.sessionId,
                             "shiftId": null,//LSFactory.get('shiftId'),
                             "startDate": "",
                             "finishDate": "",
@@ -4464,11 +4630,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 action: "done",
                                 deviceID: deviceID,
                                 timestamp: genTimestamp(),
-                                author: $scope.userSession.userId,
+                                author: SunoGlobal.userProfile.userId,
                                 isUngroupItem: $scope.isUngroupItem
                             }
                         }
-                        DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                        DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                             .then(function (data) {
                                 //debugger;
                                 var shiftId = null;
@@ -4493,16 +4659,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
                             // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
 
-                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                 .then(function (data) {
                                     var shiftId = null;
                                     if (data.docs.length > 0) {
                                         shiftId = data.docs[0].shiftId;
                                     }
                                     var printHelperData = {
-                                        "companyId": $scope.userSession.companyId,
+                                        "companyId": SunoGlobal.companyInfo.companyId,
                                         "storeId": $scope.currentStore.storeID,
-                                        "clientId": $scope.clientId,
+                                        "clientId": SunoGlobal.userProfile.sessionId,
                                         "shiftId": shiftId, //LSFactory.get('shiftId'),
                                         "printOrder": printOrder,
                                         "printSetting": setting,
@@ -4511,7 +4677,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             action: "print",
                                             deviceID: deviceID,
                                             timestamp: genTimestamp(),
-                                            author: $scope.userSession.userId
+                                            author: SunoGlobal.userProfile.userId
                                         }
                                     }
 
@@ -4611,9 +4777,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //            currentTableOrder[0].tableOrder = [];
             //            currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             //            var completeOrder = {
-            //                "companyId": $scope.userSession.companyId,
+            //                "companyId": SunoGlobal.companyInfo.companyId,
             //                "storeId": $scope.currentStore.storeID,
-            //                "clientId": $scope.clientId,
+            //                "clientId": SunoGlobal.userProfile.sessionId,
             //                "shiftId": null,//LSFactory.get('shiftId'),
             //                "startDate": "",
             //                "finishDate": "",
@@ -4623,11 +4789,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //                    action: "done",
             //                    deviceID: deviceID,
             //                    timestamp: genTimestamp(),
-            //                    author: $scope.userSession.userId,
+            //                    author: SunoGlobal.userProfile.userId,
             //                    isUngroupItem: $scope.isUngroupItem
             //                }
             //            }
-            //            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            //            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             //            .then(function (data) {
             //                //debugger;
             //                var shiftId = null;
@@ -4652,16 +4818,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //            if ($scope.printSetting.printSubmitOrder == false && !$scope.isWebView && (!$scope.printDevice || !$scope.printDevice.cashierPrinter.status)) {
             //                // nếu không phải trên trình duyệt + cho phép in thanh toán + cho phép in hộ thì mới gửi lệnh in hộ lên socket
 
-            //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             //                .then(function (data) {
             //                    var shiftId = null;
             //                    if (data.docs.length > 0) {
             //                        shiftId = data.docs[0].shiftId;
             //                    }
             //                    var printHelperData = {
-            //                        "companyId": $scope.userSession.companyId,
+            //                        "companyId": SunoGlobal.companyInfo.companyId,
             //                        "storeId": $scope.currentStore.storeID,
-            //                        "clientId": $scope.clientId,
+            //                        "clientId": SunoGlobal.userProfile.sessionId,
             //                        "shiftId": shiftId, //LSFactory.get('shiftId'),
             //                        "printOrder": printOrder,
             //                        "printSetting": setting,
@@ -4670,7 +4836,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //                            action: "print",
             //                            deviceID: deviceID,
             //                            timestamp: genTimestamp(),
-            //                            author: $scope.userSession.userId
+            //                            author: SunoGlobal.userProfile.userId
             //                        }
             //                    }
 
@@ -5158,7 +5324,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 'store': { $eq: $scope.currentStore.storeID }
                                             },
                                         }),
-                                        DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                        DBSettings.$removeDoc({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                     ])
                                         .then(function (data) {
                                             data[0].docs.forEach(function (d) { d._deleted = true; });
@@ -5176,13 +5342,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                 window.location.reload(true);
                                             }
                                             else {
-                                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                                     .then(function (data) {
                                                         ////debugger;
                                                         var shiftId = null;
                                                         if (data.docs.length > 0) {
                                                             shiftId = data.docs[0].shiftId;
-                                                            //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                                            //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                                             //.then(function (data) {
                                                             //    //console.log(data)
                                                             //    //log for debugging.
@@ -5190,15 +5356,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                                             ////.catch(function (error) { throw error }); //throw error to outer catch 
                                                         }
                                                         var completeShift = {
-                                                            "companyId": $scope.userSession.companyId,
+                                                            "companyId": SunoGlobal.companyInfo.companyId,
                                                             "storeId": $scope.currentStore.storeID,
-                                                            "clientId": $scope.clientId,
+                                                            "clientId": SunoGlobal.userProfile.sessionId,
                                                             "shiftId": shiftId, //LSFactory.get('shiftId')
                                                             "info": {
                                                                 action: "completeShift",
                                                                 deviceID: deviceID,
                                                                 timestamp: genTimestamp(),
-                                                                author: $scope.userSession.userId,
+                                                                author: SunoGlobal.userProfile.userId,
                                                                 isUngroupItem: $scope.isUngroupItem
                                                             }
                                                         }
@@ -5243,7 +5409,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             //                    'store': { $eq: $scope.currentStore.storeID }
                             //                },
                             //            }),
-                            //            DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //            DBSettings.$removeDoc({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                             //        ])
                             //            .then(function (data) {
                             //                data[0].docs.forEach(function (d) { d._deleted = true; });
@@ -5261,13 +5427,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             //                    window.location.reload(true);
                             //                }
                             //                else {
-                            //                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                             //                        .then(function (data) {
                             //                            ////debugger;
                             //                            var shiftId = null;
                             //                            if (data.docs.length > 0) {
                             //                                shiftId = data.docs[0].shiftId;
-                            //                                //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            //                                //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                             //                                //.then(function (data) {
                             //                                //    //console.log(data)
                             //                                //    //log for debugging.
@@ -5275,15 +5441,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             //                                ////.catch(function (error) { throw error }); //throw error to outer catch 
                             //                            }
                             //                            var completeShift = {
-                            //                                "companyId": $scope.userSession.companyId,
+                            //                                "companyId": SunoGlobal.companyInfo.companyId,
                             //                                "storeId": $scope.currentStore.storeID,
-                            //                                "clientId": $scope.clientId,
+                            //                                "clientId": SunoGlobal.userProfile.sessionId,
                             //                                "shiftId": shiftId, //LSFactory.get('shiftId')
                             //                                "info": {
                             //                                    action: "completeShift",
                             //                                    deviceID: deviceID,
                             //                                    timestamp: genTimestamp(),
-                            //                                    author: $scope.userSession.userId,
+                            //                                    author: SunoGlobal.userProfile.userId,
                             //                                    isUngroupItem: $scope.isUngroupItem
                             //                                }
                             //                            }
@@ -5766,7 +5932,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                 'store': { $eq: $scope.currentStore.storeID }
                             },
                         }),
-                        DBSettings.$removeDoc({ _id: 'zones_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                        DBSettings.$removeDoc({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                     ])
                     .then(function (data) {
                         data[0].docs.forEach(function (d) { d._deleted = true; });
@@ -5784,13 +5950,13 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                             window.location.reload(true);
                         }
                         else {
-                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                             .then(function (data) {
                                 ////debugger;
                                 var shiftId = null;
                                 if (data.docs.length > 0) {
                                     shiftId = data.docs[0].shiftId;
-                                    //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                                    //DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                                     //.then(function (data) {
                                     //    //console.log(data)
                                     //    //log for debugging.
@@ -5798,15 +5964,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     ////.catch(function (error) { throw error }); //throw error to outer catch 
                                 }
                                 var completeShift = {
-                                    "companyId": $scope.userSession.companyId,
+                                    "companyId": SunoGlobal.companyInfo.companyId,
                                     "storeId": $scope.currentStore.storeID,
-                                    "clientId": $scope.clientId,
+                                    "clientId": SunoGlobal.userProfile.sessionId,
                                     "shiftId": shiftId, //LSFactory.get('shiftId')
                                     "info": {
                                         action: "completeShift",
                                         deviceID: deviceID,
                                         timestamp: genTimestamp(),
-                                        author: $scope.userSession.userId,
+                                        author: SunoGlobal.userProfile.userId,
                                         isUngroupItem: $scope.isUngroupItem
                                     }
                                 }
@@ -5830,9 +5996,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     //            shiftId = data.docs[0].shiftId;
                     //        }
                     //        var completeShift = {
-                    //            "companyId": $scope.userSession.companyId,
+                    //            "companyId": SunoGlobal.companyInfo.companyId,
                     //            "storeId": $scope.currentStore.storeID,
-                    //            "clientId": $scope.clientId,
+                    //            "clientId": SunoGlobal.userProfile.sessionId,
                     //            "shiftId": shiftId, //LSFactory.get('shiftId')
                     //        }
 
@@ -5905,22 +6071,22 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     //            } else {
     //                // Nếu tắt đồng bộ
-    //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+    //                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
     //                .then(function (data) {
     //                    var shiftId = null;
     //                    if (data.docs.length > 0) {
     //                        shiftId = data.docs[0].shiftId;
     //                    }
     //                    var completeShift = {
-    //                        "companyId": $scope.userSession.companyId,
+    //                        "companyId": SunoGlobal.companyInfo.companyId,
     //                        "storeId": $scope.currentStore.storeID,
-    //                        "clientId": $scope.clientId,
+    //                        "clientId": SunoGlobal.userProfile.sessionId,
     //                        "shiftId": shiftId, //LSFactory.get('shiftId')
     //                        "info": {
     //                            action: "completeShift",
     //                            deviceID: deviceID,
     //                            timestamp: genTimestamp(),
-    //                            author: $scope.userSession.userId
+    //                            author: SunoGlobal.userProfile.userId
     //                        }
     //                    }
 
@@ -5934,7 +6100,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     //                });
 
     //                Promise.all([
-    //                    DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+    //                    DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
     //                    DBTables.$queryDoc({
     //                        selector: {
     //                            'store': { $eq: $scope.currentStore.storeID }
@@ -5990,22 +6156,22 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                 } else {
                     // Nếu tắt đồng bộ
-                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                    DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                         .then(function (data) {
                             var shiftId = null;
                             if (data.docs.length > 0) {
                                 shiftId = data.docs[0].shiftId;
                             }
                             var completeShift = {
-                                "companyId": $scope.userSession.companyId,
+                                "companyId": SunoGlobal.companyInfo.companyId,
                                 "storeId": $scope.currentStore.storeID,
-                                "clientId": $scope.clientId,
+                                "clientId": SunoGlobal.userProfile.sessionId,
                                 "shiftId": shiftId, //LSFactory.get('shiftId')
                                 "info": {
                                     action: "completeShift",
                                     deviceID: deviceID,
                                     timestamp: genTimestamp(),
-                                    author: $scope.userSession.userId
+                                    author: SunoGlobal.userProfile.userId
                                 }
                             }
 
@@ -6019,7 +6185,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         });
 
                     Promise.all([
-                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID }),
+                        DBSettings.$removeDoc({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
                         DBTables.$queryDoc({
                             selector: {
                                 'store': { $eq: $scope.currentStore.storeID }
@@ -6090,9 +6256,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             currentTableOrder[0].tableOrder = [];
             currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
             var updateData = {
-                "companyId": $scope.userSession.companyId,
+                "companyId": SunoGlobal.companyInfo.companyId,
                 "storeId": $scope.currentStore.storeID,
-                "clientId": $scope.clientId,
+                "clientId": SunoGlobal.userProfile.sessionId,
                 "shiftId": null,//LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
@@ -6102,11 +6268,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     action: "stopTimer",
                     deviceID: deviceID,
                     timestamp: genTimestamp(),
-                    author: $scope.userSession.userId,
+                    author: SunoGlobal.userProfile.userId,
                     itemID: item.itemId
                 }
             }
-            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+            DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
             .then(function (data) {
                 var shiftId = null;
                 if (data.docs.length > 0) {
@@ -6931,7 +7097,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.changeTempOrderName = function () {
         if ($scope.tableIsSelected
-              && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != $scope.userSession.userId
+              && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId
               && $scope.permissionIndex == -1
               ) {
             return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
@@ -6947,9 +7113,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 currentTableOrder[0].tableOrder = [];
                 currentTableOrder[0].tableOrder.push($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]);
                 var updateData = {
-                    "companyId": $scope.userSession.companyId,
+                    "companyId": SunoGlobal.companyInfo.companyId,
                     "storeId": $scope.currentStore.storeID,
-                    "clientId": $scope.clientId,
+                    "clientId": SunoGlobal.userProfile.sessionId,
                     "shiftId": null,//LSFactory.get('shiftId'),
                     "startDate": "",
                     "finishDate": "",
@@ -6959,10 +7125,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         action: "renameOrder",
                         deviceID: deviceID,
                         timestamp: genTimestamp(),
-                        author: $scope.userSession.userId
+                        author: SunoGlobal.userProfile.userId
                     }
                 }
-                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + $scope.userSession.companyId + '_' + $scope.currentStore.storeID })
+                DBSettings.$getDocByID({ _id: 'shiftId' + '_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID })
                 .then(function (data) {
                     var shiftId = null;
                     if (data.docs.length > 0) {
@@ -7098,3 +7264,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 //Cập nhật lại printed.
 //Cập nhật lại thông báo.
 //Tách ghép hóa đơn ở hàng tách món.
+
+
+//Set lại accessToken và refreshToken khi hết hạn.
