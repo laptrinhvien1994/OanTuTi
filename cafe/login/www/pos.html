@@ -855,7 +855,7 @@
     </ion-header-bar>
     <ion-content>
       <div class="list table-actions">
-        <a class="item item-icon-left" ng-repeat="s in storesList track by $index" on-tap="changeCurrentStore(s)" >
+        <a class="item item-icon-left" ng-repeat="s in storesList | orderBy: 'storeID' track by $index" on-tap="changeCurrentStore(s)" >
           <i class="icon ion-ios-location-outline"></i> {{s.storeName}}
         </a>
       </div>

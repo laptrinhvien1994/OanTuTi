@@ -1,6 +1,6 @@
 angular.module('SunoPosCafe.loginController', [])
-    .controller('LoginCtrl', ["$q", "$scope", "$rootScope", "$http", "Auth", "$state", "$ionicSideMenuDelegate", "$ionicPopup", "toaster", "$PouchDB", "$timeout", LoginCtrl]);
-function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSideMenuDelegate, $ionicPopup, toaster, $PouchDB, $timeout) {
+    .controller('LoginCtrl', ["$q", "$scope", "$rootScope", "$http", "Auth", "$state", "$ionicSideMenuDelegate", "$ionicPopup", "toaster", "$timeout", "SunoPouchDB", LoginCtrl]);
+function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSideMenuDelegate, $ionicPopup, toaster, $timeout, SunoPouchDB) {
     $scope.$watch('$root.appVersion', function () {
         $scope.appVersion = $rootScope.appVersion;
     });
@@ -8,10 +8,11 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
     $ionicSideMenuDelegate.canDragContent(false);
 
     var sunoAuth = new SunoAuth();
+    var DBSettings = SunoPouchDB.getPouchDBInstance('setting', null);
 
     //force reload tab nếu nhận được yêu cầu cần reload lại bên Pos Controller.
-    if ($rootScope.hasOwnProperty('forceReload') && $rootScope.forceReload) {
-        delete $rootScope.forceReload;
+    if ($rootScope.hasOwnProperty('isNeedToReload') && $rootScope.isNeedToReload) {
+        delete $rootScope.isNeedToReload;
         window.location.reload(true);
     }
 
@@ -105,7 +106,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         //localStorage.removeItem('user');
         $scope.isCancel = true;
         Promise.all([
-            $PouchDB.DBSettings.$removeDoc({ _id: 'SunoGlobal' })
+            DBSettings.$removeDoc({ _id: 'SunoGlobal' })
             //    //$PouchDB.DBSettings.$removeDoc({ _id: 'account' }),
             //    $PouchDB.DBSettings.$removeDoc({ _id: 'bootloader' }),
             //    $PouchDB.DBSettings.$removeDoc({ _id: 'setting' }),
@@ -133,9 +134,10 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
         asynRequest($state, $http, 'POST', url, $scope.token, 'json', null, function (data, status) {
             if (data) {
                 //console.log('getAuthBootloader', data);
-                AuthFactory.setBootloader(data).then(function (info) {
-                    deferred.resolve(data);
-                });
+                //AuthFactory.setBootloader(data).then(function (info) {
+                //    deferred.resolve(data);
+                //});
+                deferred.resolve(data);
             }
         }, function (error, status) {
             deferred.reject("Có lỗi xảy ra!");
@@ -350,7 +352,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
                 return getAuthBootloader();
             }).then(function (data) {
                 //Thêm vào SunoGlobal sau đó lưu xuống DB.
-                console.log(data);
+                //console.log(data);
                 //console.log(SunoGlobal);
                 var SunoGlobalWithoutFn = JSON.parse(JSON.stringify(SunoGlobal));
                 //SunoGlobalWithoutFn.stores = data[0].allStores;
@@ -362,7 +364,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
                 SunoGlobalWithoutFn.usageInfo = data.usageInfo;
                 //SunoGlobalWithoutFn.rolesGranted = data[1].rolesGranted;
                 //SunoGlobalWithoutFn.users = data[1].users.userProfiles;
-
+                debugger;
                 //SunoGlobalWithoutFn.saleSetting.cogsCalculationMethod = data[0].saleSetting.cogsCalculationMethod;
                 //SunoGlobalWithoutFn.saleSetting.isAllowDebtPayment = data[0].saleSetting.allowDebtPayment;
                 //SunoGlobalWithoutFn.saleSetting.isAllowPriceModified = data[0].saleSetting.allowPriceModified;
@@ -388,7 +390,7 @@ function LoginCtrl($q, $scope, $rootScope, $http, AuthFactory, $state, $ionicSid
                 //SunoGlobalWithoutFn.saleSetting.showInventoryTotal = data[0].saleSetting.showInventoryTotal;
                 //SunoGlobalWithoutFn.saleSetting.storeChangeAutoApproval = data[0].saleSetting.storeChangeAutoApproval;
                 //SunoGlobalWithoutFn.saleSetting.weeklyReportEmail = data[0].saleSetting.weeklyReportEmail;
-                if (validateUsagePackage(SunoGlobalWithoutFn.usageInfo))
+                if (validateUsagePackage(SunoGlobalWithoutFn))
                 {
                     return AuthFactory.setSunoGlobal(SunoGlobalWithoutFn);
                 }

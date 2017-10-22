@@ -1,5 +1,5 @@
 angular.module('SunoPosCafe.posController', ['toaster', 'ion-datetime-picker', 'btford.socket-io', "cfp.hotkeys"])
-  .controller('PosCtrl', ["$location", "$ionicPosition", "$ionicSideMenuDelegate", "$ionicHistory", "$timeout", "$interval", "$q", "$scope", "$http", "$rootScope", "AuthFactory", "$state", "$ionicPopover", "$ionicPopup", "$ionicModal", "LSFactory", "$ionicScrollDelegate", "toaster", "printer", "$filter", "hotkeys", "Auth", "$PouchDB", "utils", PosCtrl])
+  .controller('PosCtrl', ["$location", "$ionicPosition", "$ionicSideMenuDelegate", "$ionicHistory", "$timeout", "$interval", "$q", "$scope", "$http", "$rootScope", "AuthFactory", "$state", "$ionicPopover", "$ionicPopup", "$ionicModal", "LSFactory", "$ionicScrollDelegate", "toaster", "printer", "$filter", "hotkeys", "Auth", "utils", "SunoPouchDB", PosCtrl])
   .run(function ($ionicPickerI18n) {
       $ionicPickerI18n.weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
       $ionicPickerI18n.months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
@@ -7,7 +7,7 @@ angular.module('SunoPosCafe.posController', ['toaster', 'ion-datetime-picker', '
       $ionicPickerI18n.cancel = "Hủy";
   });
 
-function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistory, $timeout, $interval, $q, $scope, $http, $rootScope, AuthFactory, $state, $ionicPopover, $ionicPopup, $ionicModal, LSFactory, $ionicScrollDelegate, toaster, printer, $filter, hotkeys, Auth, $PouchDB, utils) {
+function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistory, $timeout, $interval, $q, $scope, $http, $rootScope, AuthFactory, $state, $ionicPopover, $ionicPopup, $ionicModal, LSFactory, $ionicScrollDelegate, toaster, printer, $filter, hotkeys, Auth, utils, SunoPouchDB) {
     // check platform
     // $scope.timerRunning = true;
     $scope.offline = null;
@@ -16,29 +16,44 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.isIOS = ionic.Platform.isIOS();
     $scope.isAndroid = ionic.Platform.isAndroid();
     $scope.isWindowsPhone = ionic.Platform.isWindowsPhone();
-    $scope.isLoggedIn = true;
-    $scope.selectedCategory = '';
-    $scope.isInTable = true; //Mới vô hiển thị phòng bàn
+    //$scope.isUsingOfflineMode = false; //Cờ kiểm tra xem có sử dụng chế độ Offline hay không?
+    $scope.isLoggedIn = false; //Cờ kiểm tra đã đăng nhập hay chưa?
+    $scope.selectedCategory = ''; //Tên để hiển thị nhóm hàng khi chọn vào category chưa có item.
+    $scope.isInTable = true; //Cờ kiểm tra view (Bàn-phòng/Menu), mặc định mới vào sơ đồ bàn.
     $scope.onSearchField = false; //Mới vô thì ko focus vào ô tìm kiếm hàng hóa.
-    $scope.appendedCSSClass = '';
-    $scope.isUngroupItem = false;
+    $scope.appendedCSSClass = ''; //Tên của responsive class CSS bàn/phòng.
+    $scope.isUngroupItem = false; //Cờ kiểm tra hàng hóa tách món.
+    $scope.isSync = false; //Cờ kiểm tra bật đồng bộ hay không?
+    $scope.tablesSetting = null; //Cấu hình bàn phòng
+    $scope.removeSetting = null; //Cấu hình hủy món
+    $scope.hourService = null; //Cấu hình dịch vụ tính giờ
+    $scope.blockCounter = null; //Cấu hình tính giờ theo block
+    $scope.BarItemSetting = null; //Cấu hình cho bar
+    $scope.printSetting = null; //Cấu hình in
 
-    var socket = null;
-    var manager = null;
-    var $SunoSaleOrder = null;
-    var $SunoRequest = new SunoRequest();
-    var isSocketConnected = false;
-    var isSocketInitialized = true;
+    //DB Local
+    var DBSettings = SunoPouchDB.getPouchDBInstance('setting', null); //DB cho các cấu hình thiết lập và SunoGlobal.
+    var DBTables = null; //DB cho sơ đồ phòng bàn
 
-    //Tạo key để định danh client device trong đồng bộ.
-    var deviceID = localStorage.getItem('deviceID');
+    //Socket
+    var socket = null; //socket instance
+    var manager = null; //manager instance
+    var isSocketConnected = false; //Cờ kiểm tra client có đang được kết nối socket với server Node hay không?
+    var isSocketInitialized = true; //Cờ kiểm tra xem client có phải vừa được khởi động app hay không?
+
+    //Suno Prototype
+    var $SunoSaleOrder = null; //Lưu SunoSaleOrder instance.
+    var $SunoRequest = new SunoRequest(); //SunoRequest instance. 
+
+    //Tạo key để định danh client's device trong đồng bộ.
+    var deviceID = localStorage.getItem('deviceID'); //ID của device.
     if (deviceID == null) {
         deviceID = uuid.v1();
         localStorage.setItem('deviceID', deviceID);
     }
 
     //cafe version.
-    var version = localStorage.getItem('version');
+    var version = localStorage.getItem('version'); //Version của Suno Cafe.
     if (version == null) {
         version = '2.0.0';
         localStorage.setItem('version', version);
@@ -80,9 +95,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 console.log(e);
             });
     }
-
-    var DBSettings = $PouchDB.DBSettings;
-    var DBTables = $PouchDB.DBTables;
 
     if ($scope.isAndroid || $scope.isIOS || $scope.isWindowsPhone) {
         $scope.isWebView = false;
@@ -998,7 +1010,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     //$q.when(Promise.all([Auth.getToken(), Auth.getUser(), Auth.getSetting(), Auth.getStoreList(), DBSettings.$getDocByID({ _id: 'currentStore' }), Auth.getBootloader(), Auth.getSessionId()]))
     $q.when(Auth.getSunoGlobal())
-        .then(function (data) {
+    .then(function (data) {
         //Nếu check dưới DB Local chưa có SunoGlobal mà đã vào route pos thì đẩy ra màn hình đăng nhập.
         if (data.docs.length > 0) {
             //Gán lại accessToken cho SunoGlobal trường hợp vào luôn route pos thì SunoGlobal ko có accessToken để lấy BootLoader và AuthBootloader.
@@ -1008,6 +1020,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     SunoGlobal[prop] = data.docs[0].SunoGlobal[prop];
                 }
             }
+            $scope.isLoggedIn = true;
             return Promise.all([getBootLoader(), getAuthBootLoader(), DBSettings.$getDocByID({ _id: 'currentStore' })]);
         }
         else {
@@ -1265,6 +1278,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         return Promise.all([getAllCategories(), getProductItems(''), getPrintTemplate(), getCompanyInfo(), getSettings(), { localCurrentStore: $scope.currentStore }])
     })
     .then(function (loadedData) {
+        //Đặt tên cho DB bằng để có unique name bằng companyId và storeId
+        var DBTableName = SunoGlobal.companyInfo.companyId + "_" + $scope.currentStore.storeID;
+        return Promise.all([SunoPouchDB.getPouchDBInstance('table', DBTableName), loadedData[5]]);
+    })
+    .then(function (data) {
+        DBTables = data[0];
         $scope.tables = [];
         $scope.tableMap = [];
         //Thêm mảng tạm để phục hồi khi cần.
@@ -1282,7 +1301,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }),
             //DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
             DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID }),
-            loadedData[5],
+            data[1],
         ]);
     })
     .then(function (data) {
@@ -3299,7 +3318,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return toaster.pop('warning', "", 'Hàng hóa này được tính giá theo giờ sử dụng và đã có trong đơn hàng!');
             }
         }
-        debugger;
+
         if ($scope.tableIsSelected.tableOrder.length == 0) {
             console.log('run');
             //$scope.tableIsSelected.tableOrder = [{
@@ -6019,17 +6038,19 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.logout = function () {
         Promise.all([
-            DBSettings.$removeDoc({ _id: 'account' }),
-            DBSettings.$removeDoc({ _id: 'bootloader' }),
-            DBSettings.$removeDoc({ _id: 'setting' }),
-            DBSettings.$removeDoc({ _id: 'store' }),
-            DBSettings.$removeDoc({ _id: 'token' }),
-            DBSettings.$removeDoc({ _id: 'user' }),
+            //DBSettings.$removeDoc({ _id: 'account' }),
+            //DBSettings.$removeDoc({ _id: 'bootloader' }),
+            //DBSettings.$removeDoc({ _id: 'setting' }),
+            //DBSettings.$removeDoc({ _id: 'store' }),
+            //DBSettings.$removeDoc({ _id: 'token' }),
+            //DBSettings.$removeDoc({ _id: 'user' }),
+            DBSettings.$removeDoc({ _id: 'SunoGlobal' }),
             DBSettings.$removeDoc({ _id: 'printDevice' }),
             DBSettings.$removeDoc({ _id: 'printHelper' })
         ]).then(function (data) {
+            $scope.isLoggedIn = true;
             $scope.popoverSettings.hide();
-            $rootScope.forceReload = true;
+            $rootScope.isNeedToReload = true;
             $state.go('login');
             $timeout(function () {
                 $ionicHistory.clearCache();
@@ -7267,3 +7288,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
 
 //Set lại accessToken và refreshToken khi hết hạn.
+//Đọc sơ đồ thì API, kiểm tra dưới Local
+
+//Bật OfflineCache nếu tìm kiếm hàng hóa lúc Offline thì tìm dưới DB Local.
+//Lúc load lại app thì lưu lại dữ liệu mới.
+//Lúc thanh toán thì cho thanh toán và lưu dữ liệu chưa đồng bộ xuống dưới DB Local.

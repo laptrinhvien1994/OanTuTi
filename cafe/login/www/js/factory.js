@@ -89,28 +89,27 @@ angular.module('sunoPos.factory', [])
 }])
 
 .factory('$PouchDB', [function () {
-    //Create instances of PouchDB.
-    //First DB for Table structure and Orders.
-    var DBTables = new PouchDB("SunoCafe_Tables", { adapter: 'idb', revs_limit: 1 });
-    //Second DB for Settings.
-    var DBSettings = new PouchDB("SunoCafe_Settings", { adapter: 'idb', revs_limit: 1 });
-    //Create indexes
-    Promise.all([
-        DBTables.createIndex({ index: { fields: ['store'] } }),
-        DBTables.createIndex({ index: { fields: ['tableId'] } }),
-        DBTables.createIndex({ index: { fields: ['store', 'tableId'] } }),
-        DBTables.createIndex({ index: { fields: ['store', 'tableUuid'] } }),
-        DBTables.createIndex({ index: { fields: ['store', 'tableId', 'tableUuid'] } })
-    ]).then(function (result) {
-        //log for debug if catch error when creating Index.
-        //console.log(result);
-    });
+    ////Create instances of PouchDB.
+    ////First DB for Table structure and Orders.
+    //var DBTables = new PouchDB("SunoCafe_Tables", { adapter: 'idb', revs_limit: 1 });
 
-    //Export API Object
-    var pDBAPI = {
-        DBTables: DBTables,
-        DBSettings: DBSettings
-    };
+    ////Create indexes
+    //Promise.all([
+    //    DBTables.createIndex({ index: { fields: ['store'] } }),
+    //    DBTables.createIndex({ index: { fields: ['tableId'] } }),
+    //    DBTables.createIndex({ index: { fields: ['store', 'tableId'] } }),
+    //    DBTables.createIndex({ index: { fields: ['store', 'tableUuid'] } }),
+    //    DBTables.createIndex({ index: { fields: ['store', 'tableId', 'tableUuid'] } })
+    //]).then(function (result) {
+    //    //log for debug if catch error when creating Index.
+    //    //console.log(result);
+    //});
+
+    ////Export API Object
+    //var pDBAPI = {
+    //    DBTables: DBTables,
+    //    DBSettings: DBSettings
+    //};
 
     //Public PouchDB API.
     //API with 2 parameters are 2 callback functions, that take 1 argument.
@@ -268,11 +267,59 @@ angular.module('sunoPos.factory', [])
         var pDB = this;
         return pDB.find(queryObj);
     }
-
-    return pDBAPI;
+    return PouchDB;
 }])
-.factory('Auth', ['$PouchDB', function ($PouchDB) {
-    var DB = $PouchDB.DBSettings;
+
+.factory('SunoPouchDB', ['$PouchDB', function ($PouchDB) {
+    //Singleton instance of DB settings.
+    var DBSettings = new PouchDB("SunoCf_Settings", { adapter: 'idb', revs_limit: 1 });
+    return {
+        getPouchDBInstance: function (type, name) {
+            if (type == 'setting') {
+                return DBSettings;
+            }
+            else if (type == 'table') {
+                //Instance of DB tables 
+                var DBTables = new PouchDB("SunoCf_Tables_" + name, { adapter: 'idb', revs_limit: 1 });
+                ////Don't need to return a Promise because in route Pos always call API to get Bootloader therefore createIndex actions will complete before it will be used.
+                //Create indexes 
+                return Promise.all([
+                    DBTables.createIndex({ index: { fields: ['store'] } }),
+                    DBTables.createIndex({ index: { fields: ['tableId'] } }),
+                    DBTables.createIndex({ index: { fields: ['store', 'tableId'] } }),
+                    DBTables.createIndex({ index: { fields: ['store', 'tableUuid'] } }),
+                    //DBTables.createIndex({ index: { fields: ['store', 'tableId', 'tableUuid'] } })
+                ]).then(function (result) {
+                    //log for debug if catch error when creating Indexes.
+                    //console.log(result);
+                    return DBTables;
+                })
+                .catch(function (e) {
+                    console.log(e);
+                    return e;
+                })
+            }
+            else if (type == 'item') {
+                var DBItems = new PouchDB("SunoCf_Items_" + name, { adapter: 'idb', revs_limit: 1 });
+                return Promise.all([
+                    DBItems.createIndex({ index: { fields: []}})
+                ])
+            }
+            else if (type == 'customer') {
+                var DBCustomer = new PouchDB("SunoCf_Customers_" + name, { adapter: 'idb', revs_limit: 1 });
+            }
+            else if (type == 'order') {
+                var DBOrder = new PouchDB("SunoCf_Orders_" + name, { adapter: 'idb', revs_limit: 1 });
+            }
+            else {
+                return null;
+            }
+        }
+    }
+}])
+
+.factory('Auth', ['SunoPouchDB', function (SunoPouchDB) {
+    var DB = SunoPouchDB.getPouchDBInstance('setting', null);
     var userID = 'user';
     var tokenID = 'token';
     var refreshTokenID = 'rftoken';
