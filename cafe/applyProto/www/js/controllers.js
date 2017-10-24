@@ -144,31 +144,41 @@ function convertJsonDateTimeToJs(jsonDate) {
     return date;
 }
 
-function removeItemZero(o) {
+//function removeItemZero(o) {
 
-    var temp = {};
-    temp.saleOrder = {};
+//    var temp = {};
+//    temp.saleOrder = {};
 
-    angular.copy(o, temp);
-    temp.saleOrder.orderDetails = [];
-    for (var i = 0; i < o.saleOrder.orderDetails.length; i++) {
-        if (o.saleOrder.orderDetails[i].quantity > 0) {
-            temp.saleOrder.orderDetails.push(o.saleOrder.orderDetails[i]);
+//    angular.copy(o, temp);
+//    temp.saleOrder.orderDetails = [];
+//    for (var i = 0; i < o.saleOrder.orderDetails.length; i++) {
+//        if (o.saleOrder.orderDetails[i].quantity > 0) {
+//            temp.saleOrder.orderDetails.push(o.saleOrder.orderDetails[i]);
+//        }
+//    }
+
+//    return temp;
+//}
+
+function removeItemZero($SunoSaleOrderCafe) {
+    var removedCount = 0;
+    var length = $SunoSaleOrderCafe.saleOrder.orderDetails.length;
+    for (var i = 0; i < length; i++) {
+        if ($SunoSaleOrderCafe.saleOrder.orderDetails[i - removedCount].quantity <= 0) {
+            $SunoSaleOrderCafe.removeItem($SunoSaleOrderCafe.saleOrder.orderDetails[i - removedCount]);
+            removedCount++;
+            console.log('removed');
         }
     }
-
-    return temp;
 }
 
 function removeUnNotice(o) {
-    var count = 0;
+    o.saleOrder.hasNotice = false;
     for (var i = 0; i < o.saleOrder.orderDetails.length; i++) {
         if (o.saleOrder.orderDetails[i].newOrderCount > 0) {
-            count++;
+            o.saleOrder.hasNotice = true;
+            break;
         }
-    }
-    if (count == 0) {
-        o.saleOrder.hasNotice = false;
     }
 }
 
@@ -549,10 +559,10 @@ function tableIsActive(t) {
     var count = 0;
     for (var i = 0; i < t.tableOrder.length; i++) {
         if (t.tableOrder[i].saleOrder.orderDetails.length > 0) {
-            count++;
+            return true;
         }
     }
-    return count == 0 ? false : true;
+    return false;
 }
 
 function findIndex(arraytosearch, key, valuetosearch) {

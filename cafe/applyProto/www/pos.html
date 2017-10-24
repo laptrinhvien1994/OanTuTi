@@ -67,7 +67,7 @@
         <div class="orders">
           <div class="orders-header-bar hide-on-keyboard-open">
             <div class="order-nav left">
-              <button class="button button-outline button-positive button-small" ng-repeat="o in tableIsSelected.tableOrder track by $index" ng-class="{'active':$index == orderIndexIsSelected}" on-tap="changeOrder($index)">
+              <button class="button button-outline button-positive button-small" ng-repeat="o in tableIsSelected.tableOrder track by $index" ng-class="{'active':$index == orderIndexIsSelected}" on-tap="changeOrder($index, o.saleOrder.uid)">
                 #{{$index + 1}}
               </button>
             </div>

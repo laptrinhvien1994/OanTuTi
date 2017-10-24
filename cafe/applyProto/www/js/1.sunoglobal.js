@@ -58,19 +58,19 @@ var SunoGlobal = {
             getProductItemsUrl: '/api/productitems',
             getNewProductItemsUrl: '/api/productitems/new',
             getBestSellingProductItemsUrl: '/api/productitems/bestselling',
-            createProductUrl: '/api/product/create'
+            createProductUrl: '/api/product/create?format=json'
         },
         customer: {
             search: '/api/customers/search',
             getCustomersUrl: '/api/customers',
-            createCustomerUrl: '/api/customer/create'
+            createCustomerUrl: '/api/customer/create?format=json'
         },
         saleOrder: {
             getSaleOrderUrl: '/api/sale/order',
             getSaleOrderByCodeUrl: '/api/sale/order/code',
             getSaleOrdersUrl: '/api/sale/orders',
             search: '/api/sale/searchorders',
-            completeOrderUrl: '/api/sale/complete'
+            completeOrderUrl: '/api/sale/complete?format=json'
         },
         earningPoint: {
             getConfigUrl: '/api/earningpoint/getconfig',
@@ -79,7 +79,7 @@ var SunoGlobal = {
         },
         promotion: {
             getActivePromotionUrl: '/api/promotion/getactive',
-            getPromotionOnItemUrl: '/api/promotion/getApplying',
+            getPromotionOnItemUrl: '/api/promotion/getApplying?format=json',
             getPromotionOnBillUrl: '/api/promotion/getBillApplying',
             getPromotionByCodeUrl: '/api/promotion/getIdByCode'
         }

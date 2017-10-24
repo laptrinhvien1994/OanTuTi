@@ -19,7 +19,6 @@ SunoBasicSaleOrder.prototype.saleOrders = [];
 SunoBasicSaleOrder.prototype.initOrder = function() {
     var self = this;
     self.saleOrders = [];
-    //self.createNewOrder();
 };
 /*
     Description: Tạo cấu trúc đơn hàng. 
@@ -421,12 +420,10 @@ SunoBasicSaleOrder.prototype.addItem = function(item) {
             item.unitPrice = unitPrice;
             item.sellPrice = unitPrice;
             detail = self.generateOrderDetail(item);
-            if (SunoGlobal.printer.ordering == 'desc') {
+            if (SunoGlobal.printer.ordering == 'desc')
                 self.saleOrder.orderDetails.unshift(detail);
-            }
-            else {
+            else 
                 self.saleOrder.orderDetails.push(detail);
-            }
         }
         else { 
             var unitPrice = self.calculatePricingPolicy(item, self.saleOrder.customer);
