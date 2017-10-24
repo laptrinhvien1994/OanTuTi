@@ -18,11 +18,6 @@
       "js/angular-animate.min.js",
       "js/Core/posFBController.js",
       "js/Core/autocomplete.js",
-      "js/Core/saleOrder.js",
-      "js/Core/promotion.js",
-      "js/Core/serviceUrl.js",
-      "js/Core/settingsGlobal.js",
-      "js/Core/service.js",
       "js/content.js",
       "js/app.js"
     ],
