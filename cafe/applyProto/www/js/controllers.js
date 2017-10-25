@@ -64,7 +64,7 @@ var saleOrder = {
     "orderDetails": [],
     "saleOrderCode": "",
     "saleOrderDate": null,
-    "saleUser": null,
+    "seller": null,
     "cashier": null,
     "totalQuantity": 0,
     "total": 0,
@@ -144,21 +144,22 @@ function convertJsonDateTimeToJs(jsonDate) {
     return date;
 }
 
-//function removeItemZero(o) {
+function removeItemZeroForPrint(o) {
 
-//    var temp = {};
-//    temp.saleOrder = {};
+    var temp = {
+        saleOrder: {}
+    };
 
-//    angular.copy(o, temp);
-//    temp.saleOrder.orderDetails = [];
-//    for (var i = 0; i < o.saleOrder.orderDetails.length; i++) {
-//        if (o.saleOrder.orderDetails[i].quantity > 0) {
-//            temp.saleOrder.orderDetails.push(o.saleOrder.orderDetails[i]);
-//        }
-//    }
+    angular.copy(o, temp);
+    temp.saleOrder.orderDetails = [];
+    for (var i = 0; i < o.saleOrder.orderDetails.length; i++) {
+        if (o.saleOrder.orderDetails[i].quantity > 0) {
+            temp.saleOrder.orderDetails.push(o.saleOrder.orderDetails[i]);
+        }
+    }
 
-//    return temp;
-//}
+    return temp;
+}
 
 function removeItemZero($SunoSaleOrderCafe) {
     var removedCount = 0;
@@ -167,10 +168,10 @@ function removeItemZero($SunoSaleOrderCafe) {
         if ($SunoSaleOrderCafe.saleOrder.orderDetails[i - removedCount].quantity <= 0) {
             $SunoSaleOrderCafe.removeItem($SunoSaleOrderCafe.saleOrder.orderDetails[i - removedCount]);
             removedCount++;
-            console.log('removed');
         }
     }
 }
+
 
 function removeUnNotice(o) {
     o.saleOrder.hasNotice = false;
@@ -183,7 +184,7 @@ function removeUnNotice(o) {
 }
 
 function prepareOrder(saleOrder) {
-    if (saleOrder.saleUser.userId) saleOrder.saleUser = saleOrder.saleUser.userId;
+    if (saleOrder.seller.userId) saleOrder.seller = saleOrder.seller.userId;
     saleOrder.amountPaid = parseFloat(saleOrder.amountPaid);
     if (saleOrder.amountPaid < saleOrder.payments[0].amount && !saleOrder.receiptVoucher) {
         saleOrder.paymentBalance = saleOrder.payments[0].amount - saleOrder.amountPaid;
@@ -308,10 +309,10 @@ function printOrderInBrowser(printer, saleOrder, type, setting) {
         if (saleOrder.subFee == null) saleOrder.subFee = 0;
         saleOrder.taxCode = setting.companyInfo.TaxCode;
 
-        var saleUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.saleUser.userId);
+        var sellerIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.seller.userId);
         var cashierUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.cashier);
 
-        if (saleUserIndex != null) saleOrder.saleUserName = setting.allUsers.userProfiles[saleUserIndex].displayName;
+        if (sellerIndex != null) saleOrder.sellerName = setting.allUsers.userProfiles[sellerIndex].displayName;
         if (cashierUserIndex != null) saleOrder.cashierName = setting.allUsers.userProfiles[cashierUserIndex].displayName;
 
         saleOrder.saleOrderDate ? saleOrder.saleOrderDate : saleOrder.saleOrderDate = "\/Date(" + (new Date()).getTime() + "-0000)\/";
@@ -387,10 +388,10 @@ function printOrderInMobile(printer, saleOrder, type, setting) {
     if (saleOrder.subFee == null) saleOrder.subFee = 0;
     saleOrder.taxCode = setting.companyInfo.TaxCode;
 
-    var saleUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.saleUser.userId);
+    var sellerIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.seller.userId);
     var cashierUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.cashier);
 
-    if (saleUserIndex != null) saleOrder.saleUserName = setting.allUsers.userProfiles[saleUserIndex].displayName;
+    if (sellerIndex != null) saleOrder.sellerName = setting.allUsers.userProfiles[sellerIndex].displayName;
     if (cashierUserIndex != null) saleOrder.cashierName = setting.allUsers.userProfiles[cashierUserIndex].displayName;
 
     // for (i = 0; i < saleOrder.orderDetails.length; i++) {
@@ -434,10 +435,10 @@ function prepairOrderMobile(saleOrder, setting) {
     if (saleOrder.subFee == null) saleOrder.subFee = 0;
     saleOrder.taxCode = setting.companyInfo.TaxCode;
 
-    var saleUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.saleUser.userId);
+    var sellerIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.seller.userId);
     var cashierUserIndex = findIndex(setting.allUsers.userProfiles, 'userId', saleOrder.cashier);
 
-    if (saleUserIndex != null) saleOrder.saleUserName = setting.allUsers.userProfiles[saleUserIndex].displayName;
+    if (sellerIndex != null) saleOrder.sellerName = setting.allUsers.userProfiles[sellerIndex].displayName;
     if (cashierUserIndex != null) saleOrder.cashierName = setting.allUsers.userProfiles[cashierUserIndex].displayName;
 
     // for (i = 0; i < saleOrder.orderDetails.length; i++) {
@@ -463,7 +464,7 @@ function initPrintTemplate(data, type) {
           { text: "PHIẾU IN BẾP", format: 0, align: 1, size: 0 },
           { text: data.tableName, format: 0, align: 1, size: 0 },
           { text: data.saleDateString, format: 0, align: 1, size: 0 },
-          { text: "Phục vụ: " + data.saleUserName, format: 0, align: 0, size: 0 },
+          { text: "Phục vụ: " + data.sellerName, format: 0, align: 0, size: 0 },
           { text: "     SL     MÓN", format: 0, align: 0, size: 0 },
           { text: "------------------------------------------", format: 0, align: 0, size: 0 }
         ];
@@ -546,13 +547,10 @@ function checkOrderPrintStatus(saleOrder) {
     var count = 0;
     for (var i = 0; i < saleOrder.orderDetails.length ; i++) {
         if (saleOrder.orderDetails[i].newOrderCount > 0) {
-            count++;
+            return true;
         }
     }
-
-    if (count > 0) return false;
-
-    return true;
+    return false;
 }
 
 function tableIsActive(t) {

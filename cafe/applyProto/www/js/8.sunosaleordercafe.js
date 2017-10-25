@@ -184,7 +184,7 @@ SunoSaleOrderCafe.prototype.initOrder = function() {
 /*
     Description: Tạo mới đơn hàng.
 */
-SunoSaleOrderCafe.prototype.createNewOrder = function(saleType) {
+SunoSaleOrderCafe.prototype.createNewOrder = function(saleType, callback) {
     var self = this;
     var saleOrder = self.generateSaleOrder();
     saleOrder.saleTypeId = saleType !== undefined && saleType !== null ? saleType : self.saleType.retail;
@@ -203,6 +203,7 @@ SunoSaleOrderCafe.prototype.createNewOrder = function(saleType) {
                         self.promotion.promotionOnBill = result.response;
                     }
                     self.promotions.push(self.promotion);
+                    if (callback !== null && callback !== undefined) callback();
                 })
                 .catch(function(error){
                     console.log('SunoSaleOrderCafe.prototype.createNewOrder: getPromotionOnBillUrl', error);
@@ -219,10 +220,10 @@ SunoSaleOrderCafe.prototype.createNewOrder = function(saleType) {
         });
     }
     else {
-        self.saleOrders.push(saleOrder);
-        self.saleOrder = saleOrder;
         self.promotions.push(self.promotion);
     }
+    self.saleOrders.push(saleOrder);
+    self.saleOrder = saleOrder;
 };
 
 /*
@@ -449,7 +450,7 @@ SunoSaleOrderCafe.prototype.calculateTotal = function() {
 /*
     Description: Thêm hàng hóa vào đơn hàng.
 */
-SunoSaleOrderCafe.prototype.addItem = function(item) {
+SunoSaleOrderCafe.prototype.addItem = function (item, callback) {
     var self = this;
     var result = Object.assign({}, SunoGlobal.result);
     if (!self.isValidUntrackedItemSale(item)) {
@@ -510,6 +511,7 @@ SunoSaleOrderCafe.prototype.addItem = function(item) {
                 }
                 self.calculatePromotion();
                 self.applyPromotion();
+                if (callback !== null && callback !== undefined) callback();
             })
             .catch(function(error){
                 console.log('SunoSaleOrderCafe.prototype.addItem: getPromotionOnItem', error);
@@ -635,7 +637,8 @@ SunoSaleOrderCafe.prototype.changeStore = function(storeId) {
 /*
     Description: Lấy danh sách chương trình khuyến mãi trên hàng hóa.
 */
-SunoSaleOrderCafe.prototype.getPromotionOnItem = function(items, storeId, customerId, saleDate) {
+SunoSaleOrderCafe.prototype.getPromotionOnItem = function (items, storeId, customerId, saleDate) {
+    var self = this;
     var data = { storeId: storeId, customerId: customerId, saleDate: saleDate, items: items };
     return self.request.makeRestful(SunoGlobal.sunoService.domain + SunoGlobal.sunoService.promotion.getPromotionOnItemUrl, 'POST', data);
 };
@@ -865,20 +868,27 @@ SunoSaleOrderCafe.prototype.calculatePromotion = function() {
     //#endregion
 
     //#region optimize promotion
+    //Reset promotion
+    self.saleOrder.promotionOnBillSelected = null;
+    for (var i = 0; i < self.saleOrder.orderDetails.length; i++) {
+        var detail = self.saleOrder.orderDetails[i];
+        detail.promotionId = 0;
+        detail.promotionOnItemSelected = null;
+    }
     if (self.saleOrder.promotionOnBill.length > 0 && self.saleOrder.promotionOnItem.length > 0) {
         self.saleOrder.isPromotion = true;
         var promosWithoutCode = self.saleOrder.promotionOnBill.filter(function(p){
             return p.isCodeRequired == false;
         });
         maxDiscountOnBill = getMaxDiscount(promosWithoutCode);
-        maxDiscountOnItem = getMaxDiscount(self.saleOrder.promotionOnBill);
+        maxDiscountOnItem = getMaxDiscount(self.saleOrder.promotionOnItem);
         if (maxDiscountOnBill >= maxDiscountOnItem) {
             self.saleOrder.promotionType = self.promotionType.onBill;
             calculatePromotionOnBill(promosWithoutCode, self.saleOrder);
         }
         else {
             self.saleOrder.promotionType = self.promotionType.onItem;
-            calculatePromotionOnItem(self.saleOrder.promotionOnItem);
+            calculatePromotionOnItem(self.saleOrder.promotionOnItem, self.saleOrder.orderDetails);
         }
     }
     else if (self.saleOrder.promotionOnBill.length > 0) {
@@ -898,7 +908,8 @@ SunoSaleOrderCafe.prototype.calculatePromotion = function() {
     else if (self.saleOrder.promotionOnItem.length > 0) {
         self.saleOrder.isPromotion = true;
         self.saleOrder.promotionType = self.promotionType.onItem;
-        calculatePromotionOnItem(self.saleOrder.promotionOnItem);
+        calculatePromotionOnItem(self.saleOrder.promotionOnItem, self.saleOrder.orderDetails);
+        self.saleOrder.promotionOnBillSelected = null;
     }
     else {
         self.saleOrder.isPromotion = false;
@@ -956,7 +967,27 @@ SunoSaleOrderCafe.prototype.applyPromotion = function() {
                 self.saleOrder.discount = self.saleOrder.promotionOnBillSelected.discountValue;
                 self.saleOrder.total = self.saleOrder.subTotal + self.saleOrder.subFee - self.saleOrder.discount;
                 self.saleOrder.paymentBalance = Math.max(self.saleOrder.total - self.saleOrder.amountPaid, 0);
+                //reset promotion on item
+                for (var i = 0; i < self.saleOrder.orderDetails.length; i++) {
+                    var detail = self.saleOrder.orderDetails[i];
+                    detail.promotionId = 0;
+                    detail.promotionOnItemSelected = null;
+
+                    detail.unitPrice = self.calculatePricingPolicy(detail, self.saleOrder.customer);
+                    detail.isDiscountPercent = false;
+                    detail.discount = 0;
+                    detail.discountPercent = 0;
+                    detail.sellPrice = detail.unitPrice;
+                    detail.subTotal = detail.quantity * detail.sellPrice;
+                    detail.promotionId = 0;
+                    detail.promotionOnItemSelected = null;
+
+                    self.saleOrder.totalQuantity += detail.quantity;
+                    self.saleOrder.subTotal += detail.subTotal;
+                    self.saleOrder.tax += detail.quantity * detail.tax;
+                }
             }
+            
         }
         else if (self.saleOrder.promotionType == self.promotionType.onItem) { 
             for (var i = 0; i < self.saleOrder.orderDetails.length; i++) {
@@ -974,6 +1005,9 @@ SunoSaleOrderCafe.prototype.applyPromotion = function() {
                     detail.sellPrice = detail.unitPrice - detail.discount;
                 }
             }
+            self.saleOrder.isDiscountPercent = 0;
+            self.saleOrder.discount = 0;
+            self.saleOrder.discountPercent = 0;
             self.calculateTotal();
         }
     } 
@@ -1040,7 +1074,7 @@ SunoSaleOrderCafe.prototype.applyPromotionOnItem = function(promotions) {
         self.cancelPromotion();
         for (var i = 0; i < promotions.length; i++) {
             var promo = promotions[i];
-            var detail = orderDetails.find(function(d){return d.itemId == promo.itemId;});
+            var detail = self.saleOrder.orderDetails.find(function(d){return d.itemId == promo.itemId;});
             if (detail !== undefined) {
                 detail.promotionId = promo.promotionId;
                 detail.promotionOnItemSelected = promo;

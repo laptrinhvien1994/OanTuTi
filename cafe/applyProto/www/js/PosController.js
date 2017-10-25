@@ -492,7 +492,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 console.log(e);
             });
     }
-
+    
     //$scope.getBestSellingProductItems = function () {
     //    $scope.buttonProductListStatus = 2;
     //    $ionicScrollDelegate.$getByHandle('productItemList').scrollTop();
@@ -768,6 +768,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     saleOrder: {
                         //revision: 0,
                         orderDetails: []
+                    },
+                    promotion: {
+                        isPromotion: false,
+                        isCallApi: false,
+                        promotionOnItem: [],
+                        promotionOnBill: []
                     }
                 }],
                 startTime: null
@@ -1279,12 +1285,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.payments[0].amount = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.total;
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.cashier = SunoGlobal.userProfile.userId;
-                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser = $scope.userInfo;
+                if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.seller) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.seller = $scope.userInfo;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy) {
                     $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy = SunoGlobal.userProfile.userId;
-                    var saleUserIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', SunoGlobal.userProfile.userId);
-                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[saleUserIndex].displayName;
+                    var sellerIndex = findIndex($scope.authBootloader.users.userProfiles, 'userId', SunoGlobal.userProfile.userId);
+                    $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdByName = $scope.authBootloader.users.userProfiles[sellerIndex].displayName;
                 }
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid = uuid.v1();
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId) $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.storeId = $scope.currentStore.storeID;
@@ -1388,7 +1394,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.tableMapTemp = angular.copy(data[2].localCurrentStore.zone);
             if (!$scope.tablesSetting) $scope.tablesSetting = [];
 
-            //Gán lại giá trị từ Orders cho SunoSaleOrderCafe
+            //Gán lại giá trị từ Orders cho SunoSaleOrderCafe (Nạp lại $SunoSaleOrderCafe.saleOrders)
             //Lúc tắt app mở lại
             $scope.tables.forEach(function (t) {
                 t.tableOrder.forEach(function (order) {
@@ -1396,46 +1402,49 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 });
             });
 
-        } else if ($scope.tablesSetting) {
-            var storeIndex = findIndex($scope.tablesSetting, 'storeId', $scope.currentStore.storeID);
-            if (storeIndex != null) {
-                $scope.tables = $scope.tablesSetting[storeIndex].tables;
-                $scope.tableMap = $scope.tablesSetting[storeIndex].zone;
-                $scope.tablesTemp = angular.copy($scope.tablesSetting[storeIndex].tables);
-                $scope.tableMapTemp = angular.copy($scope.tablesSetting[storeIndex].zone);
-                //Lưu xuống DB Local
-                var array = prepareTables();
-                Promise.all([
-                    DBTables.$manipulateBatchDoc(array),
-                    //Trường hợp này sửa lỗi lúc kết ca thì chưa xóa zones ở các máy đc server broadcast về.
-                    DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) })
-                ])
-                .then(function (data) {
-                    //console.log(data[0]);
-                    var zones = { _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) };
-                    if (data[1].docs.length > 0) {
-                        zones._rev = data[1].docs[0]._rev;
-                    }
-                    return DBSettings.$addDoc(zones);
-                    //return Promise.all([
-                    //    DBTables.$getAllDocs(),
-                    //    DBSettings.$addDoc(zones)
-                    //]);
-                    //console.log('Lưu DB', data);
-                })
-                .then(function (data) {
-                    //log for debug.
-                    //console.log(data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                })
+        } else {
+            if ($scope.tablesSetting) {
+                var storeIndex = findIndex($scope.tablesSetting, 'storeId', $scope.currentStore.storeID);
+                if (storeIndex != null) {
+                    $scope.tables = $scope.tablesSetting[storeIndex].tables;
+                    $scope.tableMap = $scope.tablesSetting[storeIndex].zone;
+                    $scope.tablesTemp = angular.copy($scope.tablesSetting[storeIndex].tables);
+                    $scope.tableMapTemp = angular.copy($scope.tablesSetting[storeIndex].zone);
+                    //Lưu xuống DB Local
+                    var array = prepareTables();
+                    Promise.all([
+                        DBTables.$manipulateBatchDoc(array),
+                        //Trường hợp này sửa lỗi lúc kết ca thì chưa xóa zones ở các máy đc server broadcast về.
+                        DBSettings.$getDocByID({ _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) })
+                    ])
+                    .then(function (data) {
+                        //console.log(data[0]);
+                        var zones = { _id: 'zones_' + SunoGlobal.companyInfo.companyId + '_' + $scope.currentStore.storeID, zones: angular.copy($scope.tableMap) };
+                        if (data[1].docs.length > 0) {
+                            zones._rev = data[1].docs[0]._rev;
+                        }
+                        return DBSettings.$addDoc(zones);
+                        //return Promise.all([
+                        //    DBTables.$getAllDocs(),
+                        //    DBSettings.$addDoc(zones)
+                        //]);
+                        //console.log('Lưu DB', data);
+                    })
+                    .then(function (data) {
+                        //log for debug.
+                        //console.log(data);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+                } else {
+                    $scope.checkInitTable();
+                }
             } else {
                 $scope.checkInitTable();
             }
-        } else {
-            $scope.checkInitTable();
         }
+
 
         //Check table quantity to determine CSS class.
         if ($scope.tables.length < 11) {
@@ -1460,14 +1469,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.appendedCSSClass = '';
         }
 
-        //Checking internet connection.
-        $interval(function () {
-            checkingInternetConnection();
-            //$scope.isOnline = window.navigator.onLine;
-            //console.log($scope.isOnline);
-        }, 8000);
+        ////Checking internet connection.
+        //$interval(function () {
+        //    checkingInternetConnection();
+        //}, 8000);
 
-        //Mặc định chọn bàn Mang về là bài được chọn đầu tiên.
+        //Mặc định chọn bàn Mang về là bàn được chọn đầu tiên.
         $scope.tableIsSelected = $scope.tables[0];
         $scope.orderIndexIsSelected = 0;
 
@@ -1505,11 +1512,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                         if (data.docs.length > 0) {
                             $scope.shiftId = data.docs[0].shiftId;
                         }
+
                         //Nếu shift Client hiện tại ko trùng với shift Server gửi về thì cập nhật lại hoặc thêm mới.
                         if ($scope.shiftId != msg.shiftId) {
                             $scope.shiftId = msg.shiftId;
                             if (data.docs.length > 0) {
-                                debugger;
                                 data.docs[0].shiftId = msg.shiftId;
                                 return DBSettings.$addDoc(angular.copy(data.docs[0]));
                             }
@@ -1531,6 +1538,18 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                         //Cập nhật lại sơ đồ bàn mới từ Server.
                         $scope.tables = msg.tables;
+                        var saleOrdersTemp = angular.copy($SunoSaleOrderCafe.saleOrders);
+                        //saleOrdersTemp.forEach(function (order) { $SunoSaleOrderCafe.deleteOrder(order.saleOrderUuid); });
+                        $SunoSaleOrderCafe.saleOrders = [];
+                        $scope.tables.forEach(function (t) {
+                            t.tableOrder.forEach(function (order) {
+                                $SunoSaleOrderCafe.calculateOrder(order.saleOrder, order.saleOrder);
+                            });
+                        });
+                        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                            $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                        }
+                        //console.log($scope.tables[3].tableOrder[0].saleOrder === $SunoSaleOrderCafe.saleOrder);
 
                         if (msg.tables && $scope.tables.length > 0) socketAction.process($scope.tables, $scope.unNoticeTable);
                         // console.log(msg);
@@ -1907,10 +1926,20 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     }
                                     //Nếu chưa có order này trong ds orders, trường hợp báo bếp mới.
                                     if (orderIndex == null && $scope.tables[x].tableOrder[0].saleOrder.orderDetails.length > 0) {
-                                        $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[0]));
+                                        $scope.tables[x].tableOrder.push(msg.tables[0].tableOrder[0]);
+                                        $SunoSaleOrderCafe.calculateOrder(msg.tables[0].tableOrder[0].saleOrder, msg.tables[0].tableOrder[0].saleOrder);
+
+                                        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                            $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                        }
                                     }
                                     else if (orderIndex == null && $scope.tables[x].tableOrder[0].saleOrder.orderDetails.length == 0) {
-                                        $scope.tables[x].tableOrder[0].saleOrder = angular.copy(msg.tables[0].tableOrder[0].saleOrder);
+                                        $scope.tables[x].tableOrder[0].saleOrder = msg.tables[0].tableOrder[0].saleOrder;
+                                        $SunoSaleOrderCafe.calculateOrder(msg.tables[0].tableOrder[0].saleOrder, msg.tables[0].tableOrder[0].saleOrder);
+
+                                        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                            $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                        }
                                     }
                                     else {
 
@@ -1976,12 +2005,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             //Cập nhật lại revision.
                                             z.revision = msg.tables[0].tableOrder[0].saleOrder.revision;
 
+                                            $SunoSaleOrderCafe.calculateOrder(z, z)
                                             $scope.tables[x].tableOrder[orderIndex].saleOrder = z;
-                                            //$timeout(function () {
-                                            //    $scope.watchCallback(null, null);
-                                            //}, 150);
 
-                                            $scope.watchCallback(null, null);
+                                            if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                                $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                            }
                                         }
                                         else { //Cập nhật cho hàng hóa tách món kiểu trà sữa,...
 
@@ -2062,23 +2091,25 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                             //$timeout(function () {
                                             //    $scope.watchCallback(null, null);
                                             //}, 150);
-                                            $scope.watchCallback(null, null);
+                                            //$scope.watchCallback(null, null);
                                         }
                                     }
                                     
                                 }
                                 else {
-                                    $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[0]));
+                                    $scope.tables[x].tableOrder.push(msg.tables[0].tableOrder[0]);
+                                    $SunoSaleOrderCafe.calculateOrder(msg.tables[0].tableOrder[0].saleOrder, msg.tables[0].tableOrder[0].saleOrder);
+
+                                    if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                        $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                    }
                                 }
 
                                 //Cập nhật lại trạng thái của bàn
                                 var tableStatus = tableIsActive($scope.tables[x]);
                                 $scope.tables[x].tableStatus = tableStatus ? 1 : 0;
                                 $scope.$apply();
-                                break;
-                            }
 
-                            $timeout(function () {
                                 //Lưu vào DB Local
                                 DBTables.$queryDoc({
                                     selector: {
@@ -2088,7 +2119,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     fields: ['_id', '_rev']
                                 })
                                 .then(function (data) {
-                                    //console.log(data);
                                     var table = angular.copy(msg.tables[0]);
                                     table._id = data.docs[0]._id;
                                     table._rev = data.docs[0]._rev;
@@ -2099,14 +2129,33 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                                     //console.log(data);
                                 })
                                 .catch(function (error) {
-                                    console.log(error);
+                                    //console.log(error);
+                                    //Nếu bị conflict thì retry lại
+                                    DBTables.$queryDoc({
+                                        selector: {
+                                            'store': { $eq: $scope.currentStore.storeID },
+                                            'tableUuid': { $eq: msg.tables[0].tableUuid }
+                                        },
+                                        fields: ['_id', '_rev']
+                                    })
+                                    .then(function (data) {
+                                        var table = angular.copy(msg.tables[0]);
+                                        table._id = data.docs[0]._id;
+                                        table._rev = data.docs[0]._rev;
+                                        table.store = $scope.currentStore.storeID;
+                                        return DBTables.$addDoc(table);
+                                    })
+                                    .catch(function (e) {
+                                        console.log(e);
+                                    })
                                 });
-                            }, 300);
+
+                                break;
+                            }
                         }
                     }
                         //Xử lý cho tách hóa đơn.
                     else if (msg.info.action == 'splitOrder') {
-
                         //Cập nhật lại bàn từ Server gửi về.
                         for (var x = 0; x < $scope.tables.length; x++) {
                             if ($scope.tables[x].tableUuid == msg.tables[0].tableUuid) {
@@ -2118,10 +2167,20 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
                                     //Trường hợp chưa có trong ds Orders của bàn, đây là Order mới tách
                                     if (orderIndex == -1) {
-                                        $scope.tables[x].tableOrder.push(angular.copy(msg.tables[0].tableOrder[y]));
+                                        $scope.tables[x].tableOrder.push(msg.tables[0].tableOrder[y]);
+                                        $SunoSaleOrderCafe.calculateOrder(msg.tables[0].tableOrder[y].saleOrder, msg.tables[0].tableOrder[y].saleOrder);
+
+                                        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                            $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                        }
                                     }
                                     else {
-                                        $scope.tables[x].tableOrder[orderIndex] = angular.copy(msg.tables[0].tableOrder[y]);
+                                        $scope.tables[x].tableOrder[orderIndex] = msg.tables[0].tableOrder[y];
+
+                                        $SunoSaleOrderCafe.calculateOrder(msg.tables[0].tableOrder[y].saleOrder, msg.tables[0].tableOrder[y].saleOrder);
+                                        if ($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected]) {
+                                            $SunoSaleOrderCafe.selectOrder($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid);
+                                        }
                                     }
                                 }
 
@@ -2612,7 +2671,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
 
     var prepareTables = function () {
-        debugger;
         var tables = angular.copy($scope.tables);
         var array = [];
         tables.forEach(function (t) {
@@ -2752,8 +2810,11 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $scope.tableIsSelected.tableOrder.push({ saleOrder: $SunoSaleOrderCafe.saleOrder });
             $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
             $scope.tableIsSelected.tableOrder[0].saleOrder.tableName = $scope.tableIsSelected.tableName;
-        };
-
+        }
+        else {
+            //Trỏ lại saleOrder current trong Prototype.
+            $SunoSaleOrderCafe.selectOrder(t.tableOrder[0].saleOrder.saleOrderUuid);
+        }
         $scope.orderIndexIsSelected = 0;
         $scope.showOption = false;
         //$scope.buttonStatus = null;
@@ -2772,8 +2833,16 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             //    }
             //}];
             //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
-            $scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+            //$scope.tableIsSelected.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+            //$scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
+            $SunoSaleOrderCafe.createNewOrder();
+            $scope.tableIsSelected.tableOrder.push({ saleOrder: $SunoSaleOrderCafe.saleOrder });
             $scope.tableIsSelected.tableOrder[0].saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
+            $scope.tableIsSelected.tableOrder[0].saleOrder.tableName = $scope.tableIsSelected.tableName;
+        }
+        else {
+            //Trỏ lại saleOrder current trong Prototype.
+            $SunoSaleOrderCafe.selectOrder($scope.tables[0].tableOrder[0].saleOrder.saleOrderUuid);
         }
         $scope.switchLayout(true);
     }
@@ -2851,46 +2920,47 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.changeTable = function (t) {
         // lưu data bàn trước khi đổi
-        var newtable = {};
-        angular.copy(t, newtable);
-        var oldtable = {};
-        angular.copy($scope.tableIsSelected, oldtable);
-        var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
+        var newTable = angular.copy(t);
+        var oldTable = angular.copy($scope.tableIsSelected);
+        var oldOrderId = oldTable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
 
-        // Kiểm tra nếu bàn mới chưa có order nào thì khởi tạo dữ liệu
+        // Kiểm tra nếu bàn mới chưa có order nào thì khởi tạo order
         if (t.tableOrder.length == 0) {
             //t.tableOrder = [{
             //    saleOrder: {}
             //}];
             //angular.copy(saleOrder, t.tableOrder[0].saleOrder);
-            t.tableOrder.push({ saleOrder: angular.copy(saleOrder) });
+
+            t.tableOrder.push({ saleOrder: null });
             //Ko cần cập nhật sharedwith vì chuyển bàn thì dữ liệu đã có sẵn trc đó.
         }
 
         // chuyển dữ liệu từ bàn cũ sang bàn mới
-        angular.copy(oldtable.tableOrder[$scope.orderIndexIsSelected], t.tableOrder[0]);
+        //angular.copy(oldTable.tableOrder[$scope.orderIndexIsSelected], t.tableOrder[0]);
+        t.tableOrder[0].saleOrder = $SunoSaleOrderCafe.saleOrder;
 
         // Chuyển status cho bàn mới thành active
         t.tableStatus = 1;
-        t.startTime = oldtable.startTime;
+        t.startTime = oldTable.startTime;
 
-        // xóa dữ liệu order tại bàn cũ
-        angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+        // xóa order cũ tại bàn cũ
+        //angular.copy(saleOrder, $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
         $scope.tableIsSelected.tableOrder.splice($scope.orderIndexIsSelected, 1);
 
         // Chuyển deactive bàn cũ nếu bàn cũ không còn hóa đơn
-        var tableStatus = tableIsActive($scope.tableIsSelected);
-        if (tableStatus == false) {
+        var isActived = tableIsActive($scope.tableIsSelected);
+        if (!isActived) {
             $scope.tableIsSelected.tableStatus = 0;
             // $scope.tableIsSelected.startTime = null;
         }
 
-        // đổi bàn hiện tại sang bàn mới
+        //đổi bàn được chọn sang bàn mới và trỏ lại trong saleOrder prototype.
+        $scope.selectOrder(t.tableOrder[0].saleOrder.saleOrderUuid);
         $scope.tableIsSelected = t;
         $scope.orderIndexIsSelected = 0;
         $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.tableName = $scope.tableIsSelected.tableName;
         $scope.modalSwitchTable.hide();
-        toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + oldtable.tableName + '] sang [' + newtable.tableName + ']');
+        toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + oldTable.tableName + '] sang [' + newTable.tableName + ']');
         var timestamp = genTimestamp();
         if ($scope.isSync) {
             //var currentTable = {};
@@ -2907,7 +2977,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "shiftId": null, //LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
-                "fromTableUuid": oldtable.tableUuid,
+                "fromTableUuid": oldTable.tableUuid,
                 "fromSaleOrderUuid": oldOrderId,
                 "tables": angular.copy(currentTableOrder),
                 "zone": $scope.tableMap,
@@ -2991,8 +3061,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.pairingOrder = function (t) {
-        $scope.newtable = t;
-        $scope.oldtable = $scope.tableIsSelected;
+        $scope.newTable = t;
+        $scope.oldTable = $scope.tableIsSelected;
 
         $scope.currentTablePair = t;
         if (t.tableOrder.length > 1) {
@@ -3003,9 +3073,9 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.Pair = function (o, index) {
-        //var oldtable = {};
-        var oldtable = angular.copy($scope.tableIsSelected);
-        var oldOrderId = oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
+        //var oldTable = {};
+        var oldTable = angular.copy($scope.tableIsSelected);
+        var oldOrderId = oldTable.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleOrderUuid;
         //Thêm logs cho table mới được ghép.
         var logs = []
         var timestamp = genTimestamp();
@@ -3027,7 +3097,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             }
         }
         //Thêm printed của order cũ sang order mới.
-        o.saleOrder.printed = o.saleOrder.printed.concat(oldtable.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed);
+        o.saleOrder.printed = o.saleOrder.printed.concat(oldTable.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed);
         //Thêm logs cho order mới.
         o.saleOrder.logs = o.saleOrder.logs.concat(logs);
 
@@ -3039,8 +3109,8 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             // $scope.tableIsSelected.startTime = null;
         }
 
-        toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + $scope.oldtable.tableName + '] sang [' + $scope.newtable.tableName + ']');
-        $scope.tableIsSelected = $scope.newtable;
+        toaster.pop('success', "", 'Đã chuyển đơn hàng từ [' + $scope.oldTable.tableName + '] sang [' + $scope.newTable.tableName + ']');
+        $scope.tableIsSelected = $scope.newTable;
         $scope.orderIndexIsSelected = index;
 
         if ($scope.isSync) {
@@ -3058,7 +3128,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 "shiftId": null,//LSFactory.get('shiftId'),
                 "startDate": "",
                 "finishDate": "",
-                "fromTableUuid": oldtable.tableUuid,
+                "fromTableUuid": oldTable.tableUuid,
                 "fromSaleOrderUuid": oldOrderId,
                 "tables": angular.copy(currentTables),
                 "zone": $scope.tableMap,
@@ -3357,11 +3427,12 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
         //$scope.changeOrder($scope.tableIsSelected.tableOrder.length - 1);
         //// LSFactory.set('last-update', $scope.tables);
         $SunoSaleOrderCafe.createNewOrder();
-        $scope.tableIsSelected.tableOrder.push({ saleOrder: $SunoSaleOrderCafe.saleOrder });
+        var saleOrder = { saleOrder: $SunoSaleOrderCafe.saleOrder };
+        $scope.tableIsSelected.tableOrder.push(saleOrder);
         $SunoSaleOrderCafe.saleOrder.tableName = $scope.tableIsSelected.tableName;
         $SunoSaleOrderCafe.saleOrder.sharedWith.push({ deviceID: deviceID, userID: SunoGlobal.userProfile.userId });
-        debugger;
-        $scope.changeOrder($scope.tableIsSelected.tableOrder.length - 1, $SunoSaleOrderCafe.saleOrder.saleOrderUuid );
+        //$scope.changeOrder($scope.tableIsSelected.tableOrder.length - 1, $SunoSaleOrderCafe.saleOrder.saleOrderUuid );
+        $scope.orderIndexIsSelected = $scope.tableIsSelected.tableOrder.indexOf(saleOrder);
     }
 
     $scope.cancelOrder = function () {
@@ -3369,15 +3440,15 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             if ($scope.tableIsSelected.tableOrder.length > 1) {
                 $scope.tableIsSelected.tableOrder.splice($scope.orderIndexIsSelected, 1);
                 $scope.orderIndexIsSelected = $scope.tableIsSelected.tableOrder.length - 1;
-                var checktable = tableIsActive($scope.tableIsSelected);
-                if (checktable == false) {
+                var isActived = tableIsActive($scope.tableIsSelected);
+                if (!isActived) {
                     // $scope.tableIsSelected.startTime = null;
                     $scope.tableIsSelected.tableStatus = 0;
                 }
                 // LSFactory.set('last-update', $scope.tables);
             } else {
-                var checktable = tableIsActive($scope.tableIsSelected);
-                if (checktable == false) {
+                var isActived = tableIsActive($scope.tableIsSelected);
+                if (!isActived) {
                     // $scope.tableIsSelected.startTime = null;
                     $scope.tableIsSelected.tableStatus = 0;
                 }
@@ -3523,7 +3594,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
             var cloneItem = angular.copy(item);
             var itemIndex = $SunoSaleOrderCafe.saleOrder.orderDetails.findIndex(function (d) { return d.itemId == cloneItem.itemId; });
-            $SunoSaleOrderCafe.addItem(cloneItem);
+            $SunoSaleOrderCafe.addItem(cloneItem, function () { $scope.$apply(); });
             if (itemIndex > -1) {
                 $SunoSaleOrderCafe.saleOrder.orderDetails[itemIndex].newOrderCount++;
                 $SunoSaleOrderCafe.saleOrder.orderDetails[itemIndex].lastInputedIndex = itemIndex;
@@ -3613,8 +3684,10 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     }
 
     $scope.noticeToTheKitchen = function () {
-        // console.log($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+        //Nếu có món trong order mới cho báo bếp
         if ($scope.tableIsSelected && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.orderDetails.length > 0) {
+
+            //Validate quyền thực hiện
             if ($scope.tableIsSelected
               && $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.createdBy != SunoGlobal.userProfile.userId
               && $scope.permissionIndex == -1
@@ -3622,26 +3695,28 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 return toaster.pop('error', "", 'Bạn không được phép thao tác trên đơn hàng của nhân viên khác');
             }
 
+            //Reset giá trị
             $scope.pinItem = null;
             $scope.showOption = false;
+
             // Kiem tra co mon trong hoa don can bao bep hay ko, neu hoa don ko co cap nhat mon moi thi ko bao bep nua
-            //debugger;
-            var cantPrint = checkOrderPrintStatus($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
-            if (cantPrint == false) {
+            var canPrint = checkOrderPrintStatus($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
+            if (canPrint) {
+
                 // Co mon can bao bep 
                 $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.hasNotice = false;
                 if (!$scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed) {
                     $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.printed = [];
                 }
+
+                //Xử lý thông tin cho order để chuẩn bị in.
                 // Chi in nhung mon moi order
                 var currentOrder = $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected];
-                //var printOrder = {};
                 var printOrder = angular.copy(currentOrder);
-
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
                     printOrder.saleOrder.orderDetails[i].quantity = printOrder.saleOrder.orderDetails[i].newOrderCount;
                 }
-                printOrder = removeItemZero(printOrder);
+                printOrder = removeItemZeroForPrint(printOrder);
                 //Mảng chứa các món mới báo bếp cho đồng bộ.
                 var untrackedItem = [];
                 for (var i = 0; i < printOrder.saleOrder.orderDetails.length; i++) {
@@ -3652,7 +3727,6 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                     }
                     if ($scope.isUngroupItem) {
                         obj.detailID = printOrder.saleOrder.orderDetails[i].detailID;
-                        //obj.affectedID = printOrder.saleOrder.orderDetails[i].detailID;
                     }
                     untrackedItem.push(obj);
                 }
@@ -3993,6 +4067,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
                 }
             }
 
+            //console.log($scope.tables[3].tableOrder[0].saleOrder === $SunoSaleOrderCafe.saleOrder);
             //Tính toán lại tiền
             $SunoSaleOrderCafe.changeQuantityOnItem(item);
             //calculateTotal($scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder);
@@ -4167,6 +4242,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
             $event.stopPropagation();
             $event.preventDefault();
         }
+        //console.log($SunoSaleOrderCafe.saleOrder);
     }
 
     $scope.checkRemoveItem = function (num, item) {
@@ -5060,7 +5136,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
 
     $scope.changeSale = function (s) {
         $scope.currentSale = s;
-        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.saleUser = s;
+        $scope.tableIsSelected.tableOrder[$scope.orderIndexIsSelected].saleOrder.seller = s;
         $scope.popoverSaleList.hide();
     }
 
@@ -5995,7 +6071,7 @@ function PosCtrl($location, $ionicPosition, $ionicSideMenuDelegate, $ionicHistor
     $scope.filterBySale = function (s) {
         $scope.currentUserReport = s;
         // $scope.cashier = {
-        //   saleUserId : s.userId
+        //   sellerId : s.userId
         // }
         if (s) {
             var saleCount = 0;
